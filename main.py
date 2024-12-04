@@ -6,35 +6,11 @@ import os, shutil
 import argparse
 import torch
 
+## TODO: Add the following imlementation
+# 1. Add the main function to introduce the distribution shift
+# 2. Implement the Bellman operator of DRSAC
 
-'''Hyperparameter Setting'''
-parser = argparse.ArgumentParser()
-parser.add_argument('--dvc', type=str, default='cuda', help='running device: cuda or cpu')
-parser.add_argument('--EnvIdex', type=int, default=0, help='PV1, Lch_Cv2, Humanv4, HCv4, BWv3, BWHv3')
-parser.add_argument('--write', type=str2bool, default=False, help='Use SummaryWriter to record the training')
-parser.add_argument('--render', type=str2bool, default=False, help='Render or Not')
-parser.add_argument('--Loadmodel', type=str2bool, default=False, help='Load pretrained model or Not')
-parser.add_argument('--ModelIdex', type=int, default=100, help='which model to load')
-
-parser.add_argument('--seed', type=int, default=0, help='random seed')
-parser.add_argument('--Max_train_steps', type=int, default=int(5e6), help='Max training steps')
-parser.add_argument('--save_interval', type=int, default=int(100e3), help='Model saving interval, in steps.')
-parser.add_argument('--eval_interval', type=int, default=int(2.5e3), help='Model evaluating interval, in steps.')
-parser.add_argument('--update_every', type=int, default=50, help='Training Fraquency, in stpes')
-
-parser.add_argument('--gamma', type=float, default=0.99, help='Discounted Factor')
-parser.add_argument('--net_width', type=int, default=256, help='Hidden net width, s_dim-400-300-a_dim')
-parser.add_argument('--a_lr', type=float, default=3e-4, help='Learning rate of actor')
-parser.add_argument('--c_lr', type=float, default=3e-4, help='Learning rate of critic')
-parser.add_argument('--batch_size', type=int, default=256, help='batch_size of training')
-parser.add_argument('--alpha', type=float, default=0.12, help='Entropy coefficient')
-parser.add_argument('--adaptive_alpha', type=str2bool, default=True, help='Use adaptive_alpha or Not')
-opt = parser.parse_args()
-opt.dvc = torch.device(opt.dvc) # from str to torch.device
-print(opt)
-
-
-def main():
+def main(opt):
     EnvName = ['Pendulum-v1','LunarLanderContinuous-v3','Humanoid-v4','HalfCheetah-v4','BipedalWalker-v3','BipedalWalkerHardcore-v3']
     BrifEnvName = ['PV1', 'LLdV2', 'Humanv4', 'HCv4','BWv3', 'BWHv3']
 
@@ -118,4 +94,30 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    '''Hyperparameter Setting'''
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--device', type=str, default='cuda', help='running device: cuda or cpu')
+    parser.add_argument('--EnvIdex', type=int, default=0, help='PV1, Lch_Cv2, Humanv4, HCv4, BWv3, BWHv3')
+    parser.add_argument('--write', type=str2bool, default=False, help='Use SummaryWriter to record the training')
+    parser.add_argument('--render', type=str2bool, default=False, help='Render or Not')
+    parser.add_argument('--Loadmodel', type=str2bool, default=False, help='Load pretrained model or Not')
+    parser.add_argument('--ModelIdex', type=int, default=100, help='which model to load')
+
+    parser.add_argument('--seed', type=int, default=0, help='random seed')
+    parser.add_argument('--Max_train_steps', type=int, default=int(5e6), help='Max training steps')
+    parser.add_argument('--save_interval', type=int, default=int(100e3), help='Model saving interval, in steps.')
+    parser.add_argument('--eval_interval', type=int, default=int(2.5e3), help='Model evaluating interval, in steps.')
+    parser.add_argument('--update_every', type=int, default=50, help='Training Fraquency, in stpes')
+
+    parser.add_argument('--gamma', type=float, default=0.99, help='Discounted Factor')
+    parser.add_argument('--net_width', type=int, default=256, help='Hidden net width, s_dim-400-300-a_dim')
+    parser.add_argument('--a_lr', type=float, default=3e-4, help='Learning rate of actor')
+    parser.add_argument('--c_lr', type=float, default=3e-4, help='Learning rate of critic')
+    parser.add_argument('--batch_size', type=int, default=256, help='batch_size of training')
+    parser.add_argument('--alpha', type=float, default=0.12, help='Entropy coefficient')
+    parser.add_argument('--adaptive_alpha', type=str2bool, default=True, help='Use adaptive_alpha or Not')
+    opt = parser.parse_args()
+    opt.device = torch.device(opt.device) # from str to torch.device
+    print(opt)
+
+    main(opt)
