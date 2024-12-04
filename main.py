@@ -6,9 +6,14 @@ import os, shutil
 import argparse
 import torch
 
+######################################################
 ## TODO: Add the following imlementation
 # 1. Add the main function to introduce the distribution shift
+#    e.g. ai_safety_gym.environments.distributional_shift.py
+#
 # 2. Implement the Bellman operator of DRSAC
+#    e.g. parts in SAC.SAC_continous and utils.Actor
+######################################################
 
 def main(opt):
     EnvName = ['Pendulum-v1','LunarLanderContinuous-v3','Humanoid-v4','HalfCheetah-v4','BipedalWalker-v3','BipedalWalkerHardcore-v3']
@@ -41,11 +46,14 @@ def main(opt):
         if os.path.exists(writepath): shutil.rmtree(writepath)
         writer = SummaryWriter(log_dir=writepath)
 
-
     # Build DRL model
-    if not os.path.exists('model'): os.mkdir('model')
+    if not os.path.exists('model'): 
+        os.mkdir('model')
+
     agent = SAC_countinuous(**vars(opt)) # var: transfer argparse to dictionary
-    if opt.Loadmodel: agent.load(BrifEnvName[opt.EnvIdex], opt.ModelIdex)
+
+    if opt.Loadmodel: 
+        agent.load(BrifEnvName[opt.EnvIdex], opt.ModelIdex)
 
     if opt.render:
         while True:

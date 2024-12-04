@@ -45,12 +45,16 @@ class SAC_countinuous():
 			a_next, log_pi_a_next = self.actor(s_next, deterministic=False, with_logprob=True)
 			target_Q1, target_Q2 = self.q_critic_target(s_next, a_next)
 			target_Q = torch.min(target_Q1, target_Q2)
-			# r + γ * (1 - done) * Q(s',a')
-			target_Q = r + (~dw) * self.gamma * (target_Q - self.alpha * log_pi_a_next) #Dead or Done is tackled by Randombuffer
+
+			#############################################################		
+    		### r + γ * (1 - done) * E_pi(Q(s',a') - α * logπ(a'|s')) ###
+			target_Q = r + (~dw) * self.gamma * (target_Q - self.alpha * log_pi_a_next) # Dead or Done is tackled by Randombuffer
+			#############################################################
 
 		# Get current Q estimates
 		current_Q1, current_Q2 = self.q_critic(s, a)
 
+		# JQ(θ)
 		q_loss = F.mse_loss(current_Q1, target_Q) + F.mse_loss(current_Q2, target_Q)
 		self.q_critic_optimizer.zero_grad()
 		q_loss.backward()
@@ -58,21 +62,28 @@ class SAC_countinuous():
 
 		#----------------------------- ↓↓↓↓↓ Update Actor Net ↓↓↓↓↓ ------------------------------#
 		# Freeze critic so you don't waste computational effort computing gradients for them when update actor
-		for params in self.q_critic.parameters(): params.requires_grad = False
+		for params in self.q_critic.parameters():
+			params.requires_grad = False
 
 		a, log_pi_a = self.actor(s, deterministic=False, with_logprob=True)
 		current_Q1, current_Q2 = self.q_critic(s, a)
 		Q = torch.min(current_Q1, current_Q2)
 
+		# Entropy Regularization
+		# Note that the entropy term is not included in the loss function
+		#########################################
+  		### Jπ(θ) = E[α * logπ(a|s) - Q(s,a)] ###
 		a_loss = (self.alpha * log_pi_a - Q).mean()
+		#########################################
 		self.actor_optimizer.zero_grad()
 		a_loss.backward()
 		self.actor_optimizer.step()
 
-		for params in self.q_critic.parameters(): params.requires_grad = True
+		for params in self.q_critic.parameters():
+			params.requires_grad = True
 
 		#----------------------------- ↓↓↓↓↓ Update alpha ↓↓↓↓↓ ------------------------------#
-		if self.adaptive_alpha:
+		if self.adaptive_alpha: # Adaptive alpha SAC
 			# We learn log_alpha instead of alpha to ensure alpha>0
 			alpha_loss = -(self.log_alpha * (log_pi_a + self.target_entropy).detach()).mean()
 			self.alpha_optim.zero_grad()

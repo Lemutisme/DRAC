@@ -35,8 +35,7 @@ class Actor(nn.Module):
 		# we learn log_std rather than std, so that exp(log_std) is always > 0
 		std = torch.exp(log_std)
 		dist = Normal(mu, std)
-		if deterministic: u = mu
-		else: u = dist.rsample()
+		u = mu if deterministic else dist.rsample()
 
 		'''↓↓↓ Enforcing Action Bounds, see Page 16 of https://arxiv.org/pdf/1812.05905.pdf ↓↓↓'''
 		a = torch.tanh(u)
@@ -57,7 +56,6 @@ class Double_Q_Critic(nn.Module):
 
 		self.Q_1 = build_net(layers, nn.ReLU, nn.Identity)
 		self.Q_2 = build_net(layers, nn.ReLU, nn.Identity)
-
 
 	def forward(self, state, action):
 		sa = torch.cat([state, action], 1)
