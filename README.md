@@ -1,22 +1,11 @@
-# SAC-Continuous-Pytorch
-
-**A clean and robust Pytorch implementation of Soft-Actor-Critic on continuous action space.**
-
-|                                                   BipedalWalkerHardcore                                                   |                                                     LunarLanderContinuous                                                     |
-| :------------------------------------------------------------------------------------------------------------------------: | :----------------------------------------------------------------------------------------------------------------------------: |
-|   `<img src="https://github.com/XinJingHao/TD3-Pytorch/blob/main/images/Render_BWHV3.gif" width="80%" height="auto">`   | `<img src="https://github.com/XinJingHao/PPO-Continuous-Pytorch/blob/main/render_gif/lldcV2.gif" width="80%" height="auto">` |
-| `<img src="https://github.com/XinJingHao/SAC-Continuous-Pytorch/blob/main/imgs/bwh_sacc.png" width="80%" height="auto">` |  `<img src="https://github.com/XinJingHao/SAC-Continuous-Pytorch/blob/main/imgs/lldc_sacc.png" width="80%" height="auto">`  |
-
-**Other RL algorithms by Pytorch can be found [here](https://github.com/XinJingHao/RL-Algorithms-by-Pytorch).**
-
-## Dependencies
+# Dependencies
 
 ```python
-gymnasium==0.29.1
-numpy==1.26.1
-pytorch==2.1.0
+gymnasium==1.0.0
+numpy==2.1.3
+pytorch==2.5.1
 
-python==3.11.5
+python==3.11.15
 ```
 
 ## How to use my code
@@ -99,8 +88,3 @@ For more details of Hyperparameter Setting, please check 'main.py'
 ### Reference
 
 [Soft Actor-Critic Algorithms and Applications](https://arxiv.org/pdf/1812.05905.pdf)
-
-## All Training Curves
-
-<img src="https://github.com/XinJingHao/SAC-Continuous-Pytorch/blob/main/imgs/result.jpg" width=700>
-All the experiments are trained with same hyperparameters (see main.py).
