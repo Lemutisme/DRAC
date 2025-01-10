@@ -10,10 +10,12 @@ python==3.11.15
 
 ## How to use my code
 
+First, replace the `model` to your wanted algorithm
+
 ### Train from scratch
 
 ```bash
-python main.py
+python model.py
 ```
 
 where the default enviroment is 'Pendulum'.
@@ -21,7 +23,7 @@ where the default enviroment is 'Pendulum'.
 ### Play with trained model
 
 ```bash
-python main.py --EnvIdex 0 --render True --Loadmodel True --ModelIdex 10
+python model.py --EnvIdex 0 --render True --Loadmodel True --ModelIdex 10
 ```
 
 which will render the 'Pendulum'.
@@ -31,7 +33,7 @@ which will render the 'Pendulum'.
 If you want to train on different enviroments, just run
 
 ```bash
-python main.py --EnvIdex 1
+python model.py --EnvIdex 1
 ```
 
 The ``--EnvIdex`` can be set to be 0~5, where
