@@ -3,6 +3,8 @@ import torch
 import torch.nn as nn
 import numpy as np
 import random
+from torch.distributions import Normal
+from math import exp
 
 def build_net(layer_shape, hidden_activation, output_activation):
 	'''Build net with for loop'''
@@ -24,7 +26,7 @@ def discretize(state, grid):
 	return torch.stack(dis_state, dim=-1)
 
 
-def evaluate_policy(env, agent, turns = 3):
+def evaluate_policy(env, agent, turns = 5):
 	total_scores = 0
 	for j in range(turns):
 		s, info = env.reset()
@@ -34,8 +36,6 @@ def evaluate_policy(env, agent, turns = 3):
 			a = agent.select_action(s, deterministic=True)
 			s_next, r, dw, tr, info = env.step(a)
 			done = (dw or tr)
-			if random.random() < agent.delta:
-				r = -1-r
 
 			total_scores += r
 			s = s_next
