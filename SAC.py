@@ -23,9 +23,9 @@ import math
 ######################################################
 
 class Actor(nn.Module):
-    def __init__(self, state_dim, action_dim, hid_shape, hidden_activation=nn.ReLU, output_activation=nn.ReLU):
+    def __init__(self, state_dim, action_dim, hid_shape, hid_layers, hidden_activation=nn.ReLU, output_activation=nn.ReLU):
         super(Actor, self).__init__()
-        layers = [state_dim] + list(hid_shape) * 5
+        layers = [state_dim] + list(hid_shape) * hid_layers
 
         self.a_net = build_net(layers, hidden_activation, output_activation)
         self.mu_layer = nn.Linear(layers[-1], action_dim)
@@ -58,9 +58,9 @@ class Actor(nn.Module):
         return a, logp_pi_a
 
 class Double_Q_Critic(nn.Module):
-    def __init__(self, state_dim, action_dim, hid_shape):
+    def __init__(self, state_dim, action_dim, hid_shape, hid_layers):
         super(Double_Q_Critic, self).__init__()
-        layers = [state_dim + action_dim] + list(hid_shape) * 5
+        layers = [state_dim + action_dim] + list(hid_shape) * hid_layers + [1]
 
         self.Q_1 = build_net(layers, nn.ReLU, nn.Identity)
         self.Q_2 = build_net(layers, nn.ReLU, nn.Identity)   
@@ -72,47 +72,34 @@ class Double_Q_Critic(nn.Module):
         return q1, q2
            
 class Reward(nn.Module):
-    def __init__(self, state_dim, action_dim, hid_shape, rtype, r_dim):
+    def __init__(self, state_dim, action_dim, hid_shape, hid_layers):
         super(Reward, self).__init__()
-        layers = [state_dim + action_dim] + list(hid_shape) * 5
+        layers = [state_dim + action_dim] + list(hid_shape) * hid_layers
         self.rnet = build_net(layers, nn.ReLU, nn.Identity)
-        self.rtype = rtype
-        if self.rtype == 'continuous':
-            self.mu_layer = nn.Linear(layers[-1], 1)
-            self.log_std_layer = nn.Linear(layers[-1], 1)
-        else:
-            self.r_layer = nn.Linear(layers[-1], r_dim)
-    
+        self.mu_layer = nn.Linear(layers[-1], 1)
+        self.log_std_layer = nn.Linear(layers[-1], 1)
+
     def forward(self, state, action):
         sa = torch.cat([state, action], 1)
         r_out = self.rnet(sa)
-        if self.rtype == 'continuous':
-            mu = self.mu_layer(r_out)
-            log_std = self.log_std_layer(r_out)
-            #log_std = torch.clamp(log_std, 2, -20)  #总感觉这里clamp不利于学习
-            std = torch.exp(log_std)
-            dist = Normal(mu, std)
-            r = dist.rsample()
-        else:
-            logits = self.r_layer[r_out]
-            probs = F.softmax(logits, dim=1)
-            # if deterministic:
-            #     r = probs.argmax(-1).item()
-            # else:
-            #     r = Categorical(probs).sample().item()       
+        mu = self.mu_layer(r_out)
+        log_std = self.log_std_layer(r_out)
+        #log_std = torch.clamp(log_std, 2, -20)  #总感觉这里clamp不利于学习
+        std = torch.exp(log_std)
+        dist = Normal(mu, std)
+        r = dist.rsample()     
         return r
     
     def sample(self, state, action, num):
-        if self.rtype == 'continuous':
-            sa = torch.cat([state, action], 1)
-            r_out = self.rnet(sa) 
-            mu = self.mu_layer(r_out)
-            log_std = self.log_std_layer(r_out)
-            #log_std = torch.clamp(log_std, 2, -20)  #总感觉这里clamp不利于学习
-            std = torch.exp(log_std)
-            dist = Normal(mu, std)
-            r = dist.rsample(sample_shape=(num,)) #shape = (num, batch_size, 1)
-            r = r.permute(1, 0, 2).squeeze(-1) #shape = (batch_size, num)
+        sa = torch.cat([state, action], 1)
+        r_out = self.rnet(sa) 
+        mu = self.mu_layer(r_out)
+        log_std = self.log_std_layer(r_out)
+        #log_std = torch.clamp(log_std, 2, -20)  #总感觉这里clamp不利于学习
+        std = torch.exp(log_std)
+        dist = Normal(mu, std)
+        r = dist.rsample(sample_shape=(num,)) #shape = (num, batch_size, 1)
+        r = r.permute(1, 0, 2).squeeze(-1) #shape = (batch_size, num)
         return r
             
 class ReplayBuffer(object):
@@ -170,6 +157,7 @@ class NoiseReward(gym.RewardWrapper):
         self.env = env
         self._max_episode_steps = env._max_episode_steps
         self.func = func
+        print('Env with Reward Shift Made.')
 
     def step(self, action):
         obs, reward, dw, tr, info = self.env.step(action)
@@ -188,15 +176,11 @@ class SAC_countinuous():
             self.delta = 0.5*(eval_var / train_var + math.log(train_var / eval_var)- 1)
             assert self.delta >= 0
         self.tau = 0.005
-        # if self.train_noise:
-        #     self.delta = 0.5 * math.log(2 * math.pi * (self.train_std **2))
-        # if self.eval_noise:
-        #     self.delta = 0.5 * math.log(2 * math.pi * (self.eval_std **2))
 
-        self.actor = Actor(self.state_dim, self.action_dim, (self.net_width,self.net_width)).to(self.device)
+        self.actor = Actor(self.state_dim, self.action_dim, (self.net_width, self.net_width), self.net_layer).to(self.device)
         self.actor_optimizer = torch.optim.Adam(self.actor.parameters(), lr=self.a_lr)
 
-        self.q_critic = Double_Q_Critic(self.state_dim, self.action_dim, (self.net_width,self.net_width)).to(self.device)
+        self.q_critic = Double_Q_Critic(self.state_dim, self.action_dim, (self.net_width, self.net_width), self.net_layer).to(self.device)
         self.q_critic_optimizer = torch.optim.Adam(self.q_critic.parameters(), lr=self.c_lr)
         self.q_critic_target = copy.deepcopy(self.q_critic)
         # Freeze target networks with respect to optimizers (only update via polyak averaging)
@@ -204,7 +188,7 @@ class SAC_countinuous():
             p.requires_grad = False
         
         if self.robust:    
-            self.reward = Reward(self.state_dim, self.action_dim, (self.net_width,self.net_width), self.rtype, self.r_dim).to(self.device)
+            self.reward = Reward(self.state_dim, self.action_dim, (self.net_width, self.net_width), self.net_layer).to(self.device)
             self.reward_optimizer = torch.optim.Adam(self.reward.parameters(), lr=self.r_lr)
             
             self.beta = torch.zeros((self.batch_size, 1), requires_grad=True, device=self.device)
@@ -225,9 +209,14 @@ class SAC_countinuous():
             state = torch.FloatTensor(state[np.newaxis,:]).to(self.device)
             a, _ = self.actor(state, deterministic, with_logprob=False)
         return a.cpu().numpy()[0]
+    
+    def reward_adapt(self, r, mean):
+        return r / mean * self.delta       
 
-    def train(self,):
+    def train(self, printer):
         s, a, r, s_next, dw = self.replay_buffer.sample(self.batch_size)
+        # if self.robust and self.delta >0:
+        #     r = self.reward_adapt(r, self.r_mean)
         #----------------------------- ↓↓↓↓↓ Update R Net ↓↓↓↓↓ ------------------------------#
         if self.robust:
             r_pred = self.reward(s, a)
@@ -242,12 +231,17 @@ class SAC_countinuous():
             def dual_func(r, beta):
                 size = r_sample.shape[1]
                 return - beta * (torch.logsumexp(-r/beta, dim=1, keepdim=True) - math.log(size)) - beta * self.delta
-        
+            
+            self.beta = torch.zeros_like(self.beta, requires_grad=True, device=self.device)
+            self.beta_optimizer = torch.optim.Adam([self.beta], lr=self.b_lr)
+
             for _ in range(10):
                 self.exp_beta = torch.exp(self.beta)
                 opt_loss = -dual_func(r_sample, self.exp_beta)
                 self.beta_optimizer.zero_grad()
                 opt_loss.sum().backward()
+                if printer:
+                    print(opt_loss.sum().item())
                 self.beta_optimizer.step() 
             
             r_opt = dual_func(r_sample, torch.exp(self.beta)) 
@@ -309,13 +303,14 @@ class SAC_countinuous():
         for param, target_param in zip(self.q_critic.parameters(), self.q_critic_target.parameters()):
             target_param.data.copy_(self.tau * param.data + (1 - self.tau) * target_param.data)
 
-    def save(self,EnvName, timestep):
-        torch.save(self.actor.state_dict(), "./model/{}_actor{}.pth".format(EnvName,timestep))
-        torch.save(self.q_critic.state_dict(), "./model/{}_q_critic{}.pth".format(EnvName,timestep))
+    def save(self, EnvName):
+        params = f"{self.train_std}_{self.eval_std}_{self.robust}"
+        torch.save(self.actor.state_dict(), "./model/{}_actor{}.pth".format(EnvName,params))
+        torch.save(self.q_critic.state_dict(), "./model/{}_q_critic{}.pth".format(EnvName,params))
 
-    def load(self,EnvName, timestep):
-        self.actor.load_state_dict(torch.load("./model/{}_actor{}.pth".format(EnvName, timestep), map_location=self.device))
-        self.q_critic.load_state_dict(torch.load("./model/{}_q_critic{}.pth".format(EnvName, timestep), map_location=self.device))
+    def load(self, EnvName, params):
+        self.actor.load_state_dict(torch.load("./model/{}_actor{}.pth".format(EnvName, params), map_location=self.device))
+        self.q_critic.load_state_dict(torch.load("./model/{}_q_critic{}.pth".format(EnvName, params), map_location=self.device))
 
 def main(opt):
     """
@@ -353,8 +348,7 @@ def main(opt):
 
     # 2. Create training and evaluation environments
     env = gym.make(
-        EnvName[opt.EnvIdex],
-        render_mode="human" if opt.render else None
+        EnvName[opt.EnvIdex]
     )
     if opt.train_noise:
         train_dist = Normal(0, opt.train_std)
@@ -363,18 +357,20 @@ def main(opt):
     eval_env = gym.make(EnvName[opt.EnvIdex])
     if opt.eval_noise:
         eval_dist = Normal(0, opt.eval_std)
-        eval_env = TransformReward(eval_env, lambda r: r + eval_dist.sample())
+        eval_env = NoiseReward(eval_env, lambda r: r + eval_dist.sample())
 
     # 3. Extract environment properties
     opt.state_dim = env.observation_space.shape[0]
     opt.action_dim = env.action_space.shape[0]  # Continuous action dimension
     opt.max_action = float(env.action_space.high[0])  # Action range [-max_action, max_action]
     opt.max_e_steps = env._max_episode_steps
-    if opt.EnvIdex in [0,1,2,3,5]:
-        opt.rtype = 'continuous'
-    else:
-        opt.rtype = 'discrete'
-    opt.r_dim = EnvR[opt.EnvIdex]
+    if opt.EnvIdex == 0:
+        opt.Max_train_steps = 1e5
+    elif opt.EnvIdex == 1:
+        opt.Max_train_steps = 3e5
+    elif opt.EnvIdex == 2:
+        opt.Max_train_steps = 5e5
+        
         
 
     # 4. Print environment info
@@ -401,7 +397,7 @@ def main(opt):
         from torch.utils.tensorboard import SummaryWriter
         # timenow = str(datetime.now())[:-10]    # e.g. 2025-01-10 17:45
         # timenow = ' ' + timenow[:13] + '_' + timenow[-2:]  # e.g. ' 2025-01-10_45'
-        writepath = f"runs/{BrifEnvName[opt.EnvIdex]}"
+        writepath = f"runs/SAC/{BrifEnvName[opt.EnvIdex]}"
         if opt.train_noise:
             writepath += f"/Train Noise {opt.train_std}"
         if opt.eval_noise:
@@ -421,13 +417,16 @@ def main(opt):
 
     # 9. Load a saved model if requested
     if opt.Loadmodel:
-        agent.load(BrifEnvName[opt.EnvIdex], opt.ModelIdex)
+        params = f"{opt.train_std}_{opt.eval_std}_{opt.robust}"
+        agent.load(BrifEnvName[opt.EnvIdex], params)
 
     # 10. If rendering mode is on, run an infinite evaluation loop
     if opt.render:
-        while True:
-            score = evaluate_policy(env, agent, turns=1)
-            print(f"EnvName: {BrifEnvName[opt.EnvIdex]}, Score: {score}")
+        scores = []
+        for _ in range(20):
+            scores.append(evaluate_policy(env, agent, turns=1))
+            # print(f"EnvName: {BrifEnvName[opt.EnvIdex]}, Score: {score}")
+            
 
     # 11. Otherwise, proceed with training
     else:
@@ -444,7 +443,7 @@ def main(opt):
             # (b) Interact with environment until episode finishes
             while not done:
                 # Random exploration for first 5 episodes (each episode is up to max_e_steps)
-                if total_steps < (10 * opt.max_e_steps):
+                if total_steps < (50 * opt.max_e_steps):
                     # Sample action directly from environment's action space
                     action_env = env.action_space.sample()  # Range: [-max_action, max_action]
                     # Convert env action back to agent's internal range [-1,1]
@@ -472,29 +471,38 @@ def main(opt):
                 total_steps += 1
 
                 # (c) Train the agent at fixed intervals (batch updates)
-                if (total_steps >= 10 * opt.max_e_steps) and (total_steps % opt.update_every == 0):
+                if (total_steps == 50 * opt.max_e_steps):
+                    agent.r_mean = torch.mean(agent.replay_buffer.r[:agent.replay_buffer.ptr])
+                    print(agent.r_mean)
+                    
+                if (total_steps >= 50 * opt.max_e_steps) and (total_steps % opt.update_every == 0):
+                    printer = False
+                    if total_steps % opt.eval_interval == 0:
+                        printer = True
                     for _ in range(opt.update_every):
-                        agent.train()
-                    agent.a_lr *= 0.9
-                    agent.c_lr *= 0.9
+                        agent.train(printer)
+                        printer = False
+                    
+                    if opt.robust: 
+                       agent.delta *= 0.999
 
                 # (d) Evaluate and log periodically
-                # if total_steps % opt.eval_interval == 0:
-                #     ep_r = evaluate_policy(eval_env, agent, turns=3)
-                #     if writer is not None:
-                #         writer.add_scalar('ep_r', ep_r, global_step=total_steps)
-                #     print(
-                #         f"EnvName: {BrifEnvName[opt.EnvIdex]}, "
-                #         f"Steps: {int(total_steps/1000)}k, "
-                #         f"Episodes: {total_episode}, "
-                #         f"Episode Reward: {ep_r}"
-                #     )
                 if total_steps % opt.eval_interval == 0:
-                    print(f"Steps: {int(total_steps/1000)}k")
+                    ep_r = evaluate_policy(eval_env, agent, turns=3)
+                    if writer is not None:
+                        writer.add_scalar('ep_r', ep_r, global_step=total_steps)
+                    print(
+                        f"EnvName: {BrifEnvName[opt.EnvIdex]}, "
+                        f"Steps: {int(total_steps/1000)}k, "
+                        f"Episodes: {total_episode}, "
+                        f"Episode Reward: {ep_r}"
+                    )
+                # if total_steps % opt.eval_interval == 0:
+                #     print(f"Steps: {int(total_steps/1000)}k")
 
                 # (e) Save model at fixed intervals
-                # if total_steps % opt.save_interval == 0:
-                #     agent.save(BrifEnvName[opt.EnvIdex], int(total_steps / 1000))
+                if total_steps % opt.save_interval == 0:
+                    agent.save(BrifEnvName[opt.EnvIdex])
         
         # 11.5 Compute score of 20 episode
         eval_num = 20
@@ -504,12 +512,19 @@ def main(opt):
             score = evaluate_policy(env, agent, turns=1)
             scores.append(score)
 
+        # # 11.55
+        # agent.save(BrifEnvName[opt.EnvIdex])
+
         # 12. Close environments after training
         env.close()
         eval_env.close()
 
-        return scores
-
+    print(np.mean(np.array(scores)))
+    print(np.std(np.array(scores)))
+    print(np.quantile(np.array(scores), 0.75))
+    print(np.quantile(np.array(scores), 0.25))
+    return scores
+    
 if __name__ == '__main__':
     '''Hyperparameter Setting'''
     parser = argparse.ArgumentParser()
@@ -518,19 +533,20 @@ if __name__ == '__main__':
     parser.add_argument('--write', type=str2bool, default=False, help='Use SummaryWriter to record the training')
     parser.add_argument('--render', type=str2bool, default=False, help='Render or Not')
     parser.add_argument('--Loadmodel', type=str2bool, default=False, help='Load pretrained model or Not')
-    parser.add_argument('--ModelIdex', type=int, default=100, help='which model to load')
+    #parser.add_argument('--ModelIdex', type=int, default=100, help='which model to load')
 
-    parser.add_argument('--seed', type=int, default=0, help='random seed')
-    parser.add_argument('--Max_train_steps', type=int, default=int(1e5), help='Max training steps')
+    parser.add_argument('--seed', type=int, default=42, help='random seed')
+    parser.add_argument('--Max_train_steps', type=int, default=int(5e4), help='Max training steps')
     parser.add_argument('--save_interval', type=int, default=int(100e3), help='Model saving interval, in steps.')
     parser.add_argument('--eval_interval', type=int, default=int(2.5e3), help='Model evaluating interval, in steps.')
-    parser.add_argument('--update_every', type=int, default=50, help='Training Fraquency, in stpes')
+    parser.add_argument('--update_every', type=int, default=250, help='Training Fraquency, in stpes')
 
     parser.add_argument('--gamma', type=float, default=0.99, help='Discounted Factor')
-    parser.add_argument('--net_width', type=int, default=256, help='Hidden net width, s_dim-400-300-a_dim')
+    parser.add_argument('--net_width', type=int, default=256, help='Hidden net width')
+    parser.add_argument('--net_layer', type=int, default=1, help='Hidden net layers')
     parser.add_argument('--a_lr', type=float, default=3e-5, help='Learning rate of actor')
     parser.add_argument('--c_lr', type=float, default=3e-5, help='Learning rate of critic')
-    parser.add_argument('--b_lr', type=float, default=3e-5, help='Learning rate of dual-form optimization')
+    parser.add_argument('--b_lr', type=float, default=3e-4, help='Learning rate of dual-form optimization')
     parser.add_argument('--r_lr', type=float, default=3e-5, help='Learning rate of reward net')
     parser.add_argument('--batch_size', type=int, default=256, help='batch_size of training')
     parser.add_argument('--alpha', type=float, default=0.12, help='Entropy coefficient')
@@ -543,22 +559,31 @@ if __name__ == '__main__':
     parser.add_argument('--eval_std', type=float, default=1.0, help='Standard Deviation of Eval Env Reward')
     opt = parser.parse_args()
     opt.device = torch.device(opt.device) # from str to torch.device
-    opt.train_noise = True
-    opt.eval_noise = True
-    opt.eval_std = 0.1
-    opt.train_std = 0.2
-
-    scores = []
-    for _ in range(3):
-        opt.train_std += 0.1
-        
-        print("---------------")
-        print(opt)
-
-        scores.append([opt.train_std, opt.eval_std] + main(opt))
     
-    filename = "robust.txt" if opt.robust else "non-robust.txt"
-    with open(filename, 'a') as f:
-        for score in scores:
-            f.write(f"{score}\n")
+    # opt.train_noise = True
+    # opt.eval_noise = True
+    # diff = 0.1
+    # filename = "robust.txt" if opt.robust else "non-robust.txt"
 
+    # for _ in range(5):
+    #     print("---------------")
+    #     print(opt.train_std, opt.eval_std, opt.robust)
+    #     score = [opt.train_std, opt.eval_std] + main(opt)
+    #     with open(filename, 'a') as f:
+    #         f.write(f"{score}\n")
+    #     opt.eval_std += diff
+        
+    # # opt.eval_std = opt.train_std
+    # for _ in range(5):
+    #     print("---------------")
+    #     print(opt.train_std, opt.eval_std, opt.robust)
+    #     score = [opt.train_std, opt.eval_std] + main(opt)
+    #     with open(filename, 'a') as f:
+    #          f.write(f"{score}\n")
+    #     opt.train_std += diff
+
+    main(opt)
+    
+    # Pen step 5e4
+    # LLd step 250k 2.5e5
+    # Human about 400k
