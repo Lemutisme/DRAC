@@ -1,5 +1,6 @@
 from utils import build_net, str2bool, evaluate_policy
 
+import random
 import numpy as np
 import torch
 import torch.nn as nn
@@ -408,6 +409,9 @@ def main(opt):
 
     # 5. Seed everything for reproducibility
     env_seed = opt.seed
+
+    random.seed(opt.seed)
+    np.random.seed(opt.seed)
     torch.manual_seed(opt.seed)
     torch.cuda.manual_seed(opt.seed)
     torch.backends.cudnn.deterministic = True
