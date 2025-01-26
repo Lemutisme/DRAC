@@ -1,5 +1,6 @@
 from utils import build_net, str2bool, evaluate_policy
 
+import random
 import numpy as np
 import torch
 import torch.nn as nn
@@ -221,11 +222,14 @@ class SAC_countinuous():
         # Jointly optimize, in tensor
         size = r.shape[1]
         return - beta * (torch.logsumexp(-r/beta, dim=1, keepdim=True) - math.log(size)) - beta * self.delta  
-        # Independently optimize, in np.array
-        # size = len(r)
-        # return - beta * (logsumexp(-r/beta) - math.log(size)) - beta * self.delta    
 
-    def train(self, printer):
+    def dual_func_ind(self, r, beta):
+        # Independently optimize, in np.array
+        size = len(r)
+        return - beta * (logsumexp(-r/beta) - math.log(size)) - beta * self.delta    
+        
+
+    def train(self, robust_update, printer):
         s, a, r, s_next, dw = self.replay_buffer.sample(self.batch_size)
         # time1 = time.time()
         # if self.robust and self.delta >0:
@@ -239,33 +243,35 @@ class SAC_countinuous():
             self.reward_optimizer.step()
             if printer:
                 print(f"r_loss: {r_loss.item()}")
-            
+                
+        if robust_update:   
             with torch.no_grad():
                 r_sample = self.reward.sample(s, a, 50)
-            
-            # Use scipy.optimize to independently optimize
-            # r_opt = np.zeros((self.batch_size, 1))
-            # for i in range(r_sample.shape[0]):
-            #     r = r_sample[i]
-            #     opt = minimize_scalar(fun=lambda beta:-self.dual_func(r, beta), method='Bounded', bounds=(1e-6, 1e2))
-            #     r_opt[i] = -opt.fun
-            # r_opt = torch.from_numpy(r_opt).float()
-            # r_opt = r_opt.to('cuda' if torch.cuda.is_available() else 'cpu')
                 
             # Reinitiate variable to optimize.
-            self.beta = torch.zeros_like(self.beta, requires_grad=True, device=self.device)
-            self.beta_optimizer = torch.optim.Adam([self.beta], lr=self.b_lr)
+            # self.beta = torch.zeros_like(self.beta, requires_grad=True, device=self.device)
+            # self.beta_optimizer = torch.optim.Adam([self.beta], lr=self.b_lr)
 
-            for _ in range(50):
-                self.exp_beta = torch.exp(self.beta)
-                opt_loss = -self.dual_func(r_sample, self.exp_beta)
-                self.beta_optimizer.zero_grad()
-                opt_loss.sum().backward()
-                # if printer:
-                #     print(opt_loss.sum().item())
-                self.beta_optimizer.step() 
+            # for _ in range(30):
+            #     self.exp_beta = torch.exp(self.beta)
+            #     opt_loss = -self.dual_func(r_sample, self.exp_beta)
+            #     self.beta_optimizer.zero_grad()
+            #     opt_loss.sum().backward()
+            #     self.beta_optimizer.step() 
             
-            r_opt = self.dual_func(r_sample, torch.exp(self.beta)) 
+            # r_opt1 = self.dual_func(r_sample, torch.exp(self.beta)) 
+            
+            # Use scipy.optimize to independently optimize
+            r_sample = r_sample.cpu().numpy()
+            r_opt = np.zeros((self.batch_size, 1))
+            for i in range(r_sample.shape[0]):
+                r = r_sample[i]
+                opt = minimize_scalar(fun=lambda beta:-self.dual_func_ind(r, beta), method='Bounded', bounds=(1e-6, 1e2))
+                r_opt[i] = -opt.fun
+            r_opt = torch.from_numpy(r_opt).float()
+            r_opt = r_opt.to('cuda' if torch.cuda.is_available() else 'cpu')
+            # if printer:
+            #     print((r_opt1 - r_opt2).norm(p=1).item(), r_opt2.norm(p=1).item())
             # time2 = time.time()
             # print(time2 - time1)
 
@@ -276,7 +282,7 @@ class SAC_countinuous():
             target_Q = torch.min(target_Q1, target_Q2)
             #############################################################		
             ### r + γ * (1 - done) * E_pi(Q(s',a') - α * logπ(a'|s')) ###
-            if self.robust:
+            if robust_update:
                 target_Q = r_opt + (~dw) * self.gamma * (target_Q - self.alpha * log_pi_a_next)
             else:
                 target_Q = r + (~dw) * self.gamma * (target_Q - self.alpha * log_pi_a_next) 
@@ -287,6 +293,11 @@ class SAC_countinuous():
 
         # JQ(θ)
         q_loss = F.mse_loss(current_Q1, target_Q) + F.mse_loss(current_Q2, target_Q) 
+        
+        # for name, param in self.q_critic.named_parameters():
+        #     if 'weight' in name:
+        #         q_loss += param.pow(2).sum() * 5e-2
+        
         self.q_critic_optimizer.zero_grad()
         q_loss.backward()
         self.q_critic_optimizer.step()
@@ -343,8 +354,8 @@ class SAC_countinuous():
         torch.save(self.q_critic.state_dict(), "./SAC_model/{}_q_critic{}.pth".format(EnvName,params))
 
     def load(self, EnvName, params):
-        self.actor.load_state_dict(torch.load("./SAC_model/{}_actor{}_new.pth".format(EnvName, params), map_location=self.device))
-        self.q_critic.load_state_dict(torch.load("./SAC_model/{}_q_critic{}_new.pth".format(EnvName, params), map_location=self.device))
+        self.actor.load_state_dict(torch.load("./SAC_model/{}_actor{}_new.pth".format(EnvName, params), map_location=self.device, weights_only=True))
+        self.q_critic.load_state_dict(torch.load("./SAC_model/{}_q_critic{}_new.pth".format(EnvName, params), map_location=self.device, weights_only=True))
 
 def main(opt):
     """
@@ -390,11 +401,11 @@ def main(opt):
     opt.max_action = float(env.action_space.high[0])  # Action range [-max_action, max_action]
     opt.max_e_steps = env._max_episode_steps
     if opt.EnvIdex == 0:
-        opt.Max_train_steps = 5e4
+        opt.Max_train_steps = 1e5
     elif opt.EnvIdex == 1:
         opt.Max_train_steps = 5e5
     elif opt.EnvIdex == 2:
-        opt.Max_train_steps = 5e5       
+        opt.Max_train_steps = 1e6       
 
     # 4. Print environment info
     print(
@@ -408,6 +419,9 @@ def main(opt):
 
     # 5. Seed everything for reproducibility
     env_seed = opt.seed
+    
+    random.seed(opt.seed)
+    np.random.seed(opt.seed)
     torch.manual_seed(opt.seed)
     torch.cuda.manual_seed(opt.seed)
     torch.backends.cudnn.deterministic = True
@@ -453,10 +467,10 @@ def main(opt):
         for _ in range(eval_num):
             score = evaluate_policy(eval_env, agent, turns=1)
             scores.append(score)
-        filename = "new-robust.txt" if opt.robust else "new-non-robust.txt"
-        with open(filename, 'a') as f:
-            f.write(f"{[BrifEnvName[opt.EnvIdex], opt.train_std, opt.eval_std, delta] + [np.mean(scores), np.std(scores), np.quantile(scores, 0.9), np.quantile(scores, 0.1)]}\n")
-              
+        # filename = "new-robust.txt" if opt.robust else "new-non-robust.txt"
+        # with open(filename, 'a') as f:
+        #     f.write(f"{[BrifEnvName[opt.EnvIdex], opt.train_std, opt.eval_std, delta] + [np.mean(scores), np.std(scores), np.quantile(scores, 0.9), np.quantile(scores, 0.1)]}\n")
+        print(f"{[BrifEnvName[opt.EnvIdex], opt.train_std, opt.eval_std, delta] + [np.mean(scores), np.std(scores), np.quantile(scores, 0.9), np.quantile(scores, 0.1)]}\n")     
         env.close()
         eval_env.close()
             
@@ -512,8 +526,11 @@ def main(opt):
                     printer = False
                     if total_steps % opt.eval_interval == 0:
                         printer = True
-                    for _ in range(opt.update_every):
-                        agent.train(printer)
+                    for i in range(opt.update_every):
+                        if i % 5 == 0:
+                            agent.train(agent.robust, printer)
+                        else:
+                            agent.train(False, printer)
                         printer = False
                     
                     # if opt.robust: 
@@ -567,7 +584,7 @@ if __name__ == '__main__':
     parser.add_argument('--seed', type=int, default=42, help='random seed')
     parser.add_argument('--Max_train_steps', type=int, default=int(5e4), help='Max training steps')
     parser.add_argument('--save_interval', type=int, default=int(1e4), help='Model saving interval, in steps.')
-    parser.add_argument('--eval_interval', type=int, default=int(2.5e3), help='Model evaluating interval, in steps.')
+    parser.add_argument('--eval_interval', type=int, default=int(2e3), help='Model evaluating interval, in steps.')
     parser.add_argument('--update_every', type=int, default=50, help='Training Fraquency, in stpes')
 
     parser.add_argument('--gamma', type=float, default=0.99, help='Discounted Factor')
