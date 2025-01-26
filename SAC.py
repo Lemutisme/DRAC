@@ -88,6 +88,7 @@ class Reward(nn.Module):
         r_out = self.rnet(sa)
         mu = self.mu_layer(r_out)
         log_std = self.log_std_layer(r_out)
+        # FIXME:  I think we still nedd to prevent numerical instability
         #log_std = torch.clamp(log_std, 2, -20)  #总感觉这里clamp不利于学习
         std = torch.exp(log_std)
         dist = Normal(mu, std)
@@ -221,7 +222,7 @@ class SAC_countinuous():
     def dual_func(self, r, beta):
         # Jointly optimize, in tensor
         size = r.shape[1]
-        return - beta * (torch.logsumexp(-r/beta, dim=1, keepdim=True) - math.log(size)) - beta * self.delta  
+        return - beta * (torch.logsumexp(-r/beta, dim=1, keepdim=True) - torch.log(size)) - beta * self.delta  
         # Independently optimize, in np.array
         # size = len(r)
         # return - beta * (logsumexp(-r/beta) - math.log(size)) - beta * self.delta    
@@ -254,6 +255,11 @@ class SAC_countinuous():
             # r_opt = r_opt.to('cuda' if torch.cuda.is_available() else 'cpu')
                 
             # Reinitiate variable to optimize.
+            # FIXME: Do not reinitialize β. Treat it as a persistent parameter updated via gradient descent, 
+            # just like actor/critic weights. This ensures stable convergence and efficient use of learned robustness information.
+            # Maybe we can get better results and faster convergence.
+            # self.beta = nn.Parameter(torch.ones(dim, device=self.device) * initial_beta)
+
             self.beta = torch.zeros_like(self.beta, requires_grad=True, device=self.device)
             self.beta_optimizer = torch.optim.Adam([self.beta], lr=self.b_lr)
 
@@ -261,6 +267,7 @@ class SAC_countinuous():
                 self.exp_beta = torch.exp(self.beta)
                 opt_loss = -self.dual_func(r_sample, self.exp_beta)
                 self.beta_optimizer.zero_grad()
+                # FIXME: opt_loss.mean()
                 opt_loss.sum().backward()
                 # if printer:
                 #     print(opt_loss.sum().item())
