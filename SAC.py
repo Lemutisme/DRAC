@@ -12,6 +12,9 @@ from gymnasium.wrappers import TransformReward
 import os, shutil
 import argparse
 import math
+from scipy.special import logsumexp
+from scipy.optimize import minimize, minimize_scalar
+import time
 
 ######################################################
 ## TODO: Add the following imlementation
@@ -151,11 +154,12 @@ def Action_adapter_reverse(act,max_action):
     #from [-max,max] to [-1,1]
     return  act/max_action
 
+# Env Class with Reward Shift
 class NoiseReward(gym.RewardWrapper):
     def __init__(self, env, func):
         super().__init__(env)
         self.env = env
-        self._max_episode_steps = env._max_episode_steps
+        self._max_episode_steps = env._max_episode_steps # I don't why it can't inherit
         self.func = func
         print('Env with Reward Shift Made.')
 
@@ -173,7 +177,7 @@ class SAC_countinuous():
             print('This is a robust policy.\n')
             train_var = self.train_std ** 2
             eval_var = self.eval_std ** 2
-            self.delta = 0.5*(eval_var / train_var + math.log(train_var / eval_var)- 1)
+            self.delta = 0.5*(eval_var / train_var + math.log(train_var / eval_var)- 1) # KL divergence between two Gaussian distributions with same mean.
             assert self.delta >= 0
         self.tau = 0.005
 
@@ -210,11 +214,20 @@ class SAC_countinuous():
             a, _ = self.actor(state, deterministic, with_logprob=False)
         return a.cpu().numpy()[0]
     
-    def reward_adapt(self, r, mean):
-        return r / mean * self.delta       
+    # def reward_adapt(self, r, mean):
+    #     return r / mean * self.delta   
+    
+    def dual_func(self, r, beta):
+        # Jointly optimize, in tensor
+        size = r.shape[1]
+        return - beta * (torch.logsumexp(-r/beta, dim=1, keepdim=True) - math.log(size)) - beta * self.delta  
+        # Independently optimize, in np.array
+        # size = len(r)
+        # return - beta * (logsumexp(-r/beta) - math.log(size)) - beta * self.delta    
 
     def train(self, printer):
         s, a, r, s_next, dw = self.replay_buffer.sample(self.batch_size)
+        # time1 = time.time()
         # if self.robust and self.delta >0:
         #     r = self.reward_adapt(r, self.r_mean)
         #----------------------------- ↓↓↓↓↓ Update R Net ↓↓↓↓↓ ------------------------------#
@@ -224,27 +237,37 @@ class SAC_countinuous():
             self.reward_optimizer.zero_grad()
             r_loss.backward()
             self.reward_optimizer.step()
+            if printer:
+                print(f"r_loss: {r_loss.item()}")
             
             with torch.no_grad():
                 r_sample = self.reward.sample(s, a, 50)
             
-            def dual_func(r, beta):
-                size = r_sample.shape[1]
-                return - beta * (torch.logsumexp(-r/beta, dim=1, keepdim=True) - math.log(size)) - beta * self.delta
-            
+            # Use scipy.optimize to independently optimize
+            # r_opt = np.zeros((self.batch_size, 1))
+            # for i in range(r_sample.shape[0]):
+            #     r = r_sample[i]
+            #     opt = minimize_scalar(fun=lambda beta:-self.dual_func(r, beta), method='Bounded', bounds=(1e-6, 1e2))
+            #     r_opt[i] = -opt.fun
+            # r_opt = torch.from_numpy(r_opt).float()
+            # r_opt = r_opt.to('cuda' if torch.cuda.is_available() else 'cpu')
+                
+            # Reinitiate variable to optimize.
             self.beta = torch.zeros_like(self.beta, requires_grad=True, device=self.device)
             self.beta_optimizer = torch.optim.Adam([self.beta], lr=self.b_lr)
 
-            for _ in range(10):
+            for _ in range(50):
                 self.exp_beta = torch.exp(self.beta)
-                opt_loss = -dual_func(r_sample, self.exp_beta)
+                opt_loss = -self.dual_func(r_sample, self.exp_beta)
                 self.beta_optimizer.zero_grad()
                 opt_loss.sum().backward()
-                if printer:
-                    print(opt_loss.sum().item())
+                # if printer:
+                #     print(opt_loss.sum().item())
                 self.beta_optimizer.step() 
             
-            r_opt = dual_func(r_sample, torch.exp(self.beta)) 
+            r_opt = self.dual_func(r_sample, torch.exp(self.beta)) 
+            # time2 = time.time()
+            # print(time2 - time1)
 
         #----------------------------- ↓↓↓↓↓ Update Q Net ↓↓↓↓↓ ------------------------------#
         with torch.no_grad():
@@ -267,6 +290,10 @@ class SAC_countinuous():
         self.q_critic_optimizer.zero_grad()
         q_loss.backward()
         self.q_critic_optimizer.step()
+        if printer:
+            print(f"q_loss: {q_loss.item()}")
+        # time3 = time.time()
+        # print(time3 - time2)
 
         #----------------------------- ↓↓↓↓↓ Update Actor Net ↓↓↓↓↓ ------------------------------#
         # Freeze critic so you don't waste computational effort computing gradients for them when update actor
@@ -286,9 +313,13 @@ class SAC_countinuous():
         self.actor_optimizer.zero_grad()
         a_loss.backward()
         self.actor_optimizer.step()
+        if printer:
+            print(f"a_loss: {a_loss.item()}")
         
         for params in self.q_critic.parameters():
             params.requires_grad = True
+        # time4 = time.time()
+        # print(time4 - time3)
 
         #----------------------------- ↓↓↓↓↓ Update alpha ↓↓↓↓↓ ------------------------------#
         if self.adaptive_alpha: # Adaptive alpha SAC
@@ -302,15 +333,18 @@ class SAC_countinuous():
         #----------------------------- ↓↓↓↓↓ Update Target Net ↓↓↓↓↓ ------------------------------#
         for param, target_param in zip(self.q_critic.parameters(), self.q_critic_target.parameters()):
             target_param.data.copy_(self.tau * param.data + (1 - self.tau) * target_param.data)
+        time5 = time.time()
+        # print(time5 - time4)
+        # print("\n")
 
     def save(self, EnvName):
-        params = f"{self.train_std}_{self.eval_std}_{self.robust}"
-        torch.save(self.actor.state_dict(), "./model/{}_actor{}.pth".format(EnvName,params))
-        torch.save(self.q_critic.state_dict(), "./model/{}_q_critic{}.pth".format(EnvName,params))
+        params = f"{self.train_std}_{self.eval_std}_{self.robust}_new"
+        torch.save(self.actor.state_dict(), "./SAC_model/{}_actor{}.pth".format(EnvName,params))
+        torch.save(self.q_critic.state_dict(), "./SAC_model/{}_q_critic{}.pth".format(EnvName,params))
 
     def load(self, EnvName, params):
-        self.actor.load_state_dict(torch.load("./model/{}_actor{}.pth".format(EnvName, params), map_location=self.device))
-        self.q_critic.load_state_dict(torch.load("./model/{}_q_critic{}.pth".format(EnvName, params), map_location=self.device))
+        self.actor.load_state_dict(torch.load("./SAC_model/{}_actor{}_new.pth".format(EnvName, params), map_location=self.device))
+        self.q_critic.load_state_dict(torch.load("./SAC_model/{}_q_critic{}_new.pth".format(EnvName, params), map_location=self.device))
 
 def main(opt):
     """
@@ -336,15 +370,6 @@ def main(opt):
         'BWHv3',
         'CRv3'
     ]
-    EnvR = [
-        0,
-        0,
-        0,
-        0,
-        2,
-        0,
-        3
-    ]
 
     # 2. Create training and evaluation environments
     env = gym.make(
@@ -365,13 +390,11 @@ def main(opt):
     opt.max_action = float(env.action_space.high[0])  # Action range [-max_action, max_action]
     opt.max_e_steps = env._max_episode_steps
     if opt.EnvIdex == 0:
-        opt.Max_train_steps = 1e5
+        opt.Max_train_steps = 5e4
     elif opt.EnvIdex == 1:
-        opt.Max_train_steps = 3e5
-    elif opt.EnvIdex == 2:
         opt.Max_train_steps = 5e5
-        
-        
+    elif opt.EnvIdex == 2:
+        opt.Max_train_steps = 5e5       
 
     # 4. Print environment info
     print(
@@ -422,10 +445,20 @@ def main(opt):
 
     # 10. If rendering mode is on, run an infinite evaluation loop
     if opt.render:
+        eval_num = 100
         scores = []
-        for _ in range(20):
-            scores.append(evaluate_policy(env, agent, turns=1))
-            # print(f"EnvName: {BrifEnvName[opt.EnvIdex]}, Score: {score}")
+        train_var = opt.train_std ** 2
+        eval_var = opt.eval_std ** 2
+        delta = 0.5*(eval_var / train_var + math.log(train_var / eval_var)- 1)
+        for _ in range(eval_num):
+            score = evaluate_policy(eval_env, agent, turns=1)
+            scores.append(score)
+        filename = "new-robust.txt" if opt.robust else "new-non-robust.txt"
+        with open(filename, 'a') as f:
+            f.write(f"{[BrifEnvName[opt.EnvIdex], opt.train_std, opt.eval_std, delta] + [np.mean(scores), np.std(scores), np.quantile(scores, 0.9), np.quantile(scores, 0.1)]}\n")
+              
+        env.close()
+        eval_env.close()
             
 
     # 11. Otherwise, proceed with training
@@ -471,9 +504,9 @@ def main(opt):
                 total_steps += 1
 
                 # (c) Train the agent at fixed intervals (batch updates)
-                if (total_steps == 50 * opt.max_e_steps):
-                    agent.r_mean = torch.mean(agent.replay_buffer.r[:agent.replay_buffer.ptr])
-                    print(agent.r_mean)
+                # if (total_steps == 50 * opt.max_e_steps):
+                #     agent.r_mean = torch.mean(agent.replay_buffer.r[:agent.replay_buffer.ptr])
+                #     print(agent.r_mean)
                     
                 if (total_steps >= 50 * opt.max_e_steps) and (total_steps % opt.update_every == 0):
                     printer = False
@@ -483,12 +516,12 @@ def main(opt):
                         agent.train(printer)
                         printer = False
                     
-                    if opt.robust: 
-                       agent.delta *= 0.999
+                    # if opt.robust: 
+                    #    agent.delta *= 0.999
 
                 # (d) Evaluate and log periodically
                 if total_steps % opt.eval_interval == 0:
-                    ep_r = evaluate_policy(eval_env, agent, turns=3)
+                    ep_r = evaluate_policy(eval_env, agent, turns=10)
                     if writer is not None:
                         writer.add_scalar('ep_r', ep_r, global_step=total_steps)
                     print(
@@ -497,33 +530,29 @@ def main(opt):
                         f"Episodes: {total_episode}, "
                         f"Episode Reward: {ep_r}"
                     )
-                # if total_steps % opt.eval_interval == 0:
-                #     print(f"Steps: {int(total_steps/1000)}k")
 
                 # (e) Save model at fixed intervals
                 if total_steps % opt.save_interval == 0:
                     agent.save(BrifEnvName[opt.EnvIdex])
         
-        # 11.5 Compute score of 20 episode
+        # 11.5 Compute score of 20 episodes
         eval_num = 20
         print(f"Train finished. Now generate scores of {eval_num} episodes.")
         scores = []
         for _ in range(eval_num):
-            score = evaluate_policy(env, agent, turns=1)
+            score = evaluate_policy(eval_env, agent, turns=1)
             scores.append(score)
+        filename = "robust.txt" if opt.robust else "non-robust.txt"
+        with open(filename, 'a') as f:
+              f.write(f"{[BrifEnvName[opt.EnvIdex], opt.train_std, opt.eval_std] + scores}\n")
 
-        # # 11.55
-        # agent.save(BrifEnvName[opt.EnvIdex])
+        # 11.55 Save model at last
+        agent.save(BrifEnvName[opt.EnvIdex])
 
         # 12. Close environments after training
         env.close()
         eval_env.close()
 
-    print(np.mean(np.array(scores)))
-    print(np.std(np.array(scores)))
-    print(np.quantile(np.array(scores), 0.75))
-    print(np.quantile(np.array(scores), 0.25))
-    return scores
     
 if __name__ == '__main__':
     '''Hyperparameter Setting'''
@@ -537,9 +566,9 @@ if __name__ == '__main__':
 
     parser.add_argument('--seed', type=int, default=42, help='random seed')
     parser.add_argument('--Max_train_steps', type=int, default=int(5e4), help='Max training steps')
-    parser.add_argument('--save_interval', type=int, default=int(100e3), help='Model saving interval, in steps.')
+    parser.add_argument('--save_interval', type=int, default=int(1e4), help='Model saving interval, in steps.')
     parser.add_argument('--eval_interval', type=int, default=int(2.5e3), help='Model evaluating interval, in steps.')
-    parser.add_argument('--update_every', type=int, default=250, help='Training Fraquency, in stpes')
+    parser.add_argument('--update_every', type=int, default=50, help='Training Fraquency, in stpes')
 
     parser.add_argument('--gamma', type=float, default=0.99, help='Discounted Factor')
     parser.add_argument('--net_width', type=int, default=256, help='Hidden net width')
@@ -559,28 +588,6 @@ if __name__ == '__main__':
     parser.add_argument('--eval_std', type=float, default=1.0, help='Standard Deviation of Eval Env Reward')
     opt = parser.parse_args()
     opt.device = torch.device(opt.device) # from str to torch.device
-    
-    # opt.train_noise = True
-    # opt.eval_noise = True
-    # diff = 0.1
-    # filename = "robust.txt" if opt.robust else "non-robust.txt"
-
-    # for _ in range(5):
-    #     print("---------------")
-    #     print(opt.train_std, opt.eval_std, opt.robust)
-    #     score = [opt.train_std, opt.eval_std] + main(opt)
-    #     with open(filename, 'a') as f:
-    #         f.write(f"{score}\n")
-    #     opt.eval_std += diff
-        
-    # # opt.eval_std = opt.train_std
-    # for _ in range(5):
-    #     print("---------------")
-    #     print(opt.train_std, opt.eval_std, opt.robust)
-    #     score = [opt.train_std, opt.eval_std] + main(opt)
-    #     with open(filename, 'a') as f:
-    #          f.write(f"{score}\n")
-    #     opt.train_std += diff
 
     main(opt)
     
