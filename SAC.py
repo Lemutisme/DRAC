@@ -1,4 +1,4 @@
-from utils import build_net, str2bool, evaluate_policy
+from utils import build_net, str2bool, evaluate_policy, Reward_adapter, Action_adapter, Action_adapter_reverse
 
 import random
 import numpy as np
@@ -88,7 +88,8 @@ class Reward(nn.Module):
         r_out = self.rnet(sa)
         mu = self.mu_layer(r_out)
         log_std = self.log_std_layer(r_out)
-        #log_std = torch.clamp(log_std, 2, -20)  #总感觉这里clamp不利于学习
+        # FIXME:  I think we still nedd to prevent numerical instability
+        log_std = torch.clamp(log_std, min=-20, max=20) 
         std = torch.exp(log_std)
         dist = Normal(mu, std)
         r = dist.rsample()     
@@ -134,29 +135,8 @@ class ReplayBuffer(object):
         ind = torch.randint(0, self.size, device=self.device, size=(batch_size,))
         return self.s[ind], self.a[ind], self.r[ind], self.s_next[ind], self.dw[ind]
 
-#reward engineering for better training
-def Reward_adapter(r, EnvIdex):
-    # For Pendulum-v0
-    if EnvIdex == 0:
-        r = (r + 8) / 8
-    # For LunarLander
-    elif EnvIdex == 1:
-        if r <= -100: r = -10
-    # For BipedalWalker
-    elif EnvIdex == 4 or EnvIdex == 5:
-        if r <= -100: r = -1
-    return r
-
-def Action_adapter(a,max_action):
-    #from [-1,1] to [-max,max]
-    return  a*max_action
-
-def Action_adapter_reverse(act,max_action):
-    #from [-max,max] to [-1,1]
-    return  act/max_action
-
 # Env Class with Reward Shift
-class NoiseReward(gym.RewardWrapper):
+class NoiseRewardWrapper(gym.RewardWrapper):
     def __init__(self, env, func):
         super().__init__(env)
         self.env = env
@@ -169,6 +149,18 @@ class NoiseReward(gym.RewardWrapper):
         modified_reward = self.func(reward)
         return obs, modified_reward, dw, tr, info
 
+class ScalingActionWrapper(gym.ActionWrapper):
+
+    """Assumes that actions are symmetric about zero!!!"""
+
+    def __init__(self, env, scaling_factors: np.array):
+        super(ScalingActionWrapper, self).__init__(env)
+        self._max_episode_steps = env._max_episode_steps # I don't why it can't inherit
+        self.scaling_factors = scaling_factors
+
+    def action(self, action):
+        return self.scaling_factors * action
+
 
 class SAC_countinuous():
     def __init__(self, **kwargs):
@@ -176,10 +168,13 @@ class SAC_countinuous():
         self.__dict__.update(kwargs)
         if self.robust:
             print('This is a robust policy.\n')
-            train_var = self.train_std ** 2
-            eval_var = self.eval_std ** 2
-            self.delta = 0.5*(eval_var / train_var + math.log(train_var / eval_var)- 1) # KL divergence between two Gaussian distributions with same mean.
-            assert self.delta >= 0
+            if self.train_noise and self.eval_noise:
+                train_var = self.train_std ** 2
+                eval_var = self.eval_std ** 2
+                self.delta = 0.5*(eval_var / train_var + math.log(train_var / eval_var)- 1) # KL divergence between two Gaussian distributions with same mean.
+                assert self.delta >= 0
+            else:
+                self.delta = 0
         self.tau = 0.005
 
         self.actor = Actor(self.state_dim, self.action_dim, (self.net_width, self.net_width), self.net_layer).to(self.device)
@@ -196,8 +191,8 @@ class SAC_countinuous():
             self.reward = Reward(self.state_dim, self.action_dim, (self.net_width, self.net_width), self.net_layer).to(self.device)
             self.reward_optimizer = torch.optim.Adam(self.reward.parameters(), lr=self.r_lr)
             
-            self.beta = torch.zeros((self.batch_size, 1), requires_grad=True, device=self.device)
-            self.beta_optimizer = torch.optim.Adam([self.beta], lr=self.b_lr)
+            self.log_beta = nn.Parameter(torch.ones((self.batch_size,1), requires_grad=True, device=self.device) * 1.0)
+            self.beta_optimizer = torch.optim.Adam([self.log_beta], lr=self.b_lr)
 
         self.replay_buffer = ReplayBuffer(self.state_dim, self.action_dim, max_size=int(1e6), device=self.device)
 
@@ -222,12 +217,14 @@ class SAC_countinuous():
         # Jointly optimize, in tensor
         size = r.shape[1]
         return - beta * (torch.logsumexp(-r/beta, dim=1, keepdim=True) - math.log(size)) - beta * self.delta  
+        # Independently optimize, in np.array
+        # size = len(r)
+        # return - beta * (logsumexp(-r/beta) - math.log(size)) - beta * self.delta    
 
     def dual_func_ind(self, r, beta):
         # Independently optimize, in np.array
         size = len(r)
-        return - beta * (logsumexp(-r/beta) - math.log(size)) - beta * self.delta    
-        
+        return - beta * (logsumexp(-r/beta) - math.log(size)) - beta * self.delta           
 
     def train(self, robust_update, printer):
         s, a, r, s_next, dw = self.replay_buffer.sample(self.batch_size)
@@ -246,30 +243,41 @@ class SAC_countinuous():
                 
         if robust_update:   
             with torch.no_grad():
-                r_sample = self.reward.sample(s, a, 50)
+                r_sample = self.reward.sample(s, a, 200)
+                if printer: 
+                    print("r_est:", (torch.abs(r - r_sample.mean(dim=1, keepdim=True)) / r).mean().item())
                 
             # Reinitiate variable to optimize.
-            # self.beta = torch.zeros_like(self.beta, requires_grad=True, device=self.device)
-            # self.beta_optimizer = torch.optim.Adam([self.beta], lr=self.b_lr)
+            # FIXME: Do not reinitialize β. Treat it as a persistent parameter updated via gradient descent, 
+            # just like actor/critic weights. This ensures stable convergence and efficient use of learned robustness information.
+            # Maybe we can get better results and faster convergence.
+            # self.log_beta = nn.Parameter(torch.ones(self.batch_size, requires_grad=True, device=self.device) * initial_beta)
 
-            # for _ in range(30):
-            #     self.exp_beta = torch.exp(self.beta)
-            #     opt_loss = -self.dual_func(r_sample, self.exp_beta)
+            # self.log_beta = nn.Parameter(torch.ones_like(self.log_beta, requires_grad=True, device=self.device) * 0.1)
+            # self.beta_optimizer = torch.optim.Adam([self.log_beta], lr=self.b_lr)
+
+            # for _ in range(20):
+            #     self.beta = torch.exp(self.log_beta)
+            #     opt_loss = -self.dual_func(r_sample, self.beta)
             #     self.beta_optimizer.zero_grad()
-            #     opt_loss.sum().backward()
+            #     # FIXME: opt_loss.mean()
+            #     opt_loss.mean().backward()
+            #     # if printer:
+            #     #     print(opt_loss.sum().item())
             #     self.beta_optimizer.step() 
             
-            # r_opt1 = self.dual_func(r_sample, torch.exp(self.beta)) 
+            # r_opt = self.dual_func(r_sample, torch.exp(self.log_beta)) 
             
             # Use scipy.optimize to independently optimize
             r_sample = r_sample.cpu().numpy()
             r_opt = np.zeros((self.batch_size, 1))
             for i in range(r_sample.shape[0]):
-                r = r_sample[i]
-                opt = minimize_scalar(fun=lambda beta:-self.dual_func_ind(r, beta), method='Bounded', bounds=(1e-6, 1e2))
+                opt = minimize_scalar(fun=lambda beta:-self.dual_func_ind(r_sample[i], beta), method='Bounded', bounds=(1e-4, 1.0))
                 r_opt[i] = -opt.fun
             r_opt = torch.from_numpy(r_opt).float()
             r_opt = r_opt.to('cuda' if torch.cuda.is_available() else 'cpu')
+            # if printer:
+            #     print((r-r_opt).norm(p=1).item(), r_opt.norm(p=1).item())
             # if printer:
             #     print((r_opt1 - r_opt2).norm(p=1).item(), r_opt2.norm(p=1).item())
             # time2 = time.time()
@@ -294,9 +302,10 @@ class SAC_countinuous():
         # JQ(θ)
         q_loss = F.mse_loss(current_Q1, target_Q) + F.mse_loss(current_Q2, target_Q) 
         
-        # for name, param in self.q_critic.named_parameters():
-        #     if 'weight' in name:
-        #         q_loss += param.pow(2).sum() * 5e-2
+        if self.robust:
+            for name, param in self.q_critic.named_parameters():
+                if 'weight' in name:
+                    q_loss += param.pow(2).sum() * 1e-3
         
         self.q_critic_optimizer.zero_grad()
         q_loss.backward()
@@ -340,6 +349,9 @@ class SAC_countinuous():
             alpha_loss.backward()
             self.alpha_optim.step()
             self.alpha = self.log_alpha.exp()
+        
+        if printer:
+            print("alpha = ", self.alpha.item())
 
         #----------------------------- ↓↓↓↓↓ Update Target Net ↓↓↓↓↓ ------------------------------#
         for param, target_param in zip(self.q_critic.parameters(), self.q_critic_target.parameters()):
@@ -386,26 +398,28 @@ def main(opt):
     env = gym.make(
         EnvName[opt.EnvIdex]
     )
+    # env = ScalingActionWrapper(env, scaling_factors=env.action_space.high)
     if opt.train_noise:
         train_dist = Normal(0, opt.train_std)
-        env = NoiseReward(env, lambda r: r + train_dist.sample())
+        env = NoiseRewardWrapper(env, lambda r: r + train_dist.sample())
 
     eval_env = gym.make(EnvName[opt.EnvIdex])
+    # eval_env = ScalingActionWrapper(eval_env, scaling_factors=env.action_space.high)
     if opt.eval_noise:
         eval_dist = Normal(0, opt.eval_std)
-        eval_env = NoiseReward(eval_env, lambda r: r + eval_dist.sample())
+        eval_env = NoiseRewardWrapper(eval_env, lambda r: r + eval_dist.sample())
 
     # 3. Extract environment properties
     opt.state_dim = env.observation_space.shape[0]
     opt.action_dim = env.action_space.shape[0]  # Continuous action dimension
     opt.max_action = float(env.action_space.high[0])  # Action range [-max_action, max_action]
     opt.max_e_steps = env._max_episode_steps
-    if opt.EnvIdex == 0:
-        opt.Max_train_steps = 1e5
-    elif opt.EnvIdex == 1:
-        opt.Max_train_steps = 5e5
-    elif opt.EnvIdex == 2:
-        opt.Max_train_steps = 1e6       
+    # if opt.EnvIdex == 0:
+    #     opt.Max_train_steps = 1e5
+    # elif opt.EnvIdex == 1:
+    #     opt.Max_train_steps = 5e5
+    # elif opt.EnvIdex == 2:
+    #     opt.Max_train_steps = 1e6       
 
     # 4. Print environment info
     print(
@@ -419,7 +433,6 @@ def main(opt):
 
     # 5. Seed everything for reproducibility
     env_seed = opt.seed
-    
     random.seed(opt.seed)
     np.random.seed(opt.seed)
     torch.manual_seed(opt.seed)
@@ -505,7 +518,8 @@ def main(opt):
                 next_state, reward, dw, tr, info = env.step(action_env)
 
                 # Custom reward shaping, if needed
-                reward = Reward_adapter(reward, opt.EnvIdex)
+                if opt.reward_adapt:
+                    reward = Reward_adapter(reward, opt.EnvIdex)
 
                 # Check for terminal state
                 done = (dw or tr)
@@ -524,17 +538,18 @@ def main(opt):
                     
                 if (total_steps >= 50 * opt.max_e_steps) and (total_steps % opt.update_every == 0):
                     printer = False
-                    if total_steps % opt.eval_interval == 0:
+                    if total_steps % 1000 == 0:
                         printer = True
                     for i in range(opt.update_every):
                         if i % 5 == 0:
                             agent.train(agent.robust, printer)
                         else:
                             agent.train(False, printer)
+                        # agent.train(agent.robust, False)
                         printer = False
                     
-                    # if opt.robust: 
-                    #    agent.delta *= 0.999
+                    if opt.robust: 
+                       agent.delta *= 0.999
 
                 # (d) Evaluate and log periodically
                 if total_steps % opt.eval_interval == 0:
@@ -582,7 +597,7 @@ if __name__ == '__main__':
     #parser.add_argument('--ModelIdex', type=int, default=100, help='which model to load')
 
     parser.add_argument('--seed', type=int, default=42, help='random seed')
-    parser.add_argument('--Max_train_steps', type=int, default=int(5e4), help='Max training steps')
+    parser.add_argument('--Max_train_steps', type=int, default=int(5e5), help='Max training steps')
     parser.add_argument('--save_interval', type=int, default=int(1e4), help='Model saving interval, in steps.')
     parser.add_argument('--eval_interval', type=int, default=int(2e3), help='Model evaluating interval, in steps.')
     parser.add_argument('--update_every', type=int, default=50, help='Training Fraquency, in stpes')
@@ -590,14 +605,15 @@ if __name__ == '__main__':
     parser.add_argument('--gamma', type=float, default=0.99, help='Discounted Factor')
     parser.add_argument('--net_width', type=int, default=256, help='Hidden net width')
     parser.add_argument('--net_layer', type=int, default=1, help='Hidden net layers')
-    parser.add_argument('--a_lr', type=float, default=3e-5, help='Learning rate of actor')
-    parser.add_argument('--c_lr', type=float, default=3e-5, help='Learning rate of critic')
+    parser.add_argument('--a_lr', type=float, default=5e-3, help='Learning rate of actor')
+    parser.add_argument('--c_lr', type=float, default=5e-3, help='Learning rate of critic')
     parser.add_argument('--b_lr', type=float, default=3e-4, help='Learning rate of dual-form optimization')
     parser.add_argument('--r_lr', type=float, default=3e-5, help='Learning rate of reward net')
     parser.add_argument('--batch_size', type=int, default=256, help='batch_size of training')
     parser.add_argument('--alpha', type=float, default=0.12, help='Entropy coefficient')
     parser.add_argument('--adaptive_alpha', type=str2bool, default=True, help='Use adaptive_alpha or Not')
     
+    parser.add_argument('--reward_adapt', type=bool, default=True, help='Reward adaptation')
     parser.add_argument('--robust', type=bool, default=False, help='Robust policy')
     parser.add_argument('--train_noise', type=bool, default=False, help='Train Env is Noisy')
     parser.add_argument('--train_std', type=float, default=1.0, help='Standard Deviation of Train Env Reward')
@@ -606,6 +622,7 @@ if __name__ == '__main__':
     opt = parser.parse_args()
     opt.device = torch.device(opt.device) # from str to torch.device
 
+    print(opt)
     main(opt)
     
     # Pen step 5e4
