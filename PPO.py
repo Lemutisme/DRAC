@@ -214,13 +214,13 @@ class PPO_agent(object):
             assert self.delta >= 0
 
         # Build Trajectory holder
-        self.s_hoder = np.zeros((self.T_horizon, self.state_dim),dtype=np.float32)
-        self.a_hoder = np.zeros((self.T_horizon, self.action_dim),dtype=np.float32)
-        self.r_hoder = np.zeros((self.T_horizon, 1),dtype=np.float32)
-        self.s_next_hoder = np.zeros((self.T_horizon, self.state_dim),dtype=np.float32)
-        self.logprob_a_hoder = np.zeros((self.T_horizon, self.action_dim),dtype=np.float32)
-        self.done_hoder = np.zeros((self.T_horizon, 1),dtype=np.bool_)
-        self.dw_hoder = np.zeros((self.T_horizon, 1),dtype=np.bool_)
+        self.s_holder = np.zeros((self.T_horizon, self.state_dim),dtype=np.float32)
+        self.a_holder = np.zeros((self.T_horizon, self.action_dim),dtype=np.float32)
+        self.r_holder = np.zeros((self.T_horizon, 1),dtype=np.float32)
+        self.s_next_holder = np.zeros((self.T_horizon, self.state_dim),dtype=np.float32)
+        self.logprob_a_holder = np.zeros((self.T_horizon, self.action_dim),dtype=np.float32)
+        self.done_holder = np.zeros((self.T_horizon, 1),dtype=np.bool_)
+        self.dw_holder = np.zeros((self.T_horizon, 1),dtype=np.bool_)
 
     def select_action(self, state, deterministic):
         with torch.no_grad():
@@ -236,18 +236,22 @@ class PPO_agent(object):
                 a = torch.clamp(a, 0, 1)
                 logprob_a = dist.log_prob(a).cpu().numpy().flatten()
                 return a.cpu().numpy()[0], logprob_a # both are in shape (adim, 0)
+            
+    def dual_func(self, r, beta):
+        size = r.shape[1]
+        return - beta * (torch.logsumexp(-r/beta, dim=1, keepdim=True) - math.log(size)) - beta * self.delta
 
-    def train(self, printer):
+    def train(self):
         self.entropy_coef *= self.entropy_coef_decay
 
         '''Prepare PyTorch data from Numpy data'''
-        s = torch.from_numpy(self.s_hoder).to(self.device)
-        a = torch.from_numpy(self.a_hoder).to(self.device)
-        r = torch.from_numpy(self.r_hoder).to(self.device)
-        s_next = torch.from_numpy(self.s_next_hoder).to(self.device)
-        logprob_a = torch.from_numpy(self.logprob_a_hoder).to(self.device)
-        done = torch.from_numpy(self.done_hoder).to(self.device)
-        dw = torch.from_numpy(self.dw_hoder).to(self.device)
+        s = torch.from_numpy(self.s_holder).to(self.device)
+        a = torch.from_numpy(self.a_holder).to(self.device)
+        r = torch.from_numpy(self.r_holder).to(self.device)
+        s_next = torch.from_numpy(self.s_next_holder).to(self.device)
+        logprob_a = torch.from_numpy(self.logprob_a_holder).to(self.device)
+        done = torch.from_numpy(self.done_holder).to(self.device)
+        dw = torch.from_numpy(self.dw_holder).to(self.device)
 
         if self.robust:
             r_pred = self.reward(s, a)
@@ -259,23 +263,21 @@ class PPO_agent(object):
             with torch.no_grad():
                 r_sample = self.reward.sample(s, a, 50)
             
-            def dual_func(r, beta):
-                size = r_sample.shape[1]
-                return - beta * (torch.logsumexp(-r/beta, dim=1, keepdim=True) - math.log(size)) - beta * self.delta
-            
             self.log_beta = torch.zeros((self.T_horizon, 1), requires_grad=True, device=self.device)
             self.beta_optimizer = torch.optim.Adam([self.log_beta], lr=self.b_lr)
 
-            for _ in range(10):
+            for i in range(20):
                 self.beta = torch.exp(self.log_beta)
-                opt_loss = -dual_func(r_sample, self.beta)
+                opt_loss = -self.dual_func(r_sample, self.beta)
                 self.beta_optimizer.zero_grad()
                 opt_loss.sum().backward()
-                if printer:
-                    print(opt_loss.sum().item())
                 self.beta_optimizer.step() 
+                # if i % 10 == 0:
+                #     print(opt_loss.sum().item())
             
-            r_opt = dual_func(r_sample, torch.exp(self.log_beta)) 
+            r_opt = self.dual_func(r_sample, self.beta)
+            # print(torch.norm(r-r_opt).item() / torch.norm(r).item())
+            # print("\n")
 
         ''' Use TD+GAE+LongTrajectory to compute Advantage and TD target'''
         with torch.no_grad():
@@ -343,28 +345,28 @@ class PPO_agent(object):
                 self.critic_optimizer.step()
 
     def put_data(self, s, a, r, s_next, logprob_a, done, dw, idx):
-        self.s_hoder[idx] = s
-        self.a_hoder[idx] = a
-        self.r_hoder[idx] = r
-        self.s_next_hoder[idx] = s_next
-        self.logprob_a_hoder[idx] = logprob_a
-        self.done_hoder[idx] = done
-        self.dw_hoder[idx] = dw
+        self.s_holder[idx] = s
+        self.a_holder[idx] = a
+        self.r_holder[idx] = r
+        self.s_next_holder[idx] = s_next
+        self.logprob_a_holder[idx] = logprob_a
+        self.done_holder[idx] = done
+        self.dw_holder[idx] = dw
 
     def save(self,EnvName):
         params = f"{self.train_std}_{self.eval_std}_{self.robust}"
-        torch.save(self.actor.state_dict(), ".model/PPO/{}_actor{}.pth".format(EnvName,params))
-        torch.save(self.critic.state_dict(), "./modelPPO//{}_q_critic{}.pth".format(EnvName,params))
+        torch.save(self.actor.state_dict(), "./PPO_model/{}_actor{}.pth".format(EnvName,params))
+        torch.save(self.critic.state_dict(), "./PPO_model//{}_q_critic{}.pth".format(EnvName,params))
 
     def load(self,EnvName, params):
-        self.actor.load_state_dict(torch.load("./model/PPO/{}_actor{}.pth".format(EnvName, params), map_location=self.device))
-        self.critic.load_state_dict(torch.load("./model/PPO/{}_q_critic{}.pth".format(EnvName, params), map_location=self.device))
+        self.actor.load_state_dict(torch.load("./PPO_model/{}_actor{}.pth".format(EnvName, params), map_location=self.device))
+        self.critic.load_state_dict(torch.load("./PPO_model/{}_q_critic{}.pth".format(EnvName, params), map_location=self.device))
 
 def main(opt):
     # 1. Define environment names and their abbreviations
     EnvName = [
         'Pendulum-v1',
-        'LunarLanderContinuous-v2',
+        'LunarLanderContinuous-v3',
         'Humanoid-v4',
         'HalfCheetah-v4',
         'BipedalWalker-v3',
@@ -494,6 +496,10 @@ def main(opt):
                 if traj_length % opt.T_horizon == 0:
                     agent.train()
                     traj_length = 0
+                
+                # if total_steps >= 4e5 and total_steps % 5e3 == 0:
+                #     agent.a_lr *= 0.95
+                #     agent.c_lr *= 0.95
 
                 # (vi) Periodically evaluate and log
                 if total_steps % opt.eval_interval == 0:
@@ -529,7 +535,7 @@ if __name__ == '__main__':
     parser.add_argument('--seed', type=int, default=0, help='random seed')
     parser.add_argument('--T_horizon', type=int, default=2048, help='lenth of long trajectory')
     parser.add_argument('--Distribution', type=str, default='Beta', help='Should be one of Beta ; GS_ms  ;  GS_m')
-    parser.add_argument('--Max_train_steps', type=int, default=int(3e5), help='Max training steps')
+    parser.add_argument('--Max_train_steps', type=int, default=int(1e6), help='Max training steps')
     parser.add_argument('--save_interval', type=int, default=int(3e5), help='Model saving interval, in steps.')
     parser.add_argument('--eval_interval', type=int, default=int(5e3), help='Model evaluating interval, in steps.')
 
@@ -541,7 +547,7 @@ if __name__ == '__main__':
     parser.add_argument('--net_layer', type=int, default=1, help='Hidden net layers')
     parser.add_argument('--a_lr', type=float, default=2e-4, help='Learning rate of actor')
     parser.add_argument('--c_lr', type=float, default=2e-4, help='Learning rate of critic')
-    parser.add_argument('--b_lr', type=float, default=2e-3, help='Learning rate of dual optimization problem')
+    parser.add_argument('--b_lr', type=float, default=2e-4, help='Learning rate of dual optimization problem')
     parser.add_argument('--r_lr', type=float, default=2e-4, help='Learning rate of reward')
     parser.add_argument('--l2_reg', type=float, default=1e-3, help='L2 regulization coefficient for Critic')
     parser.add_argument('--a_optim_batch_size', type=int, default=64, help='lenth of sliced trajectory of actor')

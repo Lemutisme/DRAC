@@ -33,6 +33,8 @@ def Reward_adapter(r, EnvIdex):
     # For LunarLander
     elif EnvIdex == 1:
         if r <= -100: r = -10
+    elif EnvIdex == 2:
+        r = r / 5
     # For BipedalWalker
     elif EnvIdex == 4 or EnvIdex == 5:
         if r <= -100: r = -1
@@ -48,6 +50,7 @@ def Action_adapter_reverse(act,max_action):
 
 def evaluate_policy(env, agent, turns = 5):
     total_scores = 0
+    dist = Normal(0.0, 0.1)
     for j in range(turns):
         s, info = env.reset()
         done = False
@@ -62,20 +65,20 @@ def evaluate_policy(env, agent, turns = 5):
             s = s_next
     return int(total_scores/turns)
 
-def evaluate_policy_PPOD(env, agent, turns = 3):
-    total_scores = 0
-    for j in range(turns):
-        s, info = env.reset()
-        done = False
-        while not done:
-            # Take deterministic actions at test time
-            a = agent.select_action(s, deterministic=True)
-            s_next, r, dw, tr, info = env.step(a)
-            done = (dw or tr)
+# def evaluate_policy_PPOD(env, agent, turns = 3):
+#     total_scores = 0
+#     for j in range(turns):
+#         s, info = env.reset()
+#         done = False
+#         while not done:
+#             # Take deterministic actions at test time
+#             a = agent.select_action(s, deterministic=True)
+#             s_next, r, dw, tr, info = env.step(a)
+#             done = (dw or tr)
 
-            total_scores += r
-            s = s_next
-    return int(total_scores/turns)
+#             total_scores += r
+#             s = s_next
+#     return int(total_scores/turns)
 
 def str2bool(v):
     '''transfer str to bool for argparse'''

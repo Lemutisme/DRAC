@@ -146,8 +146,9 @@ class NoiseRewardWrapper(gym.RewardWrapper):
 
     def step(self, action):
         obs, reward, dw, tr, info = self.env.step(action)
-        modified_reward = self.func(reward)
-        return obs, modified_reward, dw, tr, info
+        modified_obs = obs
+        modified_obs[2] = self.func(obs[2])
+        return modified_obs, reward, dw, tr, info
 
 class ScalingActionWrapper(gym.ActionWrapper):
 
@@ -217,9 +218,6 @@ class SAC_countinuous():
         # Jointly optimize, in tensor
         size = r.shape[1]
         return - beta * (torch.logsumexp(-r/beta, dim=1, keepdim=True) - math.log(size)) - beta * self.delta  
-        # Independently optimize, in np.array
-        # size = len(r)
-        # return - beta * (logsumexp(-r/beta) - math.log(size)) - beta * self.delta    
 
     def dual_func_ind(self, r, beta):
         # Independently optimize, in np.array
@@ -294,8 +292,10 @@ class SAC_countinuous():
                 target_Q = r_opt + (~dw) * self.gamma * (target_Q - self.alpha * log_pi_a_next)
             else:
                 target_Q = r + (~dw) * self.gamma * (target_Q - self.alpha * log_pi_a_next) 
+            if printer:
+                print(torch.max(target_Q).item(), torch.min(target_Q).item())
             #############################################################
-                
+
         # Get current Q estimates
         current_Q1, current_Q2 = self.q_critic(s, a)
 
@@ -305,7 +305,7 @@ class SAC_countinuous():
         if self.robust:
             for name, param in self.q_critic.named_parameters():
                 if 'weight' in name:
-                    q_loss += param.pow(2).sum() * 1e-3
+                    q_loss += param.pow(2).sum() * self.reg_coef
         
         self.q_critic_optimizer.zero_grad()
         q_loss.backward()
@@ -480,10 +480,11 @@ def main(opt):
         for _ in range(eval_num):
             score = evaluate_policy(eval_env, agent, turns=1)
             scores.append(score)
+            # print(score, noise_score)
         # filename = "new-robust.txt" if opt.robust else "new-non-robust.txt"
         # with open(filename, 'a') as f:
         #     f.write(f"{[BrifEnvName[opt.EnvIdex], opt.train_std, opt.eval_std, delta] + [np.mean(scores), np.std(scores), np.quantile(scores, 0.9), np.quantile(scores, 0.1)]}\n")
-        print(f"{[BrifEnvName[opt.EnvIdex], opt.train_std, opt.eval_std, delta] + [np.mean(scores), np.std(scores), np.quantile(scores, 0.9), np.quantile(scores, 0.1)]}\n")     
+        print(f"{[BrifEnvName[opt.EnvIdex], opt.train_std, opt.eval_std, delta] + [np.mean(scores), np.std(scores), np.quantile(scores, 0.9), np.quantile(scores, 0.1)]}\n")    
         env.close()
         eval_env.close()
             
@@ -532,8 +533,8 @@ def main(opt):
                 total_steps += 1
 
                 # (c) Train the agent at fixed intervals (batch updates)
-                # if (total_steps == 50 * opt.max_e_steps):
-                #     agent.r_mean = torch.mean(agent.replay_buffer.r[:agent.replay_buffer.ptr])
+                # if (total_steps < 50 * opt.max_e_steps) and (total_steps % opt.update_every == 0):
+                #     agent.r_mean = torch.max(agent.replay_buffer.r[:agent.replay_buffer.ptr]), torch.min(agent.replay_buffer.r[:agent.replay_buffer.ptr])
                 #     print(agent.r_mean)
                     
                 if (total_steps >= 50 * opt.max_e_steps) and (total_steps % opt.update_every == 0):
@@ -541,7 +542,7 @@ def main(opt):
                     if total_steps % 1000 == 0:
                         printer = True
                     for i in range(opt.update_every):
-                        if i % 5 == 0:
+                        if i % opt.robust_update_every == 0:
                             agent.train(agent.robust, printer)
                         else:
                             agent.train(False, printer)
@@ -550,7 +551,7 @@ def main(opt):
                     
                     if opt.robust: 
                        agent.delta *= 0.999
-
+                       
                 # (d) Evaluate and log periodically
                 if total_steps % opt.eval_interval == 0:
                     ep_r = evaluate_policy(eval_env, agent, turns=10)
@@ -601,6 +602,7 @@ if __name__ == '__main__':
     parser.add_argument('--save_interval', type=int, default=int(1e4), help='Model saving interval, in steps.')
     parser.add_argument('--eval_interval', type=int, default=int(2e3), help='Model evaluating interval, in steps.')
     parser.add_argument('--update_every', type=int, default=50, help='Training Fraquency, in stpes')
+    parser.add_argument('--robust_update_every', type=int, default=2, help='Training Fraquency, in stpes')
 
     parser.add_argument('--gamma', type=float, default=0.99, help='Discounted Factor')
     parser.add_argument('--net_width', type=int, default=256, help='Hidden net width')
@@ -613,6 +615,7 @@ if __name__ == '__main__':
     parser.add_argument('--alpha', type=float, default=0.12, help='Entropy coefficient')
     parser.add_argument('--adaptive_alpha', type=str2bool, default=True, help='Use adaptive_alpha or Not')
     
+    parser.add_argument('--reg_coef', type=float, default=0.0, help='Regulator of Network Parameters')
     parser.add_argument('--reward_adapt', type=bool, default=True, help='Reward adaptation')
     parser.add_argument('--robust', type=bool, default=False, help='Robust policy')
     parser.add_argument('--train_noise', type=bool, default=False, help='Train Env is Noisy')
