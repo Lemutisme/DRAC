@@ -5,6 +5,8 @@ import numpy as np
 import random
 from torch.distributions import Normal
 from math import exp
+import gymnasium as gym
+from gymnasium.envs.classic_control.pendulum import PendulumEnv
 
 def build_net(layer_shape, hidden_activation, output_activation):
     '''Build net with for loop'''
@@ -25,7 +27,13 @@ def build_net(layer_shape, hidden_activation, output_activation):
 #         dis_state.append(grid[i][idx])
 #     return torch.stack(dis_state, dim=-1)
 
-#reward engineering for better training
+# Disrupted Env
+class CustomPendulumEnv(PendulumEnv):
+    def __init__(self, render_mode=None, g=10.0, length=1.0):
+        super().__init__(render_mode=render_mode, g=g)
+        self.l = length  # override the pendulum length
+
+# Reward engineering for better training
 def Reward_adapter(r, EnvIdex):
     # For Pendulum-v0
     if EnvIdex == 0:
