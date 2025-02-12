@@ -1,4 +1,5 @@
-from utils import build_net, str2bool, evaluate_policy, Reward_adapter, Action_adapter, Action_adapter_reverse
+import torch.optim.adam
+from utils import *
 
 import random
 import numpy as np
@@ -9,21 +10,15 @@ from torch.distributions import Normal, Categorical
 import copy
 from datetime import datetime
 import gymnasium as gym
-from gymnasium.wrappers import TransformReward
 import os, shutil
 import argparse
 import math
 from scipy.special import logsumexp
 from scipy.optimize import minimize, minimize_scalar
-import time
 
 ######################################################
 ## TODO: Add the following imlementation
-# 1. Add the main function to introduce the distribution shift
-#    e.g. ai_safety_gym.environments.distributional_shift.py
-#
-# 2. Implement the Bellman operator of DRSAC
-#    e.g. parts in SAC.SAC_continous and utils.Actor
+
 ######################################################
 
 class Actor(nn.Module):
@@ -43,8 +38,7 @@ class Actor(nn.Module):
         net_out = self.a_net(state)
         mu = self.mu_layer(net_out)
         log_std = self.log_std_layer(net_out)
-        log_std = torch.clamp(log_std, self.LOG_STD_MIN, self.LOG_STD_MAX)  #总感觉这里clamp不利于学习
-        # we learn log_std rather than std, so that exp(log_std) is always > 0
+        log_std = torch.clamp(log_std, self.LOG_STD_MIN, self.LOG_STD_MAX)  
         std = torch.exp(log_std)
         dist = Normal(mu, std)
         u = mu if deterministic else dist.rsample()
@@ -61,6 +55,16 @@ class Actor(nn.Module):
 
         return a, logp_pi_a
 
+class V_Critic(nn.Module):
+    def __init__(self, state_dim, hid_shape, hid_layers):
+        super(V_Critic, self).__init__()
+        layers = [state_dim] + list(hid_shape) * hid_layers + [1]
+        
+        self.V = build_net(layers, nn.ReLU, nn.Identity)
+        
+    def forward(self, state):
+        return self.V(s)
+
 class Double_Q_Critic(nn.Module):
     def __init__(self, state_dim, action_dim, hid_shape, hid_layers):
         super(Double_Q_Critic, self).__init__()
@@ -70,42 +74,90 @@ class Double_Q_Critic(nn.Module):
         self.Q_2 = build_net(layers, nn.ReLU, nn.Identity)   
 
     def forward(self, state, action):
-        sa = torch.cat([state, action], 1)
+        sa = torch.cat([state, action], dim=1)
         q1 = self.Q_1(sa)
         q2 = self.Q_2(sa)            
         return q1, q2
-           
-class Reward(nn.Module):
-    def __init__(self, state_dim, action_dim, hid_shape, hid_layers):
-        super(Reward, self).__init__()
-        layers = [state_dim + action_dim] + list(hid_shape) * hid_layers
-        self.rnet = build_net(layers, nn.ReLU, nn.Identity)
-        self.mu_layer = nn.Linear(layers[-1], 1)
-        self.log_std_layer = nn.Linear(layers[-1], 1)
 
-    def forward(self, state, action):
-        sa = torch.cat([state, action], 1)
-        r_out = self.rnet(sa)
-        mu = self.mu_layer(r_out)
-        log_std = self.log_std_layer(r_out)
-        # FIXME:  I think we still nedd to prevent numerical instability
-        log_std = torch.clamp(log_std, min=-20, max=20) 
-        std = torch.exp(log_std)
-        dist = Normal(mu, std)
-        r = dist.rsample()     
-        return r
+class TransitionVAE(nn.Module):
+    def __init__(self, state_dim, action_dim, out_dim, hidden_dim=64, hidden_layers = 1, latent_dim=20):
+        super(TransitionVAE, self).__init__()
+
+        # Encoder layers
+        e_layers = [state_dim * 2 + action_dim] + list(hidden_dim) * hidden_layers
+        self.encoder = build_net(e_layers, nn.ReLU, nn.Identity)
+        self.e_mu = nn.Linear(hidden_dim, latent_dim)
+        self.e_logvar = nn.Linear(hidden_dim, latent_dim)
+        
+        # Decoder layers
+        d_layers = [state_dim + action_dim] + list(hidden_dim) * hidden_layers + [out_dim]
+        self.decoder = build_net(d_layers, nn.ReLU, nn.Identity)
     
-    def sample(self, state, action, num):
-        sa = torch.cat([state, action], 1)
-        r_out = self.rnet(sa) 
-        mu = self.mu_layer(r_out)
-        log_std = self.log_std_layer(r_out)
-        #log_std = torch.clamp(log_std, 2, -20)  #总感觉这里clamp不利于学习
-        std = torch.exp(log_std)
-        dist = Normal(mu, std)
-        r = dist.rsample(sample_shape=(num,)) #shape = (num, batch_size, 1)
-        r = r.permute(1, 0, 2).squeeze(-1) #shape = (batch_size, num)
-        return r
+    def encode(self, s, a, s_next):
+        x = torch.cat([s, a, s_next], dim=1)
+        h = self.encoder(x)
+        mu = self.e_mu(h)
+        logvar = self.e_logvar(h)
+        return mu, logvar
+    
+    def reparameterize(self, mu, logvar):
+        std = torch.exp(0.5 * logvar)
+        eps = torch.randn_like(std)
+        return mu + eps * std
+    
+    def decode(self, s, a, z):
+        x = torch.cat([s, a, z], dim=1)
+        s_next_recon = self.decoder(x)
+        return s_next_recon
+    
+    def forward(self, s, a, s_next):
+        mu, logvar = self.encode(s, a, s_next)
+        z = self.reparameterize(mu, logvar)
+        s_next_recon = self.decode(s, a, z)
+        return s_next_recon, mu, logvar  
+    
+    def sample(self, s, a, num_samples):
+        batch_size = s.size(0)
+        # Sample latent vectors from the prior with shape (batch, num_samples, latent_dim)
+        z = torch.randn(batch_size, num_samples, self.latent_dim, device=s.device)
+        # Expand s and a along a new sample dimension so that their shapes become (batch, num_samples, feature_dim)
+        s_expanded = s.unsqueeze(1).expand(-1, num_samples, -1)
+        a_expanded = a.unsqueeze(1).expand(-1, num_samples, -1)
+        s_next_samples = self.decoder(s_expanded, a_expanded, z)
+        return s_next_samples     
+    
+    
+# class Reward(nn.Module):
+#     def __init__(self, state_dim, action_dim, hid_shape, hid_layers):
+#         super(Reward, self).__init__()
+#         layers = [state_dim + action_dim] + list(hid_shape) * hid_layers
+#         self.rnet = build_net(layers, nn.ReLU, nn.Identity)
+#         self.mu_layer = nn.Linear(layers[-1], 1)
+#         self.log_std_layer = nn.Linear(layers[-1], 1)
+
+#     def forward(self, state, action):
+#         sa = torch.cat([state, action], 1)
+#         r_out = self.rnet(sa)
+#         mu = self.mu_layer(r_out)
+#         log_std = self.log_std_layer(r_out)
+#         # FIXME:  I think we still nedd to prevent numerical instability
+#         log_std = torch.clamp(log_std, min=-20, max=20) 
+#         std = torch.exp(log_std)
+#         dist = Normal(mu, std)
+#         r = dist.rsample()     
+#         return r
+    
+#     def sample(self, state, action, num):
+#         sa = torch.cat([state, action], 1)
+#         r_out = self.rnet(sa) 
+#         mu = self.mu_layer(r_out)
+#         log_std = self.log_std_layer(r_out)
+#         #log_std = torch.clamp(log_std, 2, -20)  #总感觉这里clamp不利于学习
+#         std = torch.exp(log_std)
+#         dist = Normal(mu, std)
+#         r = dist.rsample(sample_shape=(num,)) #shape = (num, batch_size, 1)
+#         r = r.permute(1, 0, 2).squeeze(-1) #shape = (batch_size, num)
+#         return r
             
 class ReplayBuffer(object):
     def __init__(self, state_dim, action_dim, max_size, device):
@@ -121,65 +173,67 @@ class ReplayBuffer(object):
         self.dw = torch.zeros((max_size, 1) ,dtype=torch.bool,device=self.device)
 
     def add(self, s, a, r, s_next, dw):
-        #每次只放入一个时刻的数据
         self.s[self.ptr] = torch.from_numpy(s).to(self.device)
         self.a[self.ptr] = torch.from_numpy(a).to(self.device) # Note that a is numpy.array
         self.r[self.ptr] = r
         self.s_next[self.ptr] = torch.from_numpy(s_next).to(self.device)
         self.dw[self.ptr] = dw
 
-        self.ptr = (self.ptr + 1) % self.max_size #存满了又重头开始存
+        self.ptr = (self.ptr + 1) % self.max_size
         self.size = min(self.size + 1, self.max_size)
 
     def sample(self, batch_size):
         ind = torch.randint(0, self.size, device=self.device, size=(batch_size,))
         return self.s[ind], self.a[ind], self.r[ind], self.s_next[ind], self.dw[ind]
 
-# Env Class with Reward Shift
-class NoiseRewardWrapper(gym.RewardWrapper):
-    def __init__(self, env, func):
-        super().__init__(env)
-        self.env = env
-        self._max_episode_steps = env._max_episode_steps # I don't why it can't inherit
-        self.func = func
-        print('Env with Reward Shift Made.')
+# # Env Class with Reward Shift
+# class NoiseRewardWrapper(gym.RewardWrapper):
+#     def __init__(self, env, func):
+#         super().__init__(env)
+#         self.env = env
+#         self._max_episode_steps = env._max_episode_steps # I don't why it can't inherit
+#         self.func = func
+#         print('Env with Reward Shift Made.')
 
-    def step(self, action):
-        obs, reward, dw, tr, info = self.env.step(action)
-        modified_obs = obs
-        modified_obs[2] = self.func(obs[2])
-        return modified_obs, reward, dw, tr, info
+#     def step(self, action):
+#         obs, reward, dw, tr, info = self.env.step(action)
+#         modified_obs = obs
+#         modified_obs[2] = self.func(obs[2])
+#         return modified_obs, reward, dw, tr, info
 
-class ScalingActionWrapper(gym.ActionWrapper):
+# class ScalingActionWrapper(gym.ActionWrapper):
 
-    """Assumes that actions are symmetric about zero!!!"""
+#     """Assumes that actions are symmetric about zero!!!"""
 
-    def __init__(self, env, scaling_factors: np.array):
-        super(ScalingActionWrapper, self).__init__(env)
-        self._max_episode_steps = env._max_episode_steps # I don't why it can't inherit
-        self.scaling_factors = scaling_factors
+#     def __init__(self, env, scaling_factors: np.array):
+#         super(ScalingActionWrapper, self).__init__(env)
+#         self._max_episode_steps = env._max_episode_steps # I don't why it can't inherit
+#         self.scaling_factors = scaling_factors
 
-    def action(self, action):
-        return self.scaling_factors * action
+#     def action(self, action):
+#         return self.scaling_factors * action
 
 
 class SAC_countinuous():
     def __init__(self, **kwargs):
         # Init hyperparameters for agent, just like "self.gamma = opt.gamma, self.lambd = opt.lambd, ..."
         self.__dict__.update(kwargs)
-        if self.robust:
-            print('This is a robust policy.\n')
-            if self.train_noise and self.eval_noise:
-                train_var = self.train_std ** 2
-                eval_var = self.eval_std ** 2
-                self.delta = 0.5*(eval_var / train_var + math.log(train_var / eval_var)- 1) # KL divergence between two Gaussian distributions with same mean.
-                assert self.delta >= 0
-            else:
-                self.delta = 0
+        # if self.robust:
+        #     print('This is a robust policy.\n')
+        #     if self.train_noise and self.eval_noise:
+        #         train_var = self.train_std ** 2
+        #         eval_var = self.eval_std ** 2
+        #         self.delta = 0.5*(eval_var / train_var + math.log(train_var / eval_var)- 1) # KL divergence between two Gaussian distributions with same mean.
+        #         assert self.delta >= 0
+        #     else:
+        #         self.delta = 0
         self.tau = 0.005
 
         self.actor = Actor(self.state_dim, self.action_dim, (self.net_width, self.net_width), self.net_layer).to(self.device)
         self.actor_optimizer = torch.optim.Adam(self.actor.parameters(), lr=self.a_lr)
+        
+        self.v_critic = V_Critic(self.state_dim, (self.net_width, self.net_width), self.net_layer).to(self.device)
+        self.v_critic_optimizer = torch.optim.Adam(self.v_critic.parameters(), lr=self.c_lr)
 
         self.q_critic = Double_Q_Critic(self.state_dim, self.action_dim, (self.net_width, self.net_width), self.net_layer).to(self.device)
         self.q_critic_optimizer = torch.optim.Adam(self.q_critic.parameters(), lr=self.c_lr)
@@ -189,7 +243,7 @@ class SAC_countinuous():
             p.requires_grad = False
         
         if self.robust:    
-            self.reward = Reward(self.state_dim, self.action_dim, (self.net_width, self.net_width), self.net_layer).to(self.device)
+            self.reward = TransitionVAE(self.state_dim, self.action_dim, self.state_dim, self.net_width, self.net_layer).to(self.device)
             self.reward_optimizer = torch.optim.Adam(self.reward.parameters(), lr=self.r_lr)
             
             self.log_beta = nn.Parameter(torch.ones((self.batch_size,1), requires_grad=True, device=self.device) * 1.0)
@@ -211,8 +265,10 @@ class SAC_countinuous():
             a, _ = self.actor(state, deterministic, with_logprob=False)
         return a.cpu().numpy()[0]
     
-    # def reward_adapt(self, r, mean):
-    #     return r / mean * self.delta   
+    def vae_loss(s_next, s_next_recon, mu, logvar):
+        recon_loss = F.mse_loss(s_next_recon, s_next, reduction='sum')
+        kl_div = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
+        return recon_loss + kl_div
     
     def dual_func(self, r, beta):
         # Jointly optimize, in tensor
@@ -226,13 +282,11 @@ class SAC_countinuous():
 
     def train(self, robust_update, printer):
         s, a, r, s_next, dw = self.replay_buffer.sample(self.batch_size)
-        # time1 = time.time()
-        # if self.robust and self.delta >0:
-        #     r = self.reward_adapt(r, self.r_mean)
+        
         #----------------------------- ↓↓↓↓↓ Update R Net ↓↓↓↓↓ ------------------------------#
         if self.robust:
-            r_pred = self.reward(s, a)
-            r_loss = F.mse_loss(r_pred, r)
+            s_next_recon, mu, logvar = self.reward(s, a, s_next)
+            r_loss = self.vae_loss(s_next, s_next_recon, mu, logvar)
             self.reward_optimizer.zero_grad()
             r_loss.backward()
             self.reward_optimizer.step()
@@ -242,8 +296,8 @@ class SAC_countinuous():
         if robust_update:   
             with torch.no_grad():
                 r_sample = self.reward.sample(s, a, 200)
-                if printer: 
-                    print("r_est:", (torch.abs(r - r_sample.mean(dim=1, keepdim=True)) / r).mean().item())
+                # if printer: 
+                #     print("r_est:", (torch.abs(r - r_sample.mean(dim=1, keepdim=True)) / r).mean().item())
                 
             # Reinitiate variable to optimize.
             # FIXME: Do not reinitialize β. Treat it as a persistent parameter updated via gradient descent, 
@@ -278,8 +332,7 @@ class SAC_countinuous():
             #     print((r-r_opt).norm(p=1).item(), r_opt.norm(p=1).item())
             # if printer:
             #     print((r_opt1 - r_opt2).norm(p=1).item(), r_opt2.norm(p=1).item())
-            # time2 = time.time()
-            # print(time2 - time1)
+
 
         #----------------------------- ↓↓↓↓↓ Update Q Net ↓↓↓↓↓ ------------------------------#
         with torch.no_grad():
@@ -292,8 +345,8 @@ class SAC_countinuous():
                 target_Q = r_opt + (~dw) * self.gamma * (target_Q - self.alpha * log_pi_a_next)
             else:
                 target_Q = r + (~dw) * self.gamma * (target_Q - self.alpha * log_pi_a_next) 
-            if printer:
-                print(torch.max(target_Q).item(), torch.min(target_Q).item())
+            # if printer:
+            #     print(torch.max(target_Q).item(), torch.min(target_Q).item())
             #############################################################
 
         # Get current Q estimates
@@ -302,18 +355,17 @@ class SAC_countinuous():
         # JQ(θ)
         q_loss = F.mse_loss(current_Q1, target_Q) + F.mse_loss(current_Q2, target_Q) 
         
-        if self.robust:
-            for name, param in self.q_critic.named_parameters():
-                if 'weight' in name:
-                    q_loss += param.pow(2).sum() * self.reg_coef
+        # if self.robust:
+        #     for name, param in self.q_critic.named_parameters():
+        #         if 'weight' in name:
+        #             q_loss += param.pow(2).sum() * self.reg_coef
         
         self.q_critic_optimizer.zero_grad()
         q_loss.backward()
         self.q_critic_optimizer.step()
         if printer:
             print(f"q_loss: {q_loss.item()}")
-        # time3 = time.time()
-        # print(time3 - time2)
+
 
         #----------------------------- ↓↓↓↓↓ Update Actor Net ↓↓↓↓↓ ------------------------------#
         # Freeze critic so you don't waste computational effort computing gradients for them when update actor
@@ -338,8 +390,6 @@ class SAC_countinuous():
         
         for params in self.q_critic.parameters():
             params.requires_grad = True
-        # time4 = time.time()
-        # print(time4 - time3)
 
         #----------------------------- ↓↓↓↓↓ Update alpha ↓↓↓↓↓ ------------------------------#
         if self.adaptive_alpha: # Adaptive alpha SAC
@@ -348,17 +398,12 @@ class SAC_countinuous():
             self.alpha_optim.zero_grad()
             alpha_loss.backward()
             self.alpha_optim.step()
-            self.alpha = self.log_alpha.exp()
-        
-        if printer:
-            print("alpha = ", self.alpha.item())
+            self.alpha = self.log_alpha.exp() 
 
         #----------------------------- ↓↓↓↓↓ Update Target Net ↓↓↓↓↓ ------------------------------#
         for param, target_param in zip(self.q_critic.parameters(), self.q_critic_target.parameters()):
             target_param.data.copy_(self.tau * param.data + (1 - self.tau) * target_param.data)
-        time5 = time.time()
-        # print(time5 - time4)
-        # print("\n")
+
 
     def save(self, EnvName):
         params = f"{self.train_std}_{self.eval_std}_{self.robust}_new"
@@ -395,19 +440,24 @@ def main(opt):
     ]
 
     # 2. Create training and evaluation environments
-    env = gym.make(
-        EnvName[opt.EnvIdex]
-    )
-    # env = ScalingActionWrapper(env, scaling_factors=env.action_space.high)
-    if opt.train_noise:
-        train_dist = Normal(0, opt.train_std)
-        env = NoiseRewardWrapper(env, lambda r: r + train_dist.sample())
+    env = gym.make(EnvName[opt.EnvIdex])
+    
+    if not opt.noise:
+        eval_env =  gym.make(EnvName[opt.EnvIdex])
+    else:
+        if opt.EnvIdex == 0:
+            eval_env = CustomPendulumEnv(length=opt.l) #Change pendulum length, default=1.0
+        
+    # # env = ScalingActionWrapper(env, scaling_factors=env.action_space.high)
+    # if opt.train_noise:
+    #     train_dist = Normal(0, opt.train_std)
+    #     env = NoiseRewardWrapper(env, lambda r: r + train_dist.sample())
 
-    eval_env = gym.make(EnvName[opt.EnvIdex])
-    # eval_env = ScalingActionWrapper(eval_env, scaling_factors=env.action_space.high)
-    if opt.eval_noise:
-        eval_dist = Normal(0, opt.eval_std)
-        eval_env = NoiseRewardWrapper(eval_env, lambda r: r + eval_dist.sample())
+    # eval_env = gym.make(EnvName[opt.EnvIdex])
+    # # eval_env = ScalingActionWrapper(eval_env, scaling_factors=env.action_space.high)
+    # if opt.eval_noise:
+    #     eval_dist = Normal(0, opt.eval_std)
+    #     eval_env = NoiseRewardWrapper(eval_env, lambda r: r + eval_dist.sample())
 
     # 3. Extract environment properties
     opt.state_dim = env.observation_space.shape[0]
@@ -480,7 +530,6 @@ def main(opt):
         for _ in range(eval_num):
             score = evaluate_policy(eval_env, agent, turns=1)
             scores.append(score)
-            # print(score, noise_score)
         # filename = "new-robust.txt" if opt.robust else "new-non-robust.txt"
         # with open(filename, 'a') as f:
         #     f.write(f"{[BrifEnvName[opt.EnvIdex], opt.train_std, opt.eval_std, delta] + [np.mean(scores), np.std(scores), np.quantile(scores, 0.9), np.quantile(scores, 0.1)]}\n")
