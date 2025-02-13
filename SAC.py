@@ -1,4 +1,3 @@
-import torch.optim.adam
 from utils import *
 
 import random
@@ -7,6 +6,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.distributions import Normal, Categorical
+import torch.optim.adam
 import copy
 from datetime import datetime
 import gymnasium as gym
@@ -63,7 +63,7 @@ class V_Critic(nn.Module):
         self.V = build_net(layers, nn.ReLU, nn.Identity)
         
     def forward(self, state):
-        return self.V(s)
+        return self.V(state)
 
 class Double_Q_Critic(nn.Module):
     def __init__(self, state_dim, action_dim, hid_shape, hid_layers):
@@ -234,13 +234,13 @@ class SAC_countinuous():
         
         self.v_critic = V_Critic(self.state_dim, (self.net_width, self.net_width), self.net_layer).to(self.device)
         self.v_critic_optimizer = torch.optim.Adam(self.v_critic.parameters(), lr=self.c_lr)
+        self.v_critic_target = copy.deepcopy(self.v_critic)
+        # Freeze target networks with respect to optimizers (only update via polyak averaging)
+        for p in self.v_critic_target.parameters():
+            p.requires_grad = False
 
         self.q_critic = Double_Q_Critic(self.state_dim, self.action_dim, (self.net_width, self.net_width), self.net_layer).to(self.device)
         self.q_critic_optimizer = torch.optim.Adam(self.q_critic.parameters(), lr=self.c_lr)
-        self.q_critic_target = copy.deepcopy(self.q_critic)
-        # Freeze target networks with respect to optimizers (only update via polyak averaging)
-        for p in self.q_critic_target.parameters():
-            p.requires_grad = False
         
         if self.robust:    
             self.reward = TransitionVAE(self.state_dim, self.action_dim, self.state_dim, self.net_width, self.net_layer).to(self.device)
@@ -335,18 +335,17 @@ class SAC_countinuous():
 
 
         #----------------------------- ↓↓↓↓↓ Update Q Net ↓↓↓↓↓ ------------------------------#
+        for params in self.q_critic.parameters():
+            params.requires_grad = True
+            
         with torch.no_grad():
-            a_next, log_pi_a_next = self.actor(s_next, deterministic=False, with_logprob=True)
-            target_Q1, target_Q2 = self.q_critic_target(s_next, a_next)
-            target_Q = torch.min(target_Q1, target_Q2)
+            V_next = self.v_critic_target(s_next)
             #############################################################		
-            ### r + γ * (1 - done) * E_pi(Q(s',a') - α * logπ(a'|s')) ###
+            ### Q(s, a) = r + γ * (1 - done) * V(s') ###
             if robust_update:
-                target_Q = r_opt + (~dw) * self.gamma * (target_Q - self.alpha * log_pi_a_next)
+                target_Q = r + (~dw) * self.gamma * V_next
             else:
-                target_Q = r + (~dw) * self.gamma * (target_Q - self.alpha * log_pi_a_next) 
-            # if printer:
-            #     print(torch.max(target_Q).item(), torch.min(target_Q).item())
+                target_Q = r + (~dw) * self.gamma * V_next
             #############################################################
 
         # Get current Q estimates
@@ -355,26 +354,41 @@ class SAC_countinuous():
         # JQ(θ)
         q_loss = F.mse_loss(current_Q1, target_Q) + F.mse_loss(current_Q2, target_Q) 
         
-        # if self.robust:
-        #     for name, param in self.q_critic.named_parameters():
-        #         if 'weight' in name:
-        #             q_loss += param.pow(2).sum() * self.reg_coef
-        
         self.q_critic_optimizer.zero_grad()
         q_loss.backward()
         self.q_critic_optimizer.step()
         if printer:
             print(f"q_loss: {q_loss.item()}")
-
-
-        #----------------------------- ↓↓↓↓↓ Update Actor Net ↓↓↓↓↓ ------------------------------#
-        # Freeze critic so you don't waste computational effort computing gradients for them when update actor
+        
+        #----------------------------- ↓↓↓↓↓ Update V Net ↓↓↓↓↓ ------------------------------#
         for params in self.q_critic.parameters():
             params.requires_grad = False
-
+        for params in self.v_critic.parameters():
+            params.requires_grad = True
+            
         a, log_pi_a = self.actor(s, deterministic=False, with_logprob=True)
         current_Q1, current_Q2 = self.q_critic(s, a)
         Q = torch.min(current_Q1, current_Q2)
+        ### V(s) = E_pi(Q(s,a) - α * logπ(a|s)) ###
+        target_V = (Q - self.alpha * log_pi_a).detach()
+        
+        current_V = self.v_critic(s)
+        v_loss = F.mse_loss(current_V, target_V)
+        
+        self.v_critic_optimizer.zero_grad()
+        v_loss.backward()
+        self.v_critic_optimizer.step()
+        if printer:
+            print(f"v_loss: {v_loss.item()}")
+
+        #----------------------------- ↓↓↓↓↓ Update Actor Net ↓↓↓↓↓ ------------------------------#
+        # Freeze critic so you don't waste computational effort computing gradients for them when update actor
+        for params in self.v_critic.parameters():
+            params.requires_grad = False
+
+        # a, log_pi_a = self.actor(s, deterministic=False, with_logprob=True)
+        # current_Q1, current_Q2 = self.q_critic(s, a)
+        # Q = torch.min(current_Q1, current_Q2)
 
         # Entropy Regularization
         # Note that the entropy term is not included in the loss function
@@ -387,9 +401,6 @@ class SAC_countinuous():
         self.actor_optimizer.step()
         if printer:
             print(f"a_loss: {a_loss.item()}")
-        
-        for params in self.q_critic.parameters():
-            params.requires_grad = True
 
         #----------------------------- ↓↓↓↓↓ Update alpha ↓↓↓↓↓ ------------------------------#
         if self.adaptive_alpha: # Adaptive alpha SAC
@@ -401,7 +412,7 @@ class SAC_countinuous():
             self.alpha = self.log_alpha.exp() 
 
         #----------------------------- ↓↓↓↓↓ Update Target Net ↓↓↓↓↓ ------------------------------#
-        for param, target_param in zip(self.q_critic.parameters(), self.q_critic_target.parameters()):
+        for param, target_param in zip(self.v_critic.parameters(), self.v_critic_target.parameters()):
             target_param.data.copy_(self.tau * param.data + (1 - self.tau) * target_param.data)
 
 
@@ -446,7 +457,7 @@ def main(opt):
         eval_env =  gym.make(EnvName[opt.EnvIdex])
     else:
         if opt.EnvIdex == 0:
-            eval_env = CustomPendulumEnv(length=opt.l) #Change pendulum length, default=1.0
+            eval_env = gym.make("CustomPendulum-v1", std=opt.std) #Change pendulum length, default=1.0
         
     # # env = ScalingActionWrapper(env, scaling_factors=env.action_space.high)
     # if opt.train_noise:
@@ -498,12 +509,16 @@ def main(opt):
         # timenow = str(datetime.now())[:-10]    # e.g. 2025-01-10 17:45
         # timenow = ' ' + timenow[:13] + '_' + timenow[-2:]  # e.g. ' 2025-01-10_45'
         writepath = f"runs/SAC/{BrifEnvName[opt.EnvIdex]}"
-        if opt.train_noise:
-            writepath += f"/Train Noise {opt.train_std}"
-        if opt.eval_noise:
-            writepath += f"/Eval Noise {opt.eval_std}"
+        if opt.noise:
+            writepath += f"_Noise {opt.std}"
         if opt.robust:
-             writepath += f"/Robust"
+            writepath += f"_Robust"
+        # if opt.train_noise:
+        #     writepath += f"/Train Noise {opt.train_std}"
+        # if opt.eval_noise:
+        #     writepath += f"/Eval Noise {opt.eval_std}"
+        # if opt.robust:
+        #      writepath += f"/Robust"
         if os.path.exists(writepath):
             shutil.rmtree(writepath)
         writer = SummaryWriter(log_dir=writepath)
@@ -614,8 +629,8 @@ def main(opt):
                     )
 
                 # (e) Save model at fixed intervals
-                if total_steps % opt.save_interval == 0:
-                    agent.save(BrifEnvName[opt.EnvIdex])
+                # if total_steps % opt.save_interval == 0:
+                #     agent.save(BrifEnvName[opt.EnvIdex])
         
         # 11.5 Compute score of 20 episodes
         eval_num = 20
@@ -624,12 +639,13 @@ def main(opt):
         for _ in range(eval_num):
             score = evaluate_policy(eval_env, agent, turns=1)
             scores.append(score)
-        filename = "robust.txt" if opt.robust else "non-robust.txt"
-        with open(filename, 'a') as f:
-              f.write(f"{[BrifEnvName[opt.EnvIdex], opt.train_std, opt.eval_std] + scores}\n")
+        print(np.mean(scores), np.std(scores))
+        # filename = "robust.txt" if opt.robust else "non-robust.txt"
+        # with open(filename, 'a') as f:
+        #       f.write(f"{[BrifEnvName[opt.EnvIdex], opt.train_std, opt.eval_std] + scores}\n")
 
         # 11.55 Save model at last
-        agent.save(BrifEnvName[opt.EnvIdex])
+        # agent.save(BrifEnvName[opt.EnvIdex])
 
         # 12. Close environments after training
         env.close()
@@ -667,10 +683,13 @@ if __name__ == '__main__':
     parser.add_argument('--reg_coef', type=float, default=0.0, help='Regulator of Network Parameters')
     parser.add_argument('--reward_adapt', type=bool, default=True, help='Reward adaptation')
     parser.add_argument('--robust', type=bool, default=False, help='Robust policy')
-    parser.add_argument('--train_noise', type=bool, default=False, help='Train Env is Noisy')
-    parser.add_argument('--train_std', type=float, default=1.0, help='Standard Deviation of Train Env Reward')
-    parser.add_argument('--eval_noise', type=bool, default=False, help='Evaluation Env is Noisy')
-    parser.add_argument('--eval_std', type=float, default=1.0, help='Standard Deviation of Eval Env Reward')
+    parser.add_argument('--noise', type=bool, default=False, help='Evaluation Env Noise')
+    parser.add_argument('--std', type=float, default=0.0, help='Evaluation Env Noise')
+    # parser.add_argument('--percentage', type=float, default=0.0, help='Noise Percentage')
+    # parser.add_argument('--train_noise', type=bool, default=False, help='Train Env is Noisy')
+    # parser.add_argument('--train_std', type=float, default=1.0, help='Standard Deviation of Train Env Reward')
+    # parser.add_argument('--eval_noise', type=bool, default=False, help='Evaluation Env is Noisy')
+    # parser.add_argument('--eval_std', type=float, default=1.0, help='Standard Deviation of Eval Env Reward')
     opt = parser.parse_args()
     opt.device = torch.device(opt.device) # from str to torch.device
 
