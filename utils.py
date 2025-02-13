@@ -1,12 +1,10 @@
 import argparse
-import torch
 import torch.nn as nn
 import numpy as np
-import random
-from torch.distributions import Normal
-from math import exp
-import gymnasium as gym
-from gymnasium.envs.classic_control.pendulum import PendulumEnv
+from numpy.random import normal
+from gymnasium.envs.classic_control.pendulum import PendulumEnv, angle_normalize
+from gymnasium.envs.registration import register
+
 
 def build_net(layer_shape, hidden_activation, output_activation):
     '''Build net with for loop'''
@@ -29,9 +27,41 @@ def build_net(layer_shape, hidden_activation, output_activation):
 
 # Disrupted Env
 class CustomPendulumEnv(PendulumEnv):
-    def __init__(self, render_mode=None, g=10.0, length=1.0):
-        super().__init__(render_mode=render_mode, g=g)
-        self.l = length  # override the pendulum length
+    def __init__(self, render_mode=None, std=0.0):
+        super().__init__(render_mode=render_mode)
+        self.noise_std = std
+        print(f"Penludum Env with Observation Noise STD={std}.")
+        
+    def step(self, u):
+        th, thdot = self.state  # th := theta
+
+        g = self.g
+        m = self.m
+        l = self.l
+        dt = self.dt
+
+        u = np.clip(u, -self.max_torque, self.max_torque)[0]
+        self.last_u = u  # for rendering
+        costs = angle_normalize(th) ** 2 + 0.1 * thdot**2 + 0.001 * (u**2)
+
+        newthdot = thdot + (3 * g / (2 * l) * np.sin(th) + 3.0 / (m * l**2) * u) * dt
+        newthdot = np.clip(newthdot, -self.max_speed, self.max_speed)
+        newth = th + newthdot * dt + normal(0, self.noise_std) # theta computation is not accurate.
+
+        self.state = np.array([newth, newthdot])
+
+        if self.render_mode == "human":
+            self.render()
+        # truncation=False as the time limit is handled by the `TimeLimit` wrapper added during `make`
+        return self._get_obs(), -costs, False, False, {}
+
+register(
+    id="CustomPendulum-v1",
+    entry_point="utils:CustomPendulumEnv",
+    max_episode_steps=200,
+    kwargs={'std': 0.0}
+)
+
 
 # Reward engineering for better training
 def Reward_adapter(r, EnvIdex):
@@ -58,7 +88,6 @@ def Action_adapter_reverse(act,max_action):
 
 def evaluate_policy(env, agent, turns = 5):
     total_scores = 0
-    dist = Normal(0.0, 0.1)
     for j in range(turns):
         s, info = env.reset()
         done = False
