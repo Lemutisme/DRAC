@@ -17,6 +17,17 @@ from scipy.special import logsumexp
 from scipy.optimize import minimize, minimize_scalar
 
 ######################################################
+## NOTE: Current Template
+# Actor, Double_Q_Critic, V_Critic: MLP
+# Transition learner: VAE
+# Three dual optimiztion options:
+# 1. beta, minimize loss.mean()
+# 2. functional g, minimize scalar loss, equivalent to replace beta with g(s,a)
+# 3. independent optimize, too slow
+######################################################
+
+
+######################################################
 ## TODO: Add the following imlementation
 
 ######################################################
@@ -58,12 +69,14 @@ class Actor(nn.Module):
 class V_Critic(nn.Module):
     def __init__(self, state_dim, hid_shape, hid_layers):
         super(V_Critic, self).__init__()
-        layers = [state_dim] + list(hid_shape) * hid_layers + [1]
+        self.state_dim = state_dim
         
+        layers = [state_dim] + list(hid_shape) * hid_layers + [1]
         self.V = build_net(layers, nn.ReLU, nn.Identity)
         
     def forward(self, state):
-        return self.V(state)
+        output = self.V(state)
+        return output
 
 class Double_Q_Critic(nn.Module):
     def __init__(self, state_dim, action_dim, hid_shape, hid_layers):
@@ -80,17 +93,18 @@ class Double_Q_Critic(nn.Module):
         return q1, q2
 
 class TransitionVAE(nn.Module):
-    def __init__(self, state_dim, action_dim, out_dim, hidden_dim=64, hidden_layers = 1, latent_dim=20):
+    def __init__(self, state_dim, action_dim, out_dim, hidden_dim=64, hidden_layers=1, latent_dim=5):
         super(TransitionVAE, self).__init__()
+        self.latent_dim = latent_dim
 
         # Encoder layers
         e_layers = [state_dim * 2 + action_dim] + list(hidden_dim) * hidden_layers
         self.encoder = build_net(e_layers, nn.ReLU, nn.Identity)
-        self.e_mu = nn.Linear(hidden_dim, latent_dim)
-        self.e_logvar = nn.Linear(hidden_dim, latent_dim)
+        self.e_mu = nn.Linear(e_layers[-1], latent_dim)
+        self.e_logvar = nn.Linear(e_layers[-1], latent_dim)
         
         # Decoder layers
-        d_layers = [state_dim + action_dim] + list(hidden_dim) * hidden_layers + [out_dim]
+        d_layers = [state_dim + action_dim + latent_dim] + list(hidden_dim) * hidden_layers + [out_dim]
         self.decoder = build_net(d_layers, nn.ReLU, nn.Identity)
     
     def encode(self, s, a, s_next):
@@ -106,7 +120,7 @@ class TransitionVAE(nn.Module):
         return mu + eps * std
     
     def decode(self, s, a, z):
-        x = torch.cat([s, a, z], dim=1)
+        x = torch.cat([s, a, z], dim=-1)
         s_next_recon = self.decoder(x)
         return s_next_recon
     
@@ -123,41 +137,23 @@ class TransitionVAE(nn.Module):
         # Expand s and a along a new sample dimension so that their shapes become (batch, num_samples, feature_dim)
         s_expanded = s.unsqueeze(1).expand(-1, num_samples, -1)
         a_expanded = a.unsqueeze(1).expand(-1, num_samples, -1)
-        s_next_samples = self.decoder(s_expanded, a_expanded, z)
-        return s_next_samples     
+        s_next_samples = self.decode(s_expanded, a_expanded, z)
+        return s_next_samples   
     
-    
-# class Reward(nn.Module):
-#     def __init__(self, state_dim, action_dim, hid_shape, hid_layers):
-#         super(Reward, self).__init__()
-#         layers = [state_dim + action_dim] + list(hid_shape) * hid_layers
-#         self.rnet = build_net(layers, nn.ReLU, nn.Identity)
-#         self.mu_layer = nn.Linear(layers[-1], 1)
-#         self.log_std_layer = nn.Linear(layers[-1], 1)
+class dual(nn.Module):
+    def __init__(self, state_dim, action_dim, hid_shape, hid_layers):
+        super(dual, self).__init__()  
+        layers = [state_dim + action_dim] + list(hid_shape) * hid_layers + [1]
 
-#     def forward(self, state, action):
-#         sa = torch.cat([state, action], 1)
-#         r_out = self.rnet(sa)
-#         mu = self.mu_layer(r_out)
-#         log_std = self.log_std_layer(r_out)
-#         # FIXME:  I think we still nedd to prevent numerical instability
-#         log_std = torch.clamp(log_std, min=-20, max=20) 
-#         std = torch.exp(log_std)
-#         dist = Normal(mu, std)
-#         r = dist.rsample()     
-#         return r
-    
-#     def sample(self, state, action, num):
-#         sa = torch.cat([state, action], 1)
-#         r_out = self.rnet(sa) 
-#         mu = self.mu_layer(r_out)
-#         log_std = self.log_std_layer(r_out)
-#         #log_std = torch.clamp(log_std, 2, -20)  #总感觉这里clamp不利于学习
-#         std = torch.exp(log_std)
-#         dist = Normal(mu, std)
-#         r = dist.rsample(sample_shape=(num,)) #shape = (num, batch_size, 1)
-#         r = r.permute(1, 0, 2).squeeze(-1) #shape = (batch_size, num)
-#         return r
+        self.G = build_net(layers, nn.ReLU, ExpActivation)
+
+    def forward(self, state, action):
+        sa = torch.cat([state, action], dim=1)          
+        return self.G(sa)
+
+class ExpActivation(nn.Module):
+    def forward(self, x):
+        return torch.exp(x)   
             
 class ReplayBuffer(object):
     def __init__(self, state_dim, action_dim, max_size, device):
@@ -186,47 +182,11 @@ class ReplayBuffer(object):
         ind = torch.randint(0, self.size, device=self.device, size=(batch_size,))
         return self.s[ind], self.a[ind], self.r[ind], self.s_next[ind], self.dw[ind]
 
-# # Env Class with Reward Shift
-# class NoiseRewardWrapper(gym.RewardWrapper):
-#     def __init__(self, env, func):
-#         super().__init__(env)
-#         self.env = env
-#         self._max_episode_steps = env._max_episode_steps # I don't why it can't inherit
-#         self.func = func
-#         print('Env with Reward Shift Made.')
-
-#     def step(self, action):
-#         obs, reward, dw, tr, info = self.env.step(action)
-#         modified_obs = obs
-#         modified_obs[2] = self.func(obs[2])
-#         return modified_obs, reward, dw, tr, info
-
-# class ScalingActionWrapper(gym.ActionWrapper):
-
-#     """Assumes that actions are symmetric about zero!!!"""
-
-#     def __init__(self, env, scaling_factors: np.array):
-#         super(ScalingActionWrapper, self).__init__(env)
-#         self._max_episode_steps = env._max_episode_steps # I don't why it can't inherit
-#         self.scaling_factors = scaling_factors
-
-#     def action(self, action):
-#         return self.scaling_factors * action
-
 
 class SAC_countinuous():
     def __init__(self, **kwargs):
         # Init hyperparameters for agent, just like "self.gamma = opt.gamma, self.lambd = opt.lambd, ..."
         self.__dict__.update(kwargs)
-        # if self.robust:
-        #     print('This is a robust policy.\n')
-        #     if self.train_noise and self.eval_noise:
-        #         train_var = self.train_std ** 2
-        #         eval_var = self.eval_std ** 2
-        #         self.delta = 0.5*(eval_var / train_var + math.log(train_var / eval_var)- 1) # KL divergence between two Gaussian distributions with same mean.
-        #         assert self.delta >= 0
-        #     else:
-        #         self.delta = 0
         self.tau = 0.005
 
         self.actor = Actor(self.state_dim, self.action_dim, (self.net_width, self.net_width), self.net_layer).to(self.device)
@@ -243,11 +203,14 @@ class SAC_countinuous():
         self.q_critic_optimizer = torch.optim.Adam(self.q_critic.parameters(), lr=self.c_lr)
         
         if self.robust:    
-            self.reward = TransitionVAE(self.state_dim, self.action_dim, self.state_dim, self.net_width, self.net_layer).to(self.device)
-            self.reward_optimizer = torch.optim.Adam(self.reward.parameters(), lr=self.r_lr)
+            self.transition = TransitionVAE(self.state_dim, self.action_dim, self.state_dim, (self.net_width, self.net_width), self.net_layer).to(self.device)
+            self.trans_optimizer = torch.optim.Adam(self.transition.parameters(), lr=self.r_lr)
             
             self.log_beta = nn.Parameter(torch.ones((self.batch_size,1), requires_grad=True, device=self.device) * 1.0)
             self.beta_optimizer = torch.optim.Adam([self.log_beta], lr=self.b_lr)
+            
+            self.g = dual(self.state_dim, self.action_dim, (self.net_width, self.net_width), self.net_layer).to(self.device)
+            self.g_optimizer = torch.optim.Adam(self.g.parameters(), lr=self.g_lr)
 
         self.replay_buffer = ReplayBuffer(self.state_dim, self.action_dim, max_size=int(1e6), device=self.device)
 
@@ -265,73 +228,87 @@ class SAC_countinuous():
             a, _ = self.actor(state, deterministic, with_logprob=False)
         return a.cpu().numpy()[0]
     
-    def vae_loss(s_next, s_next_recon, mu, logvar):
+    def vae_loss(self, s_next, s_next_recon, mu, logvar):
         recon_loss = F.mse_loss(s_next_recon, s_next, reduction='sum')
         kl_div = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
         return recon_loss + kl_div
     
-    def dual_func(self, r, beta):
+    def dual_func_g(self, s, a, s_next):
+        size = s_next.shape[1]
+        dual_sa = self.g(s,a)
+        return - dual_sa * (torch.logsumexp(-self.v_critic_target(s_next).squeeze(-1)/dual_sa, dim=1, keepdim=True) - math.log(size)) - dual_sa * self.delta  
+
+    def dual_func_beta(self, s_next, beta):
         # Jointly optimize, in tensor
-        size = r.shape[1]
-        return - beta * (torch.logsumexp(-r/beta, dim=1, keepdim=True) - math.log(size)) - beta * self.delta  
-
-    def dual_func_ind(self, r, beta):
+        size = s_next.shape[1]
+        return - beta * (torch.logsumexp(-self.v_critic_target(s_next).squeeze(-1)/beta, dim=1, keepdim=True) - math.log(size)) - beta * self.delta     
+    
+    def dual_func_ind(self, s_next, beta):
         # Independently optimize, in np.array
-        size = len(r)
-        return - beta * (logsumexp(-r/beta) - math.log(size)) - beta * self.delta           
+        size = s_next.shape[-1]
+        v_next = self.v_critic_target(s_next)
+        v_next = v_next.cpu().numpy()
+        return - beta * (logsumexp(-v_next/beta) - math.log(size)) - beta * self.delta           
 
-    def train(self, robust_update, printer):
+    def train(self, robust_update, printer, writer, step):
         s, a, r, s_next, dw = self.replay_buffer.sample(self.batch_size)
         
         #----------------------------- ↓↓↓↓↓ Update R Net ↓↓↓↓↓ ------------------------------#
         if self.robust:
-            s_next_recon, mu, logvar = self.reward(s, a, s_next)
-            r_loss = self.vae_loss(s_next, s_next_recon, mu, logvar)
-            self.reward_optimizer.zero_grad()
-            r_loss.backward()
-            self.reward_optimizer.step()
+            s_next_recon, mu, logvar = self.transition(s, a, s_next)
+            tr_loss = self.vae_loss(s_next, s_next_recon, mu, logvar)
+            self.trans_optimizer.zero_grad()
+            tr_loss.backward()
+            self.trans_optimizer.step()
             if printer:
-                print(f"r_loss: {r_loss.item()}")
+                print(f"tr_loss: {tr_loss.item()}")
+            if writer:
+                writer.add_scalar('tr_loss', tr_loss, global_step=step)
                 
         if robust_update:   
             with torch.no_grad():
-                r_sample = self.reward.sample(s, a, 200)
-                # if printer: 
-                #     print("r_est:", (torch.abs(r - r_sample.mean(dim=1, keepdim=True)) / r).mean().item())
-                
-            # Reinitiate variable to optimize.
-            # FIXME: Do not reinitialize β. Treat it as a persistent parameter updated via gradient descent, 
-            # just like actor/critic weights. This ensures stable convergence and efficient use of learned robustness information.
-            # Maybe we can get better results and faster convergence.
-            # self.log_beta = nn.Parameter(torch.ones(self.batch_size, requires_grad=True, device=self.device) * initial_beta)
-
+                s_next_sample = self.transition.sample(s, a, 200)
+            
+			#############################################################		
+            ### option1: optimize w.r.t beta ###
             # self.log_beta = nn.Parameter(torch.ones_like(self.log_beta, requires_grad=True, device=self.device) * 0.1)
             # self.beta_optimizer = torch.optim.Adam([self.log_beta], lr=self.b_lr)
 
-            # for _ in range(20):
+            # for _ in range(5):
             #     self.beta = torch.exp(self.log_beta)
-            #     opt_loss = -self.dual_func(r_sample, self.beta)
+            #     opt_loss = -self.dual_func_beta(s_next_sample, self.beta)
             #     self.beta_optimizer.zero_grad()
-            #     # FIXME: opt_loss.mean()
             #     opt_loss.mean().backward()
-            #     # if printer:
-            #     #     print(opt_loss.sum().item())
+            #     if printer:
+            #         print(opt_loss.sum().item())
             #     self.beta_optimizer.step() 
             
-            # r_opt = self.dual_func(r_sample, torch.exp(self.log_beta)) 
+            # V_next_opt = self.dual_func(s_next_sample, torch.exp(self.log_beta)) 
+            #############################################################		
+
+			#############################################################		
+            ### option2: optimize w.r.t functional g ###
+            for _ in range(5):
+                opt_loss = -self.dual_func_g(s, a, s_next_sample)
+                self.g_optimizer.zero_grad()
+                opt_loss.mean().backward()
+                # if printer:
+                #     print(opt_loss.mean().item())    
+                self.g_optimizer.step() 
             
-            # Use scipy.optimize to independently optimize
-            r_sample = r_sample.cpu().numpy()
-            r_opt = np.zeros((self.batch_size, 1))
-            for i in range(r_sample.shape[0]):
-                opt = minimize_scalar(fun=lambda beta:-self.dual_func_ind(r_sample[i], beta), method='Bounded', bounds=(1e-4, 1.0))
-                r_opt[i] = -opt.fun
-            r_opt = torch.from_numpy(r_opt).float()
-            r_opt = r_opt.to('cuda' if torch.cuda.is_available() else 'cpu')
-            # if printer:
-            #     print((r-r_opt).norm(p=1).item(), r_opt.norm(p=1).item())
-            # if printer:
-            #     print((r_opt1 - r_opt2).norm(p=1).item(), r_opt2.norm(p=1).item())
+            V_next_opt = self.dual_func(s, a, s_next_sample) 
+            #############################################################		
+            
+            #############################################################		
+            # option3: Use scipy.optimize to independently optimize
+            # s_next_sample = s_next_sample.cpu().numpy()
+            # V_next_opt = np.zeros((self.batch_size, 1))
+            # for i in range(s_next_sample.shape[0]):
+            #     opt = minimize_scalar(fun=lambda beta:-self.dual_func_ind(s_next_sample[i], beta), method='Bounded', bounds=(1e-4, 1.0))
+            #     V_next_opt[i] = -opt.fun
+            # V_next_opt = torch.from_numpy(V_next_opt).float()
+            # V_next_opt = V_next_opt.to('cuda' if torch.cuda.is_available() else 'cpu')
+            #############################################################		
 
 
         #----------------------------- ↓↓↓↓↓ Update Q Net ↓↓↓↓↓ ------------------------------#
@@ -343,7 +320,9 @@ class SAC_countinuous():
             #############################################################		
             ### Q(s, a) = r + γ * (1 - done) * V(s') ###
             if robust_update:
-                target_Q = r + (~dw) * self.gamma * V_next
+                target_Q = r + (~dw) * self.gamma * V_next_opt
+                if printer:
+                    print((V_next_opt - V_next).norm().item() / V_next.norm().item())
             else:
                 target_Q = r + (~dw) * self.gamma * V_next
             #############################################################
@@ -359,6 +338,8 @@ class SAC_countinuous():
         self.q_critic_optimizer.step()
         if printer:
             print(f"q_loss: {q_loss.item()}")
+        if writer:
+            writer.add_scalar('q_loss', q_loss, global_step=step)
         
         #----------------------------- ↓↓↓↓↓ Update V Net ↓↓↓↓↓ ------------------------------#
         for params in self.q_critic.parameters():
@@ -380,6 +361,8 @@ class SAC_countinuous():
         self.v_critic_optimizer.step()
         if printer:
             print(f"v_loss: {v_loss.item()}")
+        if writer:
+            writer.add_scalar('v_loss', v_loss, global_step=step)
 
         #----------------------------- ↓↓↓↓↓ Update Actor Net ↓↓↓↓↓ ------------------------------#
         # Freeze critic so you don't waste computational effort computing gradients for them when update actor
@@ -393,14 +376,16 @@ class SAC_countinuous():
         # Entropy Regularization
         # Note that the entropy term is not included in the loss function
         #########################################
-          ### Jπ(θ) = E[α * logπ(a|s) - Q(s,a)] ###
+        ### Jπ(θ) = E[α * logπ(a|s) - Q(s,a)] ###
         a_loss = (self.alpha * log_pi_a - Q).mean()
         #########################################
         self.actor_optimizer.zero_grad()
         a_loss.backward()
         self.actor_optimizer.step()
         if printer:
-            print(f"a_loss: {a_loss.item()}")
+            print(f"a_loss: {a_loss.item()}\n")
+        if writer:
+            writer.add_scalar('a_loss', a_loss, global_step=step)
 
         #----------------------------- ↓↓↓↓↓ Update alpha ↓↓↓↓↓ ------------------------------#
         if self.adaptive_alpha: # Adaptive alpha SAC
@@ -417,13 +402,15 @@ class SAC_countinuous():
 
 
     def save(self, EnvName):
-        params = f"{self.train_std}_{self.eval_std}_{self.robust}_new"
-        torch.save(self.actor.state_dict(), "./SAC_model/{}_actor{}.pth".format(EnvName,params))
-        torch.save(self.q_critic.state_dict(), "./SAC_model/{}_q_critic{}.pth".format(EnvName,params))
+        params = f"{self.std}_{self.robust}"
+        torch.save(self.actor.state_dict(), "./SAC_model/{}/actor_{}.pth".format(EnvName,params))
+        torch.save(self.q_critic.state_dict(), "./SAC_model/{}/q_{}.pth".format(EnvName,params))
+        torch.save(self.v_critic.state_dict(), "./SAC_model/{}/v_{}.pth".format(EnvName,params))
 
     def load(self, EnvName, params):
-        self.actor.load_state_dict(torch.load("./SAC_model/{}_actor{}_new.pth".format(EnvName, params), map_location=self.device, weights_only=True))
-        self.q_critic.load_state_dict(torch.load("./SAC_model/{}_q_critic{}_new.pth".format(EnvName, params), map_location=self.device, weights_only=True))
+        self.actor.load_state_dict(torch.load("./SAC_model/{}/actor_{}.pth".format(EnvName, params), map_location=self.device, weights_only=True))
+        self.q_critic.load_state_dict(torch.load("./SAC_model/{}/q_{}.pth".format(EnvName, params), map_location=self.device, weights_only=True))
+        self.v_critic.load_state_dict(torch.load("./SAC_model/{}/v_{}.pth".format(EnvName, params), map_location=self.device, weights_only=True))
 
 def main(opt):
     """
@@ -457,30 +444,13 @@ def main(opt):
         eval_env =  gym.make(EnvName[opt.EnvIdex])
     else:
         if opt.EnvIdex == 0:
-            eval_env = gym.make("CustomPendulum-v1", std=opt.std) #Change pendulum length, default=1.0
-        
-    # # env = ScalingActionWrapper(env, scaling_factors=env.action_space.high)
-    # if opt.train_noise:
-    #     train_dist = Normal(0, opt.train_std)
-    #     env = NoiseRewardWrapper(env, lambda r: r + train_dist.sample())
-
-    # eval_env = gym.make(EnvName[opt.EnvIdex])
-    # # eval_env = ScalingActionWrapper(eval_env, scaling_factors=env.action_space.high)
-    # if opt.eval_noise:
-    #     eval_dist = Normal(0, opt.eval_std)
-    #     eval_env = NoiseRewardWrapper(eval_env, lambda r: r + eval_dist.sample())
+            eval_env = gym.make("CustomPendulum-v1", std=opt.std) # Add noise when updating angle
 
     # 3. Extract environment properties
     opt.state_dim = env.observation_space.shape[0]
     opt.action_dim = env.action_space.shape[0]  # Continuous action dimension
     opt.max_action = float(env.action_space.high[0])  # Action range [-max_action, max_action]
-    opt.max_e_steps = env._max_episode_steps
-    # if opt.EnvIdex == 0:
-    #     opt.Max_train_steps = 1e5
-    # elif opt.EnvIdex == 1:
-    #     opt.Max_train_steps = 5e5
-    # elif opt.EnvIdex == 2:
-    #     opt.Max_train_steps = 1e6       
+    opt.max_e_steps = env._max_episode_steps    
 
     # 4. Print environment info
     print(
@@ -510,15 +480,9 @@ def main(opt):
         # timenow = ' ' + timenow[:13] + '_' + timenow[-2:]  # e.g. ' 2025-01-10_45'
         writepath = f"runs/SAC/{BrifEnvName[opt.EnvIdex]}"
         if opt.noise:
-            writepath += f"_Noise {opt.std}"
+            writepath += f"_Noise_{opt.std}"
         if opt.robust:
             writepath += f"_Robust"
-        # if opt.train_noise:
-        #     writepath += f"/Train Noise {opt.train_std}"
-        # if opt.eval_noise:
-        #     writepath += f"/Eval Noise {opt.eval_std}"
-        # if opt.robust:
-        #      writepath += f"/Robust"
         if os.path.exists(writepath):
             shutil.rmtree(writepath)
         writer = SummaryWriter(log_dir=writepath)
@@ -532,23 +496,20 @@ def main(opt):
 
     # 9. Load a saved model if requested
     if opt.Loadmodel:
-        params = f"{opt.train_std}_{opt.eval_std}_{opt.robust}"
+        params = f"{opt.std}_{opt.robust}"
         agent.load(BrifEnvName[opt.EnvIdex], params)
 
     # 10. If rendering mode is on, run an infinite evaluation loop
     if opt.render:
         eval_num = 100
         scores = []
-        train_var = opt.train_std ** 2
-        eval_var = opt.eval_std ** 2
-        delta = 0.5*(eval_var / train_var + math.log(train_var / eval_var)- 1)
         for _ in range(eval_num):
             score = evaluate_policy(eval_env, agent, turns=1)
             scores.append(score)
         # filename = "new-robust.txt" if opt.robust else "new-non-robust.txt"
         # with open(filename, 'a') as f:
         #     f.write(f"{[BrifEnvName[opt.EnvIdex], opt.train_std, opt.eval_std, delta] + [np.mean(scores), np.std(scores), np.quantile(scores, 0.9), np.quantile(scores, 0.1)]}\n")
-        print(f"{[BrifEnvName[opt.EnvIdex], opt.train_std, opt.eval_std, delta] + [np.mean(scores), np.std(scores), np.quantile(scores, 0.9), np.quantile(scores, 0.1)]}\n")    
+        print(f"{[BrifEnvName[opt.EnvIdex]] + [np.mean(scores), np.std(scores), np.quantile(scores, 0.9), np.quantile(scores, 0.1)]}\n")    
         env.close()
         eval_env.close()
             
@@ -567,7 +528,7 @@ def main(opt):
 
             # (b) Interact with environment until episode finishes
             while not done:
-                # Random exploration for first 5 episodes (each episode is up to max_e_steps)
+                # Random exploration for first 50 episodes (each episode is up to max_e_steps)
                 if total_steps < (50 * opt.max_e_steps):
                     # Sample action directly from environment's action space
                     action_env = env.action_space.sample()  # Range: [-max_action, max_action]
@@ -597,24 +558,22 @@ def main(opt):
                 total_steps += 1
 
                 # (c) Train the agent at fixed intervals (batch updates)
-                # if (total_steps < 50 * opt.max_e_steps) and (total_steps % opt.update_every == 0):
-                #     agent.r_mean = torch.max(agent.replay_buffer.r[:agent.replay_buffer.ptr]), torch.min(agent.replay_buffer.r[:agent.replay_buffer.ptr])
-                #     print(agent.r_mean)
-                    
                 if (total_steps >= 50 * opt.max_e_steps) and (total_steps % opt.update_every == 0):
-                    printer = False
-                    if total_steps % 1000 == 0:
+                    if total_steps % 500 == 0:
                         printer = True
+                    writer_copy = writer
                     for i in range(opt.update_every):
-                        if i % opt.robust_update_every == 0:
-                            agent.train(agent.robust, printer)
-                        else:
-                            agent.train(False, printer)
-                        # agent.train(agent.robust, False)
+                        # if i % opt.robust_update_every == 0:
+                        #     agent.train(agent.robust, printer)
+                        # else:
+                        #     agent.train(False, printer)
+                        agent.train(agent.robust, printer, writer_copy, total_steps)
                         printer = False
+                        writer_copy = False
                     
-                    if opt.robust: 
-                       agent.delta *= 0.999
+                    agent.a_lr *= 0.999
+                    agent.c_lr *= 0.999
+                    
                        
                 # (d) Evaluate and log periodically
                 if total_steps % opt.eval_interval == 0:
@@ -629,8 +588,8 @@ def main(opt):
                     )
 
                 # (e) Save model at fixed intervals
-                # if total_steps % opt.save_interval == 0:
-                #     agent.save(BrifEnvName[opt.EnvIdex])
+                if total_steps % opt.save_interval == 0:
+                    agent.save(BrifEnvName[opt.EnvIdex])
         
         # 11.5 Compute score of 20 episodes
         eval_num = 20
@@ -645,7 +604,7 @@ def main(opt):
         #       f.write(f"{[BrifEnvName[opt.EnvIdex], opt.train_std, opt.eval_std] + scores}\n")
 
         # 11.55 Save model at last
-        # agent.save(BrifEnvName[opt.EnvIdex])
+        agent.save(BrifEnvName[opt.EnvIdex])
 
         # 12. Close environments after training
         env.close()
@@ -667,24 +626,26 @@ if __name__ == '__main__':
     parser.add_argument('--save_interval', type=int, default=int(1e4), help='Model saving interval, in steps.')
     parser.add_argument('--eval_interval', type=int, default=int(2e3), help='Model evaluating interval, in steps.')
     parser.add_argument('--update_every', type=int, default=50, help='Training Fraquency, in stpes')
-    parser.add_argument('--robust_update_every', type=int, default=2, help='Training Fraquency, in stpes')
+    # parser.add_argument('--robust_update_every', type=int, default=2, help='Training Fraquency, in stpes')
 
     parser.add_argument('--gamma', type=float, default=0.99, help='Discounted Factor')
     parser.add_argument('--net_width', type=int, default=256, help='Hidden net width')
     parser.add_argument('--net_layer', type=int, default=1, help='Hidden net layers')
     parser.add_argument('--a_lr', type=float, default=5e-3, help='Learning rate of actor')
-    parser.add_argument('--c_lr', type=float, default=5e-3, help='Learning rate of critic')
-    parser.add_argument('--b_lr', type=float, default=3e-4, help='Learning rate of dual-form optimization')
-    parser.add_argument('--r_lr', type=float, default=3e-5, help='Learning rate of reward net')
+    parser.add_argument('--c_lr', type=float, default=5e-5, help='Learning rate of critic')
+    parser.add_argument('--b_lr', type=float, default=5e-5, help='Learning rate of dual-form optimization')
+    parser.add_argument('--g_lr', type=float, default=5e-5, help='Learning rate of dual net')
+    parser.add_argument('--r_lr', type=float, default=5e-5, help='Learning rate of reward net')
     parser.add_argument('--batch_size', type=int, default=256, help='batch_size of training')
     parser.add_argument('--alpha', type=float, default=0.12, help='Entropy coefficient')
     parser.add_argument('--adaptive_alpha', type=str2bool, default=True, help='Use adaptive_alpha or Not')
     
-    parser.add_argument('--reg_coef', type=float, default=0.0, help='Regulator of Network Parameters')
+    # parser.add_argument('--reg_coef', type=float, default=0.0, help='Regulator of Network Parameters')
     parser.add_argument('--reward_adapt', type=bool, default=True, help='Reward adaptation')
     parser.add_argument('--robust', type=bool, default=False, help='Robust policy')
     parser.add_argument('--noise', type=bool, default=False, help='Evaluation Env Noise')
     parser.add_argument('--std', type=float, default=0.0, help='Evaluation Env Noise')
+    parser.add_argument('--delta', type=float, default=0.0, help='Evaluation Env Noise') 
     # parser.add_argument('--percentage', type=float, default=0.0, help='Noise Percentage')
     # parser.add_argument('--train_noise', type=bool, default=False, help='Train Env is Noisy')
     # parser.add_argument('--train_std', type=float, default=1.0, help='Standard Deviation of Train Env Reward')
