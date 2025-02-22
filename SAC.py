@@ -1,14 +1,17 @@
-from utils import *
+from utils import evaluate_policy_SAC as evaluate_policy
+from utils import Action_adapter_symm as Action_adapter
+from utils import Action_adapter_symm_reverse as Action_adapter_reverse
+from utils import build_net, Reward_adapter, str2bool, register
+from continuous_cartpole import register
 
 import random
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.distributions import Normal, Categorical
+from torch.distributions import Normal
 import torch.optim.adam
 import copy
-from datetime import datetime
 import gymnasium as gym
 import os, shutil
 import argparse
@@ -203,6 +206,7 @@ class SAC_countinuous():
         self.q_critic_optimizer = torch.optim.Adam(self.q_critic.parameters(), lr=self.c_lr)
         
         if self.robust:    
+            print('This is a robust policy.\n')
             self.transition = TransitionVAE(self.state_dim, self.action_dim, self.state_dim, (self.net_width, self.net_width), self.net_layer).to(self.device)
             self.trans_optimizer = torch.optim.Adam(self.transition.parameters(), lr=self.r_lr)
             
@@ -269,7 +273,7 @@ class SAC_countinuous():
             with torch.no_grad():
                 s_next_sample = self.transition.sample(s, a, 200)
             
-			#############################################################		
+            #############################################################		
             ### option1: optimize w.r.t beta ###
             # self.log_beta = nn.Parameter(torch.ones_like(self.log_beta, requires_grad=True, device=self.device) * 0.1)
             # self.beta_optimizer = torch.optim.Adam([self.log_beta], lr=self.b_lr)
@@ -286,7 +290,7 @@ class SAC_countinuous():
             # V_next_opt = self.dual_func(s_next_sample, torch.exp(self.log_beta)) 
             #############################################################		
 
-			#############################################################		
+            #############################################################		
             ### option2: optimize w.r.t functional g ###
             for _ in range(5):
                 opt_loss = -self.dual_func_g(s, a, s_next_sample)
@@ -296,7 +300,7 @@ class SAC_countinuous():
                 #     print(opt_loss.mean().item())    
                 self.g_optimizer.step() 
             
-            V_next_opt = self.dual_func(s, a, s_next_sample) 
+            V_next_opt = self.dual_func_g(s, a, s_next_sample) 
             #############################################################		
             
             #############################################################		
@@ -420,6 +424,7 @@ def main(opt):
     # 1. Define environment names and abbreviations
     EnvName = [
         'Pendulum-v1',
+        "ContinuousCartPole",
         'LunarLanderContinuous-v3',
         'Humanoid-v5',
         'HalfCheetah-v4',
@@ -429,6 +434,7 @@ def main(opt):
     ]
     BrifEnvName = [
         'PV1',
+        "CPV0",
         'LLdV2',
         'Humanv5',
         'HCv4',
@@ -496,12 +502,14 @@ def main(opt):
 
     # 9. Load a saved model if requested
     if opt.Loadmodel:
+        print("Load Model.")
         params = f"{opt.std}_{opt.robust}"
         agent.load(BrifEnvName[opt.EnvIdex], params)
 
     # 10. If rendering mode is on, run an infinite evaluation loop
     if opt.render:
         eval_num = 100
+        print(f"Evaluate {eval_num} policies.")
         scores = []
         for _ in range(eval_num):
             score = evaluate_policy(eval_env, agent, turns=1)
@@ -559,9 +567,10 @@ def main(opt):
 
                 # (c) Train the agent at fixed intervals (batch updates)
                 if (total_steps >= 50 * opt.max_e_steps) and (total_steps % opt.update_every == 0):
+                    printer = False
+                    writer_copy = writer
                     if total_steps % 500 == 0:
                         printer = True
-                    writer_copy = writer
                     for i in range(opt.update_every):
                         # if i % opt.robust_update_every == 0:
                         #     agent.train(agent.robust, printer)
@@ -619,10 +628,9 @@ if __name__ == '__main__':
     parser.add_argument('--write', type=str2bool, default=False, help='Use SummaryWriter to record the training')
     parser.add_argument('--render', type=str2bool, default=False, help='Render or Not')
     parser.add_argument('--Loadmodel', type=str2bool, default=False, help='Load pretrained model or Not')
-    #parser.add_argument('--ModelIdex', type=int, default=100, help='which model to load')
 
     parser.add_argument('--seed', type=int, default=42, help='random seed')
-    parser.add_argument('--Max_train_steps', type=int, default=int(5e5), help='Max training steps')
+    parser.add_argument('--Max_train_steps', type=int, default=int(2e5), help='Max training steps')
     parser.add_argument('--save_interval', type=int, default=int(1e4), help='Model saving interval, in steps.')
     parser.add_argument('--eval_interval', type=int, default=int(2e3), help='Model evaluating interval, in steps.')
     parser.add_argument('--update_every', type=int, default=50, help='Training Fraquency, in stpes')
@@ -646,17 +654,15 @@ if __name__ == '__main__':
     parser.add_argument('--noise', type=bool, default=False, help='Evaluation Env Noise')
     parser.add_argument('--std', type=float, default=0.0, help='Evaluation Env Noise')
     parser.add_argument('--delta', type=float, default=0.0, help='Evaluation Env Noise') 
-    # parser.add_argument('--percentage', type=float, default=0.0, help='Noise Percentage')
-    # parser.add_argument('--train_noise', type=bool, default=False, help='Train Env is Noisy')
-    # parser.add_argument('--train_std', type=float, default=1.0, help='Standard Deviation of Train Env Reward')
-    # parser.add_argument('--eval_noise', type=bool, default=False, help='Evaluation Env is Noisy')
-    # parser.add_argument('--eval_std', type=float, default=1.0, help='Standard Deviation of Eval Env Reward')
+   
     opt = parser.parse_args()
     opt.device = torch.device(opt.device) # from str to torch.device
-
-    print(opt)
+    if opt.noise:
+        opt.delta = 0.5 * opt.std
+    if not opt.render:
+        print(opt)
     main(opt)
     
-    # Pen step 5e4
+    # Pen step 1e5
     # LLd step 250k 2.5e5
     # Human about 400k
