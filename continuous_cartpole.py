@@ -12,6 +12,7 @@ from gymnasium import spaces, logger
 from gymnasium.utils import seeding
 from gymnasium.envs.registration import register
 import numpy as np
+from numpy.random import normal 
 
 
 class ContinuousCartPoleEnv(gym.Env):
@@ -162,8 +163,36 @@ class ContinuousCartPoleEnv(gym.Env):
         if self.viewer:
             self.viewer.close()
 
+class CustomCartPoleEnv(ContinuousCartPoleEnv):
+    def __init__(self, std=0.0):
+        super().__init__()
+        self.noise_std = std
+        print(f"Cartpole Env with Observation Noise STD={std}.")
+        
+    def stepPhysics(self, force):
+        x, x_dot, theta, theta_dot = self.state
+        costheta = math.cos(theta)
+        sintheta = math.sin(theta)
+        temp = (force + self.polemass_length * theta_dot * theta_dot * sintheta) / self.total_mass
+        thetaacc = (self.gravity * sintheta - costheta * temp) / \
+            (self.length * (4.0/3.0 - self.masspole * costheta * costheta / self.total_mass))
+        xacc = temp - self.polemass_length * thetaacc * costheta / self.total_mass
+        x = x + self.tau * x_dot + normal(0, self.noise_std) # position computation is not accurate.
+        x_dot = x_dot + self.tau * xacc
+        theta = theta + self.tau * theta_dot + normal(0, self.noise_std) # theta computation is not accurate.
+        theta_dot = theta_dot + self.tau * thetaacc
+        return (x, x_dot, theta, theta_dot)
+
+
 register(
     id="ContinuousCartPole",
     entry_point="continuous_cartpole:ContinuousCartPoleEnv",
-     max_episode_steps=500
+    max_episode_steps=500
+)
+
+register(
+    id="CustomCartPole",
+    entry_point="continuous_cartpole:CustomCartPoleEnv",
+    max_episode_steps=500,
+    kwargs={'std':0.0}
 )
