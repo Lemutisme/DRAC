@@ -1,6 +1,7 @@
 from utils import evaluate_policy_PPO as evaluate_policy
 from utils import Action_adapter_pos as Action_adapter
 from utils import Reward_adapter, str2bool, build_net, register
+from continuous_cartpole import register
 
 import math
 import numpy as np
@@ -197,8 +198,8 @@ class PPO_agent(object):
             self.transition = TransitionVAE(self.state_dim, self.action_dim, self.state_dim, (self.net_width, self.net_width), self.net_layer).to(self.device)
             self.trans_optimizer = torch.optim.Adam(self.transition.parameters(), lr=self.r_lr)
             
-            self.log_beta = nn.Parameter(torch.ones((self.batch_size,1), requires_grad=True, device=self.device) * 1.0)
-            self.beta_optimizer = torch.optim.Adam([self.log_beta], lr=self.b_lr)
+            # self.log_beta = nn.Parameter(torch.ones((self.batch_size,1), requires_grad=True, device=self.device) * 1.0)
+            # self.beta_optimizer = torch.optim.Adam([self.log_beta], lr=self.b_lr)
             
             self.g = dual(self.state_dim, self.action_dim, (self.net_width, self.net_width), self.net_layer).to(self.device)
             self.g_optimizer = torch.optim.Adam(self.g.parameters(), lr=self.g_lr)
@@ -235,17 +236,17 @@ class PPO_agent(object):
     def dual_func_g(self, s, a, s_next):
         size = s_next.shape[1]
         dual_sa = self.g(s,a)
-        return - dual_sa * (torch.logsumexp(-self.v_critic_target(s_next).squeeze(-1)/dual_sa, dim=1, keepdim=True) - math.log(size)) - dual_sa * self.delta  
+        return - dual_sa * (torch.logsumexp(-self.critic(s_next).squeeze(-1)/dual_sa, dim=1, keepdim=True) - math.log(size)) - dual_sa * self.delta  
 
     def dual_func_beta(self, s_next, beta):
         # Jointly optimize, in tensor
         size = s_next.shape[1]
-        return - beta * (torch.logsumexp(-self.v_critic_target(s_next).squeeze(-1)/beta, dim=1, keepdim=True) - math.log(size)) - beta * self.delta     
+        return - beta * (torch.logsumexp(-self.critic(s_next).squeeze(-1)/beta, dim=1, keepdim=True) - math.log(size)) - beta * self.delta     
     
     def dual_func_ind(self, s_next, beta):
         # Independently optimize, in np.array
         size = s_next.shape[-1]
-        v_next = self.v_critic_target(s_next)
+        v_next = self.critic(s_next)
         v_next = v_next.cpu().numpy()
         return - beta * (logsumexp(-v_next/beta) - math.log(size)) - beta * self.delta    
 
@@ -273,19 +274,17 @@ class PPO_agent(object):
                 writer.add_scalar('tr_loss', tr_loss, global_step=step)
             
            with torch.no_grad():
-                r_sample = self.reward.sample(s, a, 50)
-            
-           self.log_beta = torch.zeros((self.T_horizon, 1), requires_grad=True, device=self.device)
-           self.beta_optimizer = torch.optim.Adam([self.log_beta], lr=self.b_lr)
+                s_next_sample = self.transition.sample(s, a, 200)
            
-           for i in range(20):
-                self.beta = torch.exp(self.log_beta)
-                opt_loss = -self.dual_func(r_sample, self.beta)
-                self.beta_optimizer.zero_grad()
-                opt_loss.sum().backward()
-                self.beta_optimizer.step() 
-            
-           r_opt = self.dual_func(r_sample, self.beta)
+           for _ in range(5):
+               opt_loss = -self.dual_func_g(s, a, s_next_sample)
+               self.g_optimizer.zero_grad()
+               opt_loss.mean().backward()
+               if printer:
+                   print(opt_loss.mean().item())    
+               self.g_optimizer.step() 
+           
+           vs_opt = self.dual_func_g(s, a, s_next_sample) 
 
 
         ''' Use TD+GAE+LongTrajectory to compute Advantage and TD target'''
@@ -295,7 +294,7 @@ class PPO_agent(object):
 
             '''dw for TD_target and Adv'''
             if self.robust:
-                deltas = r_opt + self.gamma * vs_ * (~dw) - vs
+                deltas = r + self.gamma * vs_opt * (~dw) - vs
             else:
                 deltas = r + self.gamma * vs_ * (~dw) - vs
             deltas = deltas.cpu().flatten().numpy()
@@ -381,6 +380,7 @@ def main(opt):
     # 1. Define environment names and their abbreviations
     EnvName = [
         'Pendulum-v1',
+        "ContinuousCartPole",
         'LunarLanderContinuous-v3',
         'Humanoid-v4',
         'HalfCheetah-v4',
@@ -389,6 +389,7 @@ def main(opt):
     ]
     BrifEnvName = [
         'PV1',
+        'CPV0',
         'LLdV2',
         'Humanv4',
         'HCv4',
@@ -404,6 +405,8 @@ def main(opt):
     else:
         if opt.EnvIdex == 0:
             eval_env = gym.make("CustomPendulum-v1", std=opt.std) # Add noise when updating angle
+        elif opt.EnvIdex == 1:
+            eval_env = gym.make("CustomCartPole", std=opt.std) # Add noise when updating angle
 
 
     # 3. Extract environment/state/action info
@@ -450,19 +453,26 @@ def main(opt):
     #     kwargs["c_lr"] *= 4
 
     # 7. Ensure a directory for saving models
-    if not os.path.exists('model'):
-        os.mkdir('model')
+    dir = f'PPO_model/{BrifEnvName[opt.EnvIdex]}'
+    if not os.path.exists(dir):
+        os.mkdir(dir)
 
     # 8. Create the PPO agent
     agent = PPO_agent(**vars(opt))  # Convert opt to dict and pass to PPO_agent
 
     # 9. Load existing model if requested
-    if opt.Loadmodel:
+    if opt.load_model:
         params = f"{opt.std}_{opt.robust}"
         agent.load(BrifEnvName[opt.EnvIdex], params)
 
     # 10. If rendering is enabled, just evaluate in a loop
     if opt.render:
+        while True:
+            ep_r = evaluate_policy(env, agent, opt.max_action, turns=1)
+            print(f"Env: {EnvName[opt.EnvIdex]}, Episode Reward: {ep_r}")
+    
+    # 11. If evaluating only, print result
+    elif opt.eval_model:
         eval_num = 100
         print(f"Evaluate {eval_num} policies.")
         scores = []
@@ -473,10 +483,8 @@ def main(opt):
         # with open(filename, 'a') as f:
         #     f.write(f"{[BrifEnvName[opt.EnvIdex], opt.train_std, opt.eval_std, delta] + [np.mean(scores), np.std(scores), np.quantile(scores, 0.9), np.quantile(scores, 0.1)]}\n")
         print(f"{[BrifEnvName[opt.EnvIdex]] + [np.mean(scores), np.std(scores), np.quantile(scores, 0.9), np.quantile(scores, 0.1)]}\n")    
-        env.close()
-        eval_env.close()
 
-    # 11. Otherwise, proceed with training
+    # 12. Otherwise, proceed with training
     else:
         traj_length = 0
         total_steps = 0
@@ -512,8 +520,9 @@ def main(opt):
                 total_steps += 1
 
                 # (v) Update agent if horizon reached
+                printer = traj_length % (10 * opt.T_horizon) == 0
                 if traj_length % opt.T_horizon == 0:
-                    agent.train(False, writer, total_steps)
+                    agent.train(printer, writer, total_steps)
                     traj_length = 0
                 
                 # if total_steps >= 4e5 and total_steps % 5e3 == 0:
@@ -532,12 +541,12 @@ def main(opt):
                     )
 
                 # (vii) Periodically save model
-                if total_steps % opt.save_interval == 0:
+                if opt.save_model and total_steps % opt.save_interval == 0:
                     agent.save(BrifEnvName[opt.EnvIdex])
 
-        # Close environments
-        env.close()
-        eval_env.close()
+    # Close environments
+    env.close()
+    eval_env.close()
 
 
 if __name__ == '__main__':
@@ -547,7 +556,9 @@ if __name__ == '__main__':
     parser.add_argument('--EnvIdex', type=int, default=0, help='PV1, Lch_Cv2, Humanv4, HCv4, BWv3, BWHv3')
     parser.add_argument('--write', type=str2bool, default=False, help='Use SummaryWriter to record the training')
     parser.add_argument('--render', type=str2bool, default=False, help='Render or Not')
-    parser.add_argument('--Loadmodel', type=str2bool, default=False, help='Load pretrained model or Not')
+    parser.add_argument('--load_model', type=str2bool, default=False, help='Load pretrained model or Not')
+    parser.add_argument('--eval_model', type=str2bool, default=False, help='Evaluate only')
+    parser.add_argument('--save_model', type=str2bool, default=False, help='Evaluate only')
    
     parser.add_argument('--seed', type=int, default=0, help='random seed')
     parser.add_argument('--T_horizon', type=int, default=2048, help='lenth of long trajectory')
@@ -564,8 +575,9 @@ if __name__ == '__main__':
     parser.add_argument('--net_layer', type=int, default=1, help='Hidden net layers')
     parser.add_argument('--a_lr', type=float, default=2e-5, help='Learning rate of actor')
     parser.add_argument('--c_lr', type=float, default=2e-5, help='Learning rate of critic')
-    # parser.add_argument('--b_lr', type=float, default=2e-4, help='Learning rate of dual optimization problem')
-    # parser.add_argument('--r_lr', type=float, default=2e-4, help='Learning rate of reward')
+    parser.add_argument('--b_lr', type=float, default=2e-4, help='Learning rate of dual optimization problem')
+    parser.add_argument('--g_lr', type=float, default=2e-4, help='Learning rate of dual optimization problem')
+    parser.add_argument('--r_lr', type=float, default=2e-4, help='Learning rate of reward')
     parser.add_argument('--l2_reg', type=float, default=1e-3, help='L2 regulization coefficient for Critic')
     parser.add_argument('--a_optim_batch_size', type=int, default=64, help='lenth of sliced trajectory of actor')
     parser.add_argument('--c_optim_batch_size', type=int, default=64, help='lenth of sliced trajectory of critic')
@@ -575,9 +587,11 @@ if __name__ == '__main__':
     parser.add_argument('--robust', type=bool, default=False, help='Robust policy')
     parser.add_argument('--noise', type=bool, default=False, help='Env with noise')
     parser.add_argument('--std', type=float, default=0.0, help='Noise std')
+    parser.add_argument('--delta', type=float, default=0.0, help='Noise std')
     
     opt = parser.parse_args()
     opt.device = torch.device(opt.device) # from str to torch.device
-    print(opt)
+    if not opt.eval_model:
+        print(opt)
 
     main(opt)

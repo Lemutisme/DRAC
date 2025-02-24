@@ -191,6 +191,7 @@ class SAC_countinuous():
         # Init hyperparameters for agent, just like "self.gamma = opt.gamma, self.lambd = opt.lambd, ..."
         self.__dict__.update(kwargs)
         self.tau = 0.005
+        print(f"delta = {self.delta}")
 
         self.actor = Actor(self.state_dim, self.action_dim, (self.net_width, self.net_width), self.net_layer).to(self.device)
         self.actor_optimizer = torch.optim.Adam(self.actor.parameters(), lr=self.a_lr)
@@ -292,12 +293,14 @@ class SAC_countinuous():
 
             #############################################################		
             ### option2: optimize w.r.t functional g ###
+            if printer:
+                print(f"mean = {torch.mean(self.v_critic_target(s_next_sample)).item()}, "
+                      f"std = {torch.std(self.v_critic_target(s_next_sample)).item()}, "
+                      f"delta = {self.delta}")    
             for _ in range(5):
                 opt_loss = -self.dual_func_g(s, a, s_next_sample)
                 self.g_optimizer.zero_grad()
                 opt_loss.mean().backward()
-                # if printer:
-                #     print(opt_loss.mean().item())    
                 self.g_optimizer.step() 
             
             V_next_opt = self.dual_func_g(s, a, s_next_sample) 
@@ -494,20 +497,28 @@ def main(opt):
         writer = SummaryWriter(log_dir=writepath)
 
     # 7. Create a directory for saving models
-    if not os.path.exists('model'):
-        os.mkdir('model')
+
+    dir = f'SAC_model/{BrifEnvName[opt.EnvIdex]}'
+    if not os.path.exists(dir):
+        os.mkdir(dir)
 
     # 8. Initialize the SAC agent
     agent = SAC_countinuous(**vars(opt))  # Convert argparse Namespace to dict
 
     # 9. Load a saved model if requested
-    if opt.Loadmodel:
+    if opt.load_model:
         print("Load Model.")
         params = f"{opt.std}_{opt.robust}"
         agent.load(BrifEnvName[opt.EnvIdex], params)
 
     # 10. If rendering mode is on, run an infinite evaluation loop
     if opt.render:
+        while True:
+            ep_r = evaluate_policy(env, agent, opt.max_action, turns=1)
+            print(f"Env: {EnvName[opt.EnvIdex]}, Episode Reward: {ep_r}")
+    
+    # 11. If evaluating only, print result
+    elif opt.eval_model:
         eval_num = 100
         print(f"Evaluate {eval_num} policies.")
         scores = []
@@ -518,16 +529,14 @@ def main(opt):
         # with open(filename, 'a') as f:
         #     f.write(f"{[BrifEnvName[opt.EnvIdex], opt.train_std, opt.eval_std, delta] + [np.mean(scores), np.std(scores), np.quantile(scores, 0.9), np.quantile(scores, 0.1)]}\n")
         print(f"{[BrifEnvName[opt.EnvIdex]] + [np.mean(scores), np.std(scores), np.quantile(scores, 0.9), np.quantile(scores, 0.1)]}\n")    
-        env.close()
-        eval_env.close()
             
 
-    # 11. Otherwise, proceed with training
+    # 12. Otherwise, proceed with training
     else:
         total_steps = 0
         total_episode = 0
 
-        while total_steps < opt.Max_train_steps:
+        while total_steps < opt.max_train_steps:
             # (a) Reset environment with incremented seed
             state, info = env.reset(seed=env_seed)
             env_seed += 1
@@ -597,7 +606,7 @@ def main(opt):
                     )
 
                 # (e) Save model at fixed intervals
-                if total_steps % opt.save_interval == 0:
+                if opt.save_model and total_steps % opt.save_interval == 0:
                     agent.save(BrifEnvName[opt.EnvIdex])
         
         # 11.5 Compute score of 20 episodes
@@ -612,12 +621,12 @@ def main(opt):
         # with open(filename, 'a') as f:
         #       f.write(f"{[BrifEnvName[opt.EnvIdex], opt.train_std, opt.eval_std] + scores}\n")
 
-        # 11.55 Save model at last
-        agent.save(BrifEnvName[opt.EnvIdex])
+        # 12. Save model at last
+        if opt.save_model:
+            agent.save(BrifEnvName[opt.EnvIdex])
 
-        # 12. Close environments after training
-        env.close()
-        eval_env.close()
+    env.close()
+    eval_env.close()
 
     
 if __name__ == '__main__':
@@ -627,10 +636,12 @@ if __name__ == '__main__':
     parser.add_argument('--EnvIdex', type=int, default=0, help='PV1, Lch_Cv2, Humanv4, HCv4, BWv3, BWHv3, CRv3')
     parser.add_argument('--write', type=str2bool, default=False, help='Use SummaryWriter to record the training')
     parser.add_argument('--render', type=str2bool, default=False, help='Render or Not')
-    parser.add_argument('--Loadmodel', type=str2bool, default=False, help='Load pretrained model or Not')
-
+    parser.add_argument('--load_model', type=str2bool, default=False, help='Load pretrained model or Not')
+    parser.add_argument('--eval_model', type=str2bool, default=False, help='Evaluate only')
+    parser.add_argument('--save_model', type=str2bool, default=True, help='Save or not')
+   
     parser.add_argument('--seed', type=int, default=42, help='random seed')
-    parser.add_argument('--Max_train_steps', type=int, default=int(2e5), help='Max training steps')
+    parser.add_argument('--max_train_steps', type=int, default=int(2e5), help='Max training steps')
     parser.add_argument('--save_interval', type=int, default=int(1e4), help='Model saving interval, in steps.')
     parser.add_argument('--eval_interval', type=int, default=int(2e3), help='Model evaluating interval, in steps.')
     parser.add_argument('--update_every', type=int, default=50, help='Training Fraquency, in stpes')
@@ -657,9 +668,7 @@ if __name__ == '__main__':
    
     opt = parser.parse_args()
     opt.device = torch.device(opt.device) # from str to torch.device
-    if opt.noise:
-        opt.delta = 0.5 * opt.std
-    if not opt.render:
+    if not opt.eval_model:
         print(opt)
     main(opt)
     
