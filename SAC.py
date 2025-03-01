@@ -191,7 +191,6 @@ class SAC_countinuous():
         # Init hyperparameters for agent, just like "self.gamma = opt.gamma, self.lambd = opt.lambd, ..."
         self.__dict__.update(kwargs)
         self.tau = 0.005
-        print(f"delta = {self.delta}")
 
         self.actor = Actor(self.state_dim, self.action_dim, (self.net_width, self.net_width), self.net_layer).to(self.device)
         self.actor_optimizer = torch.optim.Adam(self.actor.parameters(), lr=self.a_lr)
@@ -207,7 +206,7 @@ class SAC_countinuous():
         self.q_critic_optimizer = torch.optim.Adam(self.q_critic.parameters(), lr=self.c_lr)
         
         if self.robust:    
-            print('This is a robust policy.\n')
+            print('This is a robust policy.')
             self.transition = TransitionVAE(self.state_dim, self.action_dim, self.state_dim, (self.net_width, self.net_width), self.net_layer).to(self.device)
             self.trans_optimizer = torch.optim.Adam(self.transition.parameters(), lr=self.r_lr)
             
@@ -293,28 +292,26 @@ class SAC_countinuous():
 
             #############################################################		
             ### option2: optimize w.r.t functional g ###
-            if printer:
-                print(f"mean = {torch.mean(self.v_critic_target(s_next_sample)).item()}, "
-                      f"std = {torch.std(self.v_critic_target(s_next_sample)).item()}, "
-                      f"delta = {self.delta}")    
             for _ in range(5):
                 opt_loss = -self.dual_func_g(s, a, s_next_sample)
                 self.g_optimizer.zero_grad()
                 opt_loss.mean().backward()
                 self.g_optimizer.step() 
+                # if printer:
+                #     print(opt_loss.mean().item())
             
             V_next_opt = self.dual_func_g(s, a, s_next_sample) 
             #############################################################		
             
             #############################################################		
-            # option3: Use scipy.optimize to independently optimize
+            # option3: Use scipy.optimize to separately optimize
             # s_next_sample = s_next_sample.cpu().numpy()
-            # V_next_opt = np.zeros((self.batch_size, 1))
+            # V_next_opt_acc = np.zeros((self.batch_size, 1))
             # for i in range(s_next_sample.shape[0]):
             #     opt = minimize_scalar(fun=lambda beta:-self.dual_func_ind(s_next_sample[i], beta), method='Bounded', bounds=(1e-4, 1.0))
-            #     V_next_opt[i] = -opt.fun
-            # V_next_opt = torch.from_numpy(V_next_opt).float()
-            # V_next_opt = V_next_opt.to('cuda' if torch.cuda.is_available() else 'cpu')
+            #     V_next_opt_acc[i] = -opt.fun
+            # V_next_opt_acc = torch.from_numpy(V_next_opt_acc).float()
+            # V_next_opt_acc = V_next_opt_acc.to('cuda' if torch.cuda.is_available() else 'cpu')
             #############################################################		
 
 
@@ -329,7 +326,8 @@ class SAC_countinuous():
             if robust_update:
                 target_Q = r + (~dw) * self.gamma * V_next_opt
                 if printer:
-                    print((V_next_opt - V_next).norm().item() / V_next.norm().item())
+                    print(((V_next_opt - V_next) / V_next).norm().item()) # difference of robust update
+                    # print(((V_next_opt - V_next_opt_acc) / V_next_opt).norm().item()) # difference of reparate and joint optimize
             else:
                 target_Q = r + (~dw) * self.gamma * V_next
             #############################################################
@@ -339,6 +337,10 @@ class SAC_countinuous():
 
         # JQ(θ)
         q_loss = F.mse_loss(current_Q1, target_Q) + F.mse_loss(current_Q2, target_Q) 
+        
+        for name,param in self.q_critic.named_parameters():
+            if 'weight' in name:
+                q_loss += param.pow(2).sum() * opt.l2_reg
         
         self.q_critic_optimizer.zero_grad()
         q_loss.backward()
@@ -362,6 +364,10 @@ class SAC_countinuous():
         
         current_V = self.v_critic(s)
         v_loss = F.mse_loss(current_V, target_V)
+        
+        for name,param in self.v_critic.named_parameters():
+            if 'weight' in name:
+                v_loss += param.pow(2).sum() * opt.l2_reg
         
         self.v_critic_optimizer.zero_grad()
         v_loss.backward()
@@ -447,13 +453,13 @@ def main(opt):
     ]
 
     # 2. Create training and evaluation environments
-    env = gym.make(EnvName[opt.EnvIdex])
-    
     if not opt.noise:
+        env = gym.make(EnvName[opt.EnvIdex])
         eval_env =  gym.make(EnvName[opt.EnvIdex])
     else:
         if opt.EnvIdex == 0:
-            eval_env = gym.make("CustomPendulum-v1", std=opt.std) # Add noise when updating angle
+            env = gym.make("CustomPendulum-v1", std=opt.std) # Add noise when updating angle
+            eval_env = gym.make("CustomPendulum-v1", std=2*opt.std) # Add noise when updating angle
 
     # 3. Extract environment properties
     opt.state_dim = env.observation_space.shape[0]
@@ -520,10 +526,10 @@ def main(opt):
     # 11. If evaluating only, print result
     elif opt.eval_model:
         eval_num = 100
-        print(f"Evaluate {eval_num} policies.")
+        print(f"Evaluate {eval_num} episodes.")
         scores = []
-        for _ in range(eval_num):
-            score = evaluate_policy(eval_env, agent, turns=1)
+        for i in range(eval_num):
+            score = evaluate_policy(eval_env, agent, turns=1, seeds_list=[opt.seeds_list[i]])
             scores.append(score)
         # filename = "new-robust.txt" if opt.robust else "new-non-robust.txt"
         # with open(filename, 'a') as f:
@@ -643,7 +649,7 @@ if __name__ == '__main__':
     parser.add_argument('--seed', type=int, default=42, help='random seed')
     parser.add_argument('--max_train_steps', type=int, default=int(2e5), help='Max training steps')
     parser.add_argument('--save_interval', type=int, default=int(1e4), help='Model saving interval, in steps.')
-    parser.add_argument('--eval_interval', type=int, default=int(2e3), help='Model evaluating interval, in steps.')
+    parser.add_argument('--eval_interval', type=int, default=int(1e3), help='Model evaluating interval, in steps.')
     parser.add_argument('--update_every', type=int, default=50, help='Training Fraquency, in stpes')
     # parser.add_argument('--robust_update_every', type=int, default=2, help='Training Fraquency, in stpes')
 
@@ -653,8 +659,9 @@ if __name__ == '__main__':
     parser.add_argument('--a_lr', type=float, default=5e-3, help='Learning rate of actor')
     parser.add_argument('--c_lr', type=float, default=5e-5, help='Learning rate of critic')
     parser.add_argument('--b_lr', type=float, default=5e-5, help='Learning rate of dual-form optimization')
-    parser.add_argument('--g_lr', type=float, default=5e-5, help='Learning rate of dual net')
+    parser.add_argument('--g_lr', type=float, default=5e-4, help='Learning rate of dual net')
     parser.add_argument('--r_lr', type=float, default=5e-5, help='Learning rate of reward net')
+    parser.add_argument('--l2_reg', type=float, default=1e-4, help='L2 regulization coefficient for Critic')
     parser.add_argument('--batch_size', type=int, default=256, help='batch_size of training')
     parser.add_argument('--alpha', type=float, default=0.12, help='Entropy coefficient')
     parser.add_argument('--adaptive_alpha', type=str2bool, default=True, help='Use adaptive_alpha or Not')
@@ -668,9 +675,16 @@ if __name__ == '__main__':
    
     opt = parser.parse_args()
     opt.device = torch.device(opt.device) # from str to torch.device
-    if not opt.eval_model:
+    if opt.eval_model:
+        opt.seeds_list = [random.randint(0, 100000) for _ in range(100)]
+        opt.robust = False
+        main(opt)
+        print("----------------------------------")
+        opt.robust = True
+        main(opt)
+    else:
         print(opt)
-    main(opt)
+        main(opt)
     
     # Pen step 1e5
     # LLd step 250k 2.5e5
