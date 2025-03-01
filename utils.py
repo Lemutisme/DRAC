@@ -35,7 +35,14 @@ class CustomPendulumEnv(PendulumEnv):
 
         newthdot = thdot + (3 * g / (2 * l) * np.sin(th) + 3.0 / (m * l**2) * u) * dt
         newthdot = np.clip(newthdot, -self.max_speed, self.max_speed)
-        newth = th + newthdot * dt + normal(0, self.noise_std) * (dt**2) # theta computation is not accurate.
+        newth = th + newthdot * dt 
+        #############################################################	
+        # Universal Normal noise
+        # newth += normal(0, self.noise_std)
+        
+        # Always adverse Normal noise 
+        newth += abs(normal(0, self.noise_std)) * np.sign(newth) 
+        #############################################################	
 
         self.state = np.array([newth, newthdot])
 
