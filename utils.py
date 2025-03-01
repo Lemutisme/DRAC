@@ -86,10 +86,13 @@ def Action_adapter_pos(a, max_action):
     #from [0,1] to [-max,max]
     return  2 * (a - 0.5) * max_action
 
-def evaluate_policy_SAC(env, agent, turns = 5):
+def evaluate_policy_SAC(env, agent, turns = 1, seeds_list = []):
     total_scores = 0
     for j in range(turns):
-        s, info = env.reset()
+        if seeds_list:
+            s, info = env.reset(seed=seeds_list[j])
+        else:
+            s, info = env.reset()
         done = False
         while not done:
             # Take deterministic actions at test time
