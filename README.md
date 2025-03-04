@@ -43,29 +43,9 @@ The ``--EnvIdex`` can be set to be 0~5, where
 '--EnvIdex 5' for 'BipedalWalkerHardcore-v3' 
 ```
 
-Note: if you want train on **BipedalWalker, BipedalWalkerHardcore, or LunarLanderContinuous**, you need to install [box2d-py](https://gymnasium.farama.org/environments/box2d/) first. You can install box2d-py via:
-
-```bash
-pip install gymnasium[box2d]
-```
-
-if you want train on **Humanoid or HalfCheetah**, you need to install [MuJoCo](https://gymnasium.farama.org/environments/mujoco/) first. You can install MuJoCo via:
-
-```bash
-pip install mujoco
-pip install gymnasium[mujoco]
-```
-
 ### Visualize the training curve
 
 You can use the [tensorboard](https://pytorch.org/docs/stable/tensorboard.html) to record anv visualize the training curve.
-
-- Installation (please make sure PyTorch is installed already):
-
-```bash
-pip install tensorboard
-pip install packaging
-```
 
 - Record (the training curves will be saved at '**\runs**'):
 
@@ -78,10 +58,6 @@ python main.py --write True
 ```bash
 tensorboard --logdir runs
 ```
-
-### Hyperparameter Setting
-
-For more details of Hyperparameter Setting, please check 'main.py'
 
 ### Reference
 
