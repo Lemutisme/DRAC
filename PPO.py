@@ -9,10 +9,11 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.distributions import Normal, Beta
+
 import copy
-from datetime import datetime
 import gymnasium as gym
 import os, shutil
+import hydra
 import argparse
 from scipy.special import logsumexp
 
@@ -118,34 +119,34 @@ class TransitionVAE(nn.Module):
         self.encoder = build_net(e_layers, nn.ReLU, nn.Identity)
         self.e_mu = nn.Linear(e_layers[-1], latent_dim)
         self.e_logvar = nn.Linear(e_layers[-1], latent_dim)
-        
+
         # Decoder layers
         d_layers = [state_dim + action_dim + latent_dim] + list(hidden_dim) * hidden_layers + [out_dim]
         self.decoder = build_net(d_layers, nn.ReLU, nn.Identity)
-    
+
     def encode(self, s, a, s_next):
         x = torch.cat([s, a, s_next], dim=1)
         h = self.encoder(x)
         mu = self.e_mu(h)
         logvar = self.e_logvar(h)
         return mu, logvar
-    
+
     def reparameterize(self, mu, logvar):
         std = torch.exp(0.5 * logvar)
         eps = torch.randn_like(std)
         return mu + eps * std
-    
+
     def decode(self, s, a, z):
         x = torch.cat([s, a, z], dim=-1)
         s_next_recon = self.decoder(x)
         return s_next_recon
-    
+
     def forward(self, s, a, s_next):
         mu, logvar = self.encode(s, a, s_next)
         z = self.reparameterize(mu, logvar)
         s_next_recon = self.decode(s, a, z)
         return s_next_recon, mu, logvar  
-    
+
     def sample(self, s, a, num_samples):
         batch_size = s.size(0)
         # Sample latent vectors from the prior with shape (batch, num_samples, latent_dim)
@@ -155,7 +156,7 @@ class TransitionVAE(nn.Module):
         a_expanded = a.unsqueeze(1).expand(-1, num_samples, -1)
         s_next_samples = self.decode(s_expanded, a_expanded, z)
         return s_next_samples  
-    
+
 class dual(nn.Module):
     def __init__(self, state_dim, action_dim, hid_shape, hid_layers):
         super(dual, self).__init__()  
@@ -227,12 +228,12 @@ class PPO_agent(object):
                 a = torch.clamp(a, 0, 1)
                 logprob_a = dist.log_prob(a).cpu().numpy().flatten()
                 return a.cpu().numpy()[0], logprob_a # both are in shape (adim, 0)
-            
+
     def vae_loss(self, s_next, s_next_recon, mu, logvar):
         recon_loss = F.mse_loss(s_next_recon, s_next, reduction='sum')
         kl_div = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
         return recon_loss + kl_div
-    
+
     def dual_func_g(self, s, a, s_next):
         size = s_next.shape[1]
         dual_sa = self.g(s,a)
@@ -242,7 +243,7 @@ class PPO_agent(object):
         # Jointly optimize, in tensor
         size = s_next.shape[1]
         return - beta * (torch.logsumexp(-self.critic(s_next).squeeze(-1)/beta, dim=1, keepdim=True) - math.log(size)) - beta * self.delta     
-    
+
     def dual_func_ind(self, s_next, beta):
         # Independently optimize, in np.array
         size = s_next.shape[-1]
@@ -263,29 +264,28 @@ class PPO_agent(object):
         dw = torch.from_numpy(self.dw_holder).to(self.device)
 
         if self.robust:
-           s_next_recon, mu, logvar = self.transition(s, a, s_next)
-           tr_loss = self.vae_loss(s_next, s_next_recon, mu, logvar)
-           self.trans_optimizer.zero_grad()
-           tr_loss.backward()
-           self.trans_optimizer.step()
-           if printer:
-               print(f"tr_loss: {tr_loss.item()}")
-           if writer:
+            s_next_recon, mu, logvar = self.transition(s, a, s_next)
+            tr_loss = self.vae_loss(s_next, s_next_recon, mu, logvar)
+            self.trans_optimizer.zero_grad()
+            tr_loss.backward()
+            self.trans_optimizer.step()
+            if printer:
+                print(f"tr_loss: {tr_loss.item()}")
+            if writer:
                 writer.add_scalar('tr_loss', tr_loss, global_step=step)
             
-           with torch.no_grad():
+            with torch.no_grad():
                 s_next_sample = self.transition.sample(s, a, 200)
-           
-           for _ in range(5):
-               opt_loss = -self.dual_func_g(s, a, s_next_sample)
-               self.g_optimizer.zero_grad()
-               opt_loss.mean().backward()
-               if printer:
-                   print(opt_loss.mean().item())    
-               self.g_optimizer.step() 
-           
-           vs_opt = self.dual_func_g(s, a, s_next_sample) 
 
+            for _ in range(5):
+                opt_loss = -self.dual_func_g(s, a, s_next_sample)
+                self.g_optimizer.zero_grad()
+                opt_loss.mean().backward()
+                if printer:
+                    print(opt_loss.mean().item())    
+                self.g_optimizer.step() 
+
+            vs_opt = self.dual_func_g(s, a, s_next_sample) 
 
         ''' Use TD+GAE+LongTrajectory to compute Advantage and TD target'''
         with torch.no_grad():
@@ -309,7 +309,6 @@ class PPO_agent(object):
             adv = torch.tensor(adv).unsqueeze(1).float().to(self.device)
             td_target = adv + vs
             adv = (adv - adv.mean()) / ((adv.std()+1e-4))  #sometimes helps
-
 
         """Slice long trajectopy into short trajectory and perform mini-batch PPO update"""
         a_optim_iter_num = int(math.ceil(s.shape[0] / self.a_optim_batch_size))
@@ -341,7 +340,6 @@ class PPO_agent(object):
                 self.actor_optimizer.step()
                 if writer:
                     writer.add_scalar('a_loss', a_loss.mean(), global_step=step)
-            
 
             '''update the critic'''
             for i in range(c_optim_iter_num):
@@ -356,7 +354,6 @@ class PPO_agent(object):
                 self.critic_optimizer.step()
                 if writer:
                     writer.add_scalar('c_loss', c_loss, global_step=step)
-            
 
     def put_data(self, s, a, r, s_next, logprob_a, done, dw, idx):
         self.s_holder[idx] = s
@@ -367,15 +364,16 @@ class PPO_agent(object):
         self.done_holder[idx] = done
         self.dw_holder[idx] = dw
 
-    def save(self,EnvName):
+    def save(self):
         params = f"{self.std}_{self.robust}"
-        torch.save(self.actor.state_dict(), "./PPO_model/{}/actor_{}.pth".format(EnvName,params))
-        torch.save(self.critic.state_dict(), "./PPO_model/{}/q_critic_{}.pth".format(EnvName,params))
+        torch.save(self.actor.state_dict(), f"{dir}/actor_{params}.pth")
+        torch.save(self.critic.state_dict(), f"{dir}/q_critic_{params}.pth")
 
-    def load(self, EnvName, params):
-        self.actor.load_state_dict(torch.load("./PPO_model/{}/actor_{}.pth".format(EnvName, params), map_location=self.device, weights_only=True))
-        self.critic.load_state_dict(torch.load("./PPO_model/{}/q_critic_{}.pth".format(EnvName, params), map_location=self.device, weights_only=True))
+    def load(self, params):
+        self.actor.load_state_dict(torch.load(f"{dir}/actor_{params}.pth", map_location=self.device, weights_only=True))
+        self.critic.load_state_dict(torch.load(f"{dir}/q_critic_{params}.pth", map_location=self.device, weights_only=True))
 
+#@hydra.main(version_base=None, config_path="config/PPO", config_name="base")
 def main(opt):
     # 1. Define environment names and their abbreviations
     EnvName = [
@@ -453,9 +451,9 @@ def main(opt):
     #     kwargs["c_lr"] *= 4
 
     # 7. Ensure a directory for saving models
-    dir = f'PPO_model/{BrifEnvName[opt.EnvIdex]}'
-    if not os.path.exists(dir):
-        os.mkdir(dir)
+    opt.dir = f'./models/PPO_model/{BrifEnvName[opt.EnvIdex]}'
+    if not os.path.exists(opt.dir):
+        os.mkdir(opt.dir)
 
     # 8. Create the PPO agent
     agent = PPO_agent(**vars(opt))  # Convert opt to dict and pass to PPO_agent
@@ -463,7 +461,7 @@ def main(opt):
     # 9. Load existing model if requested
     if opt.load_model:
         params = f"{opt.std}_{opt.robust}"
-        agent.load(BrifEnvName[opt.EnvIdex], params)
+        agent.load(params)
 
     # 10. If rendering is enabled, just evaluate in a loop
     if opt.render:
@@ -559,7 +557,7 @@ if __name__ == '__main__':
     parser.add_argument('--load_model', type=str2bool, default=False, help='Load pretrained model or Not')
     parser.add_argument('--eval_model', type=str2bool, default=False, help='Evaluate only')
     parser.add_argument('--save_model', type=str2bool, default=False, help='Evaluate only')
-   
+
     parser.add_argument('--seed', type=int, default=0, help='random seed')
     parser.add_argument('--T_horizon', type=int, default=2048, help='lenth of long trajectory')
     parser.add_argument('--Distribution', type=str, default='Beta', help='Should be one of Beta ; GS_ms  ;  GS_m')
@@ -583,12 +581,12 @@ if __name__ == '__main__':
     parser.add_argument('--c_optim_batch_size', type=int, default=64, help='lenth of sliced trajectory of critic')
     parser.add_argument('--entropy_coef', type=float, default=1e-3, help='Entropy coefficient of Actor')
     parser.add_argument('--entropy_coef_decay', type=float, default=0.99, help='Decay rate of entropy_coef')
-    
+
     parser.add_argument('--robust', type=bool, default=False, help='Robust policy')
     parser.add_argument('--noise', type=bool, default=False, help='Env with noise')
     parser.add_argument('--std', type=float, default=0.0, help='Noise std')
     parser.add_argument('--delta', type=float, default=0.0, help='Noise std')
-    
+
     opt = parser.parse_args()
     opt.device = torch.device(opt.device) # from str to torch.device
     if not opt.eval_model:

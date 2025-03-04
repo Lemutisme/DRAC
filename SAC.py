@@ -416,14 +416,14 @@ class SAC_countinuous():
 
     def save(self, EnvName):
         params = f"{self.std}_{self.robust}"
-        torch.save(self.actor.state_dict(), "./SAC_model/{}/actor_{}.pth".format(EnvName,params))
-        torch.save(self.q_critic.state_dict(), "./SAC_model/{}/q_{}.pth".format(EnvName,params))
-        torch.save(self.v_critic.state_dict(), "./SAC_model/{}/v_{}.pth".format(EnvName,params))
+        torch.save(self.actor.state_dict(), "./models/SAC_model/{}/actor_{}.pth".format(EnvName,params))
+        torch.save(self.q_critic.state_dict(), "./models/SAC_model/{}/q_{}.pth".format(EnvName,params))
+        torch.save(self.v_critic.state_dict(), "./models/SAC_model/{}/v_{}.pth".format(EnvName,params))
 
     def load(self, EnvName, params):
-        self.actor.load_state_dict(torch.load("./SAC_model/{}/actor_{}.pth".format(EnvName, params), map_location=self.device, weights_only=True))
-        self.q_critic.load_state_dict(torch.load("./SAC_model/{}/q_{}.pth".format(EnvName, params), map_location=self.device, weights_only=True))
-        self.v_critic.load_state_dict(torch.load("./SAC_model/{}/v_{}.pth".format(EnvName, params), map_location=self.device, weights_only=True))
+        self.actor.load_state_dict(torch.load("./models/SAC_model/{}/actor_{}.pth".format(EnvName, params), map_location=self.device, weights_only=True))
+        self.q_critic.load_state_dict(torch.load("./models/SAC_model/{}/q_{}.pth".format(EnvName, params), map_location=self.device, weights_only=True))
+        self.v_critic.load_state_dict(torch.load("./models/SAC_model/{}/v_{}.pth".format(EnvName, params), map_location=self.device, weights_only=True))
 
 def main(opt):
     """
@@ -504,7 +504,7 @@ def main(opt):
 
     # 7. Create a directory for saving models
 
-    dir = f'SAC_model/{BrifEnvName[opt.EnvIdex]}'
+    dir = f'models/SAC_model/{BrifEnvName[opt.EnvIdex]}'
     if not os.path.exists(dir):
         os.mkdir(dir)
 
@@ -597,8 +597,7 @@ def main(opt):
                     
                     agent.a_lr *= 0.999
                     agent.c_lr *= 0.999
-                    
-                       
+
                 # (d) Evaluate and log periodically
                 if total_steps % opt.eval_interval == 0:
                     ep_r = evaluate_policy(eval_env, agent, turns=10)
@@ -645,7 +644,7 @@ if __name__ == '__main__':
     parser.add_argument('--load_model', type=str2bool, default=False, help='Load pretrained model or Not')
     parser.add_argument('--eval_model', type=str2bool, default=False, help='Evaluate only')
     parser.add_argument('--save_model', type=str2bool, default=True, help='Save or not')
-   
+
     parser.add_argument('--seed', type=int, default=42, help='random seed')
     parser.add_argument('--max_train_steps', type=int, default=int(2e5), help='Max training steps')
     parser.add_argument('--save_interval', type=int, default=int(1e4), help='Model saving interval, in steps.')
@@ -672,7 +671,7 @@ if __name__ == '__main__':
     parser.add_argument('--noise', type=bool, default=False, help='Evaluation Env Noise')
     parser.add_argument('--std', type=float, default=0.0, help='Evaluation Env Noise')
     parser.add_argument('--delta', type=float, default=0.0, help='Evaluation Env Noise') 
-   
+
     opt = parser.parse_args()
     opt.device = torch.device(opt.device) # from str to torch.device
     if opt.eval_model:
@@ -685,7 +684,7 @@ if __name__ == '__main__':
     else:
         print(opt)
         main(opt)
-    
+
     # Pen step 1e5
     # LLd step 250k 2.5e5
     # Human about 400k
