@@ -1,11 +1,7 @@
 # Dependencies
 
 ```python
-gymnasium==1.0.0
-numpy==2.1.3
-pytorch==2.5.1
-
-python==3.11.15
+conda env create -f requirement.yaml -n DRAC
 ```
 
 ## How to use my code
