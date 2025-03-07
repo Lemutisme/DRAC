@@ -2,6 +2,7 @@
 
 ```python
 conda env create -f requirement.yaml -n DRAC
+conda activate DRAC
 ```
 
 ## How to use my code
