@@ -89,7 +89,7 @@ def Action_adapter_pos(a, max_action):
 def evaluate_policy_SAC(env, agent, turns = 1, seeds_list = []):
     total_scores = 0
     for j in range(turns):
-        if seeds_list:
+        if len(seeds_list) > 0:
             s, info = env.reset(seed=seeds_list[j])
         else:
             s, info = env.reset()

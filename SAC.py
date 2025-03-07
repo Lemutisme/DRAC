@@ -460,6 +460,7 @@ def main(opt):
         if opt.EnvIdex == 0:
             env = gym.make("CustomPendulum-v1", std=opt.std) # Add noise when updating angle
             eval_env = gym.make("CustomPendulum-v1", std=2*opt.std) # Add noise when updating angle
+            opt.max_train_steps = int(1e5)
 
     # 3. Extract environment properties
     opt.state_dim = env.observation_space.shape[0]
@@ -531,9 +532,9 @@ def main(opt):
         for i in range(eval_num):
             score = evaluate_policy(eval_env, agent, turns=1, seeds_list=[opt.seeds_list[i]])
             scores.append(score)
-        # filename = "new-robust.txt" if opt.robust else "new-non-robust.txt"
-        # with open(filename, 'a') as f:
-        #     f.write(f"{[BrifEnvName[opt.EnvIdex], opt.train_std, opt.eval_std, delta] + [np.mean(scores), np.std(scores), np.quantile(scores, 0.9), np.quantile(scores, 0.1)]}\n")
+        filename = "outcome.txt"
+        with open(filename, 'a') as f:
+            f.write(f"{[BrifEnvName[opt.EnvIdex], opt.std, opt.robust] + [np.mean(scores), np.std(scores), np.quantile(scores, 0.9), np.quantile(scores, 0.1)]}\n")
         print(f"{[BrifEnvName[opt.EnvIdex]] + [np.mean(scores), np.std(scores), np.quantile(scores, 0.9), np.quantile(scores, 0.1)]}\n")    
             
 
@@ -660,7 +661,7 @@ if __name__ == '__main__':
     parser.add_argument('--b_lr', type=float, default=5e-5, help='Learning rate of dual-form optimization')
     parser.add_argument('--g_lr', type=float, default=5e-4, help='Learning rate of dual net')
     parser.add_argument('--r_lr', type=float, default=5e-5, help='Learning rate of reward net')
-    parser.add_argument('--l2_reg', type=float, default=1e-4, help='L2 regulization coefficient for Critic')
+    parser.add_argument('--l2_reg', type=float, default=1e-3, help='L2 regulization coefficient for Critic')
     parser.add_argument('--batch_size', type=int, default=256, help='batch_size of training')
     parser.add_argument('--alpha', type=float, default=0.12, help='Entropy coefficient')
     parser.add_argument('--adaptive_alpha', type=str2bool, default=True, help='Use adaptive_alpha or Not')
