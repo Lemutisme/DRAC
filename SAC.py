@@ -415,7 +415,12 @@ class SAC_countinuous():
 
 
     def save(self, EnvName):
-        params = f"{self.std}_{self.robust}"
+        params = f"{self.type}"
+        if self.perturb_arg:
+            for arg in self.perturb_arg:
+                params += f"_{arg}"
+        if self.robust:
+            params += f"_Robust"
         torch.save(self.actor.state_dict(), "./SAC_model/{}/actor_{}.pth".format(EnvName,params))
         torch.save(self.q_critic.state_dict(), "./SAC_model/{}/q_{}.pth".format(EnvName,params))
         torch.save(self.v_critic.state_dict(), "./SAC_model/{}/v_{}.pth".format(EnvName,params))
@@ -453,14 +458,24 @@ def main(opt):
     ]
 
     # 2. Create training and evaluation environments
-    if not opt.noise:
+    if not opt.perturb:
         env = gym.make(EnvName[opt.EnvIdex])
-        eval_env =  gym.make(EnvName[opt.EnvIdex])
+        eval_env = gym.make(EnvName[opt.EnvIdex])
     else:
         if opt.EnvIdex == 0:
-            env = gym.make("CustomPendulum-v1", std=opt.std) # Add noise when updating angle
-            eval_env = gym.make("CustomPendulum-v1", std=2*opt.std) # Add noise when updating angle
             opt.max_train_steps = int(1e5)
+            if opt.type == 'damp':
+                damp_mean, damp_std = opt.perturb_arg
+                print("Training Env:")
+                env = gym.make("CustomPendulum-v1", type='damp', damp_mean=damp_mean, damp_std=0.0) 
+                print("Evaluation Env:")
+                eval_env = gym.make("CustomPendulum-v1", type='damp', damp_mean=damp_mean, damp_std=damp_std) 
+            elif opt.type == 'noise':
+                noise_std = opt.perturb_arg[0]
+                print("Training Env:")
+                env = gym.make("CustomPendulum-v1", type='noise', noise_std=noise_std) 
+                print("Evaluation Env:")
+                eval_env = gym.make("CustomPendulum-v1", type='noise', noise_std=noise_std)
 
     # 3. Extract environment properties
     opt.state_dim = env.observation_space.shape[0]
@@ -495,7 +510,7 @@ def main(opt):
         # timenow = str(datetime.now())[:-10]    # e.g. 2025-01-10 17:45
         # timenow = ' ' + timenow[:13] + '_' + timenow[-2:]  # e.g. ' 2025-01-10_45'
         writepath = f"runs/SAC/{BrifEnvName[opt.EnvIdex]}"
-        if opt.noise:
+        if opt.perturb:
             writepath += f"_Noise_{opt.std}"
         if opt.robust:
             writepath += f"_Robust"
@@ -504,7 +519,6 @@ def main(opt):
         writer = SummaryWriter(log_dir=writepath)
 
     # 7. Create a directory for saving models
-
     dir = f'SAC_model/{BrifEnvName[opt.EnvIdex]}'
     if not os.path.exists(dir):
         os.mkdir(dir)
@@ -515,7 +529,11 @@ def main(opt):
     # 9. Load a saved model if requested
     if opt.load_model:
         print("Load Model.")
-        params = f"{opt.std}_{opt.robust}"
+        params = f"{opt.type}"
+        for arg in opt.perturb_arg:
+            params += f"_{arg}"
+        if opt.robust:
+            params += f"_Robust"
         agent.load(BrifEnvName[opt.EnvIdex], params)
 
     # 10. If rendering mode is on, run an infinite evaluation loop
@@ -528,14 +546,18 @@ def main(opt):
     elif opt.eval_model:
         eval_num = 100
         print(f"Evaluate {eval_num} episodes.")
-        scores = []
+        score_lst = []
+        damp_mean, damp_std = opt.perturb_arg
         for i in range(eval_num):
+            if opt.type == 'damp':
+                if i % 10 == 0:
+                    eval_env = gym.make("CustomPendulum-v1", type='damp', damp_mean=damp_mean, damp_std=damp_std, seed=opt.seeds_list[i])
             score = evaluate_policy(eval_env, agent, turns=1, seeds_list=[opt.seeds_list[i]])
-            scores.append(score)
-        filename = "outcome.txt"
-        with open(filename, 'a') as f:
-            f.write(f"{[BrifEnvName[opt.EnvIdex], opt.std, opt.robust] + [np.mean(scores), np.std(scores), np.quantile(scores, 0.9), np.quantile(scores, 0.1)]}\n")
-        print(f"{[BrifEnvName[opt.EnvIdex]] + [np.mean(scores), np.std(scores), np.quantile(scores, 0.9), np.quantile(scores, 0.1)]}\n")    
+            score_lst.append(score)
+        # filename = "outcome.txt"
+        # with open(filename, 'a') as f:
+        #     f.write(f"{[BrifEnvName[opt.EnvIdex], opt.std, opt.robust] + [np.mean(scores), np.std(scores), np.quantile(scores, 0.9), np.quantile(scores, 0.1)]}\n")
+        print(f"{[BrifEnvName[opt.EnvIdex]] + [np.mean(score_lst), np.std(score_lst), np.quantile(score_lst, 0.9), np.quantile(score_lst, 0.1)]}\n")    
             
 
     # 12. Otherwise, proceed with training
@@ -568,8 +590,7 @@ def main(opt):
                 next_state, reward, dw, tr, info = env.step(action_env)
 
                 # Custom reward shaping, if needed
-                if opt.reward_adapt:
-                    reward = Reward_adapter(reward, opt.EnvIdex)
+                reward = Reward_adapter(reward, opt.EnvIdex)
 
                 # Check for terminal state
                 done = (dw or tr)
@@ -652,8 +673,8 @@ if __name__ == '__main__':
     parser.add_argument('--save_interval', type=int, default=int(1e4), help='Model saving interval, in steps.')
     parser.add_argument('--eval_interval', type=int, default=int(1e3), help='Model evaluating interval, in steps.')
     parser.add_argument('--update_every', type=int, default=50, help='Training Fraquency, in stpes')
-    # parser.add_argument('--robust_update_every', type=int, default=2, help='Training Fraquency, in stpes')
-
+   
+    # Network Related
     parser.add_argument('--gamma', type=float, default=0.99, help='Discounted Factor')
     parser.add_argument('--net_width', type=int, default=256, help='Hidden net width')
     parser.add_argument('--net_layer', type=int, default=1, help='Hidden net layers')
@@ -662,17 +683,18 @@ if __name__ == '__main__':
     parser.add_argument('--b_lr', type=float, default=5e-5, help='Learning rate of dual-form optimization')
     parser.add_argument('--g_lr', type=float, default=5e-4, help='Learning rate of dual net')
     parser.add_argument('--r_lr', type=float, default=5e-5, help='Learning rate of reward net')
-    parser.add_argument('--l2_reg', type=float, default=1e-3, help='L2 regulization coefficient for Critic')
-    parser.add_argument('--batch_size', type=int, default=256, help='batch_size of training')
+    parser.add_argument('--l2_reg', type=float, default=5e-4, help='L2 regulization coefficient for Critic')
+    parser.add_argument('--batch_size', type=int, default=256, help='Batch_size of training')
     parser.add_argument('--alpha', type=float, default=0.12, help='Entropy coefficient')
     parser.add_argument('--adaptive_alpha', type=str2bool, default=True, help='Use adaptive_alpha or Not')
     
-    # parser.add_argument('--reg_coef', type=float, default=0.0, help='Regulator of Network Parameters')
-    parser.add_argument('--reward_adapt', type=bool, default=True, help='Reward adaptation')
+    # Perturbation and Robust Policy
+    # parser.add_argument('--reward_adapt', type=bool, default=True, help='Reward adaptation')
     parser.add_argument('--robust', type=bool, default=False, help='Robust policy')
-    parser.add_argument('--noise', type=bool, default=False, help='Evaluation Env Noise')
-    parser.add_argument('--std', type=float, default=0.0, help='Evaluation Env Noise')
-    parser.add_argument('--delta', type=float, default=0.0, help='Evaluation Env Noise') 
+    parser.add_argument('--perturb', type=bool, default=False, help='Env with perturbation')
+    parser.add_argument('--type', type=str, default=None, help='Env Perturbation Type')
+    parser.add_argument('--perturb_arg', nargs='+', type=float, default=0.0, help='Env Perturbation Arg')
+    parser.add_argument('--delta', type=float, default=0.0, help='Distribution Discrepancy') 
    
     opt = parser.parse_args()
     opt.device = torch.device(opt.device) # from str to torch.device
