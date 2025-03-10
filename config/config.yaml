@@ -4,8 +4,8 @@
 defaults:
   - _self_
   - env: pendulum
-  - override hydra/job_logging: disabled
-  - override hydra/hydra_logging: disabled
+  - hydra/job_logging: job_logging
+  - override hydra/hydra_logging: colorlog
 
 # General settings
 device: cuda
@@ -33,7 +33,7 @@ b_lr: 0.00005 # 5e-5
 g_lr: 0.0005 # 5e-4
 r_lr: 0.00005 # 5e-5
 l2_reg: 0.001 # 1e-3
-batch_size: 2048 #256
+batch_size: 4096 #256
 alpha: 0.12
 adaptive_alpha: true
 
@@ -52,3 +52,7 @@ hydra:
   sweep:
     dir: ./multirun/${now:%Y-%m-%d}/${now:%H-%M-%S}
     subdir: ${hydra.job.num}
+  job:
+    name: ${env_name}_training
+    chdir: true  # Change to the output directory
+  

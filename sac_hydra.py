@@ -439,7 +439,40 @@ def main(cfg: DictConfig):
     """
     # Set up logger
     log = logging.getLogger(__name__)
-    log.info(OmegaConf.to_yaml(cfg))
+    log.info(f"Configuration:\n{OmegaConf.to_yaml(cfg)}")
+
+    # Create a summary log file for key information
+    output_dir = Path(hydra.core.hydra_config.HydraConfig.get().runtime.output_dir)
+    summary_path = output_dir / "summary.log"
+
+    # Create file handler for summary log
+    summary_handler = logging.FileHandler(summary_path)
+    summary_handler.setLevel(logging.INFO)
+    summary_formatter = logging.Formatter('[%(asctime)s] %(message)s')
+    summary_handler.setFormatter(summary_formatter)
+
+    # Create a separate logger for summary information
+    summary_logger = logging.getLogger("summary")
+    summary_logger.setLevel(logging.INFO)
+    summary_logger.addHandler(summary_handler)
+    summary_logger.info(f"Starting SAC training with configuration: {cfg.env_name}")
+
+    # Log system information
+    import platform
+    import torch.cuda
+    system_info = {
+        "Platform": platform.platform(),
+        "Python": platform.python_version(),
+        "PyTorch": torch.__version__,
+        "CUDA Available": torch.cuda.is_available(),
+        "CUDA Version": torch.version.cuda if torch.cuda.is_available() else "N/A",
+        "GPU": torch.cuda.get_device_name(0) if torch.cuda.is_available() else "N/A"
+    }
+
+    log.info(f"System information:")
+    for key, value in system_info.items():
+        log.info(f"  {key}: {value}")
+    summary_logger.info(f"System: {system_info['Platform']}, PyTorch: {system_info['PyTorch']}, GPU: {system_info['GPU']}")
 
     # 1. Define environment names and abbreviations
     EnvName = [
@@ -546,16 +579,35 @@ def main(cfg: DictConfig):
             scores.append(score)
             # Update progress bar with current mean score
             if i > 0 and i % 5 == 0:
-                tqdm.write(f"Current mean score after {i} episodes: {np.mean(scores[:i]):.2f}")
+                current_mean = np.mean(scores[:i])
+                tqdm.write(f"Current mean score after {i} episodes: {current_mean:.2f}")
+                # Log intermediate results to summary
+                summary_logger.info(f"Intermediate evaluation ({i}/{eval_num}): Mean score = {current_mean:.2f}")
+
+        # Calculate statistics
+        mean_score = np.mean(scores)
+        std_score = np.std(scores)
+        p90_score = np.quantile(scores, 0.9)
+        p10_score = np.quantile(scores, 0.1)
 
         # Save results to output directory
         results_path = Path(hydra.core.hydra_config.HydraConfig.get().runtime.output_dir) / "results.txt"
         with open(results_path, 'a') as f:
-            f.write(f"{[BrifEnvName[opt.env_index], opt.std, opt.robust, np.mean(scores), np.std(scores), np.quantile(scores, 0.9), np.quantile(scores, 0.1)]}\n")
+            f.write(f"{[BrifEnvName[opt.env_index], opt.std, opt.robust, mean_score, std_score, p90_score, p10_score]}\n")
 
-        log.info(f"Results: {BrifEnvName[opt.env_index]}, Mean: {np.mean(scores):.2f}, Std: {np.std(scores):.2f}")
-        log.info(f"90th percentile: {np.quantile(scores, 0.9):.2f}, 10th percentile: {np.quantile(scores, 0.1):.2f}")
+        log.info(f"Results: {BrifEnvName[opt.env_index]}, Mean: {mean_score:.2f}, Std: {std_score:.2f}")
+        log.info(f"90th percentile: {p90_score:.2f}, 10th percentile: {p10_score:.2f}")
         log.info(f"Results saved to {results_path}")
+
+        # Log final results to summary file
+        summary_logger.info("-" * 50)
+        summary_logger.info("EVALUATION COMPLETED")
+        summary_logger.info(f"Environment: {EnvName[opt.env_index]}")
+        summary_logger.info(f"Evaluation over {eval_num} episodes:")
+        summary_logger.info(f"  Mean reward: {mean_score:.2f} ± {std_score:.2f}")
+        summary_logger.info(f"  90th percentile: {p90_score:.2f}")
+        summary_logger.info(f"  10th percentile: {p10_score:.2f}")
+        summary_logger.info("-" * 50)
 
     # 12. Otherwise, proceed with training
     else:
@@ -623,13 +675,18 @@ def main(cfg: DictConfig):
 
                     # (c) Train the agent at fixed intervals (batch updates)
                     if (total_steps >= 50 * opt.max_e_steps) and (total_steps % opt.update_every == 0):
+                        printer = False
                         writer_copy = writer
+                        if total_steps % 500 == 0:
+                            printer = True
+
                         train_bar = tqdm(range(opt.update_every), 
                                         desc="Model Update", 
                                         leave=False, ncols=100, position=2)
 
                         for i in train_bar:
-                            agent.train(agent.robust, writer_copy, total_steps)
+                            agent.train(agent.robust, printer, writer_copy, total_steps)
+                            printer = False
                             writer_copy = False
 
                         # Learning rate decay
@@ -641,7 +698,6 @@ def main(cfg: DictConfig):
                         # Temporarily close progress bars for evaluation
                         episode_pbar.close()
                         pbar.set_description("Evaluating...")
-
                         ep_r = evaluate_policy(eval_env, agent, turns=10)
 
                         if writer is not None:
@@ -680,7 +736,25 @@ def main(cfg: DictConfig):
             score = evaluate_policy(eval_env, agent, turns=1)
             scores.append(score)
 
-        log.info(f"Final evaluation - Mean: {np.mean(scores):.2f}, Std: {np.std(scores):.2f}")
+        mean_score = np.mean(scores)
+        std_score = np.std(scores)
+        p90_score = np.quantile(scores, 0.9)
+        p10_score = np.quantile(scores, 0.1)
+
+        log.info(f"Final evaluation - Mean: {mean_score:.2f}, Std: {std_score:.2f}")
+        log.info(f"90th percentile: {p90_score:.2f}, 10th percentile: {p10_score:.2f}")
+
+        # Log final results to summary file
+        summary_logger.info("-" * 50)
+        summary_logger.info("TRAINING COMPLETED")
+        summary_logger.info(f"Environment: {EnvName[opt.env_index]}")
+        summary_logger.info(f"Total steps: {total_steps}")
+        summary_logger.info(f"Total episodes: {total_episode}")
+        summary_logger.info(f"Final evaluation over {eval_num} episodes:")
+        summary_logger.info(f"  Mean reward: {mean_score:.2f} ± {std_score:.2f}")
+        summary_logger.info(f"  90th percentile: {p90_score:.2f}")
+        summary_logger.info(f"  10th percentile: {p10_score:.2f}")
+        summary_logger.info("-" * 50)
 
         # Save final model
         if opt.save_model:
