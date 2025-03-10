@@ -16,10 +16,18 @@ def build_net(layer_shape, hidden_activation, output_activation):
 
 # Disrupted Env
 class CustomPendulumEnv(PendulumEnv):
-    def __init__(self, render_mode=None, std=0.0):
+    def __init__(self, render_mode=None, type=None, damp_mean=0.0, damp_std=0.0, noise_std=0.0, seed=None):
         super().__init__(render_mode=render_mode)
-        self.noise_std = std
-        print(f"Penludum Env with Observation Noise STD={std}.")
+        if seed:
+            np.random.seed(seed)
+        self.b = 0.0
+        self.type = type
+        if type == 'damp':
+            self.b = abs(normal(damp_mean, damp_std))
+            print(f"Penludum Env with Damping Factor: {self.b: .5f}.")
+        elif type == 'noise':
+            self.noise_std = noise_std
+            print(f"Penludum Env with Observation Noise STD: {noise_std: .5f}.")
         
     def step(self, u):
         th, thdot = self.state  # th := theta
@@ -28,20 +36,22 @@ class CustomPendulumEnv(PendulumEnv):
         m = self.m
         l = self.l
         dt = self.dt
+        b = self.b
 
         u = np.clip(u, -self.max_torque, self.max_torque)[0]
         self.last_u = u  # for rendering
         costs = angle_normalize(th) ** 2 + 0.1 * thdot**2 + 0.001 * (u**2)
 
-        newthdot = thdot + (3 * g / (2 * l) * np.sin(th) + 3.0 / (m * l**2) * u) * dt
+        newthdot = thdot + (3 * g / (2 * l) * np.sin(th) + 3.0 / (m * l**2) * u - b * thdot) * dt
         newthdot = np.clip(newthdot, -self.max_speed, self.max_speed)
         newth = th + newthdot * dt 
         #############################################################	
-        # Universal Normal noise
-        # newth += normal(0, self.noise_std)
+        if self.type == 'noise':
+            # Universal Normal noise
+            newth += normal(0, self.noise_std)
         
-        # Always adverse Normal noise 
-        newth += abs(normal(0, self.noise_std)) * np.sign(newth) 
+            # Always adverse Normal noise 
+            # newth += abs(normal(0, self.noise_std)) * np.sign(newth) 
         #############################################################	
 
         self.state = np.array([newth, newthdot])
@@ -55,7 +65,7 @@ register(
     id="CustomPendulum-v1",
     entry_point="utils:CustomPendulumEnv",
     max_episode_steps=200,
-    kwargs={'std': 0.0}
+    kwargs={'type':None, 'damp_mean':0.0, 'damp_std':0.0, 'noise_std':0.0}
 )
 
 
