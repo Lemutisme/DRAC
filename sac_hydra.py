@@ -23,7 +23,7 @@ from scipy.optimize import minimize_scalar
 from omegaconf import DictConfig, OmegaConf
 
 ######################################################
-# NOTE:
+# NOTE: 
 # Actor, Double_Q_Critic, V_Critic: MLP
 # Transition learner: VAE
 # Three robust dual optimization options:
@@ -443,7 +443,14 @@ def main(cfg: DictConfig):
 
     # Create a summary log file for key information
     output_dir = Path(hydra.core.hydra_config.HydraConfig.get().runtime.output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+
     summary_path = output_dir / "summary.log"
+
+    # Configure file logging manually to ensure it works
+    file_handler = logging.FileHandler(output_dir / "train.log")
+    file_handler.setFormatter(logging.Formatter('[%(asctime)s][%(name)s][%(levelname)s] - %(message)s'))
+    log.addHandler(file_handler)
 
     # Create file handler for summary log
     summary_handler = logging.FileHandler(summary_path)
@@ -675,18 +682,13 @@ def main(cfg: DictConfig):
 
                     # (c) Train the agent at fixed intervals (batch updates)
                     if (total_steps >= 50 * opt.max_e_steps) and (total_steps % opt.update_every == 0):
-                        printer = False
                         writer_copy = writer
-                        if total_steps % 500 == 0:
-                            printer = True
-
                         train_bar = tqdm(range(opt.update_every), 
                                         desc="Model Update", 
                                         leave=False, ncols=100, position=2)
 
                         for i in train_bar:
-                            agent.train(agent.robust, printer, writer_copy, total_steps)
-                            printer = False
+                            agent.train(agent.robust, writer_copy, total_steps)
                             writer_copy = False
 
                         # Learning rate decay

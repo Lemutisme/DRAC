@@ -4,8 +4,8 @@
 defaults:
   - _self_
   - env: pendulum
-  - hydra/job_logging: job_logging
-  - override hydra/hydra_logging: colorlog
+  - override hydra/job_logging: default
+  - override hydra/hydra_logging: default
 
 # General settings
 device: cuda
@@ -55,4 +55,3 @@ hydra:
   job:
     name: ${env_name}_training
     chdir: true  # Change to the output directory
-  
