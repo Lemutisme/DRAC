@@ -1,33 +1,32 @@
 from utils import evaluate_policy_SAC as evaluate_policy
 from utils import Action_adapter_symm as Action_adapter
 from utils import Action_adapter_symm_reverse as Action_adapter_reverse
-from utils import build_net, Reward_adapter, str2bool, register
-from continuous_cartpole import register
+from utils import build_net, Reward_adapter
+
+import copy
+import math
+import hydra
+import logging
 
 import random
 import numpy as np
+import gymnasium as gym
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.distributions import Normal
-import torch.optim as optim
-import copy
-import gymnasium as gym
-import os
-import shutil
-import math
-from scipy.special import logsumexp
-from scipy.optimize import minimize, minimize_scalar
-from omegaconf import DictConfig, OmegaConf
-import hydra
+
+from tqdm import tqdm
 from pathlib import Path
-import logging
-from typing import Dict, Any, List, Optional
+from scipy.special import logsumexp
+from scipy.optimize import minimize_scalar
+from omegaconf import DictConfig, OmegaConf
 
 ######################################################
+# NOTE:
 # Actor, Double_Q_Critic, V_Critic: MLP
 # Transition learner: VAE
-# Three dual optimization options:
+# Three robust dual optimization options:
 # 1. beta, minimize loss.mean()
 # 2. functional g, minimize scalar loss, equivalent to replace beta with g(s,a)
 # 3. independent optimize, too slow
@@ -541,9 +540,13 @@ def main(cfg: DictConfig):
         seeds_list = [random.randint(0, 100000) for _ in range(eval_num)] if not hasattr(opt, 'seeds_list') else opt.seeds_list
 
         scores = []
-        for i in range(eval_num):
+        # Use tqdm for evaluation progress
+        for i in tqdm(range(eval_num), desc="Evaluation Progress", ncols=100):
             score = evaluate_policy(eval_env, agent, turns=1, seeds_list=[seeds_list[i]])
             scores.append(score)
+            # Update progress bar with current mean score
+            if i > 0 and i % 5 == 0:
+                tqdm.write(f"Current mean score after {i} episodes: {np.mean(scores[:i]):.2f}")
 
         # Save results to output directory
         results_path = Path(hydra.core.hydra_config.HydraConfig.get().runtime.output_dir) / "results.txt"
@@ -559,81 +562,126 @@ def main(cfg: DictConfig):
         total_steps = 0
         total_episode = 0
 
-        while total_steps < opt.max_train_steps:
-            # (a) Reset environment with incremented seed
-            state, info = env.reset(seed=env_seed)
-            env_seed += 1
-            total_episode += 1
-            done = False
+        # Create a progress bar for the total training steps
+        with tqdm(total=opt.max_train_steps, desc="Training Progress", ncols=100) as pbar:
+            while total_steps < opt.max_train_steps:
+                # (a) Reset environment with incremented seed
+                state, info = env.reset(seed=env_seed)
+                env_seed += 1
+                total_episode += 1
+                done = False
+                ep_reward = 0
 
-            # (b) Interact with environment until episode finishes
-            while not done:
-                # Random exploration for first 50 episodes (each episode is up to max_e_steps)
-                if total_steps < (50 * opt.max_e_steps):
-                    # Sample action directly from environment's action space
-                    action_env = env.action_space.sample()  # Range: [-max_action, max_action]
-                    # Convert env action back to agent's internal range [-1,1]
-                    action_agent = Action_adapter_reverse(action_env, opt.max_action)
-                else:
-                    # Select action from agent (internal range [-1,1])
-                    action_agent = agent.select_action(state, deterministic=False)
-                    # Convert agent action to environment range
-                    action_env = Action_adapter(action_agent, opt.max_action)
+                # Create a progress bar for steps within this episode
+                episode_pbar = tqdm(total=opt.max_e_steps, desc=f"Episode {total_episode}", 
+                                    leave=False, ncols=100, position=1)
 
-                # Step the environment
-                next_state, reward, dw, tr, info = env.step(action_env)
+                # (b) Interact with environment until episode finishes
+                episode_steps = 0
+                while not done:
+                    # Random exploration for first 50 episodes (each episode is up to max_e_steps)
+                    if total_steps < (50 * opt.max_e_steps):
+                        # Sample action directly from environment's action space
+                        action_env = env.action_space.sample()  # Range: [-max_action, max_action]
+                        # Convert env action back to agent's internal range [-1,1]
+                        action_agent = Action_adapter_reverse(action_env, opt.max_action)
+                    else:
+                        # Select action from agent (internal range [-1,1])
+                        action_agent = agent.select_action(state, deterministic=False)
+                        # Convert agent action to environment range
+                        action_env = Action_adapter(action_agent, opt.max_action)
 
-                # Custom reward shaping, if needed
-                if opt.reward_adapt:
-                    reward = Reward_adapter(reward, opt.env_index)
+                    # Step the environment
+                    next_state, reward, dw, tr, info = env.step(action_env)
+                    ep_reward += reward
 
-                # Check for terminal state
-                done = (dw or tr)
+                    # Custom reward shaping, if needed
+                    if opt.reward_adapt:
+                        reward = Reward_adapter(reward, opt.env_index)
 
-                # Store transition in replay buffer
-                agent.replay_buffer.add(state, action_agent, reward, next_state, dw)
+                    # Check for terminal state
+                    done = (dw or tr)
 
-                # Move to next step
-                state = next_state
-                total_steps += 1
+                    # Store transition in replay buffer
+                    agent.replay_buffer.add(state, action_agent, reward, next_state, dw)
 
-                # (c) Train the agent at fixed intervals (batch updates)
-                if (total_steps >= 50 * opt.max_e_steps) and (total_steps % opt.update_every == 0):
-                    printer = False
-                    writer_copy = writer
-                    if total_steps % 500 == 0:
-                        printer = True
-                        
-                    for i in range(opt.update_every):
-                        agent.train(agent.robust, printer, writer_copy, total_steps)
+                    # Move to next step
+                    state = next_state
+                    total_steps += 1
+                    episode_steps += 1
+
+                    # Update progress bars
+                    pbar.update(1)
+                    episode_pbar.update(1)
+
+                    # Update progress bar description with more info
+                    if total_steps % 10 == 0:
+                        pbar.set_postfix({
+                            'episode': total_episode,
+                            'reward': f"{ep_reward:.2f}"
+                        })
+
+                    # (c) Train the agent at fixed intervals (batch updates)
+                    if (total_steps >= 50 * opt.max_e_steps) and (total_steps % opt.update_every == 0):
                         printer = False
-                        writer_copy = False
+                        writer_copy = writer
+                        if total_steps % 500 == 0:
+                            printer = True
 
-                    # Learning rate decay
-                    agent.a_lr *= 0.999
-                    agent.c_lr *= 0.999
+                        train_bar = tqdm(range(opt.update_every), 
+                                        desc="Model Update", 
+                                        leave=False, ncols=100, position=2)
 
-                # (d) Evaluate and log periodically
-                if total_steps % opt.eval_interval == 0:
-                    ep_r = evaluate_policy(eval_env, agent, turns=10)
-                    if writer is not None:
-                        writer.add_scalar('ep_r', ep_r, global_step=total_steps)
-                    log.info(
-                        f"EnvName: {BrifEnvName[opt.env_index]}, "
-                        f"Steps: {int(total_steps/1000)}k, "
-                        f"Episodes: {total_episode}, "
-                        f"Episode Reward: {ep_r}"
-                    )
+                        for i in train_bar:
+                            agent.train(agent.robust, printer, writer_copy, total_steps)
+                            printer = False
+                            writer_copy = False
 
-                # (e) Save model at fixed intervals
-                if opt.save_model and total_steps % opt.save_interval == 0:
-                    agent.save(BrifEnvName[opt.env_index])
+                        # Learning rate decay
+                        agent.a_lr *= 0.999
+                        agent.c_lr *= 0.999
+
+                    # (d) Evaluate and log periodically
+                    if total_steps % opt.eval_interval == 0:
+                        # Temporarily close progress bars for evaluation
+                        episode_pbar.close()
+                        pbar.set_description("Evaluating...")
+
+                        ep_r = evaluate_policy(eval_env, agent, turns=10)
+
+                        if writer is not None:
+                            writer.add_scalar('ep_r', ep_r, global_step=total_steps)
+
+                        log.info(
+                            f"EnvName: {BrifEnvName[opt.env_index]}, "
+                            f"Steps: {int(total_steps/1000)}k, "
+                            f"Episodes: {total_episode}, "
+                            f"Episode Reward: {ep_r}"
+                        )
+
+                        # Reset progress bar description
+                        pbar.set_description("Training Progress")
+                        episode_pbar = tqdm(total=opt.max_e_steps, initial=episode_steps,
+                                            desc=f"Episode {total_episode}", 
+                                            leave=False, ncols=100, position=1)
+
+                    # (e) Save model at fixed intervals
+                    if opt.save_model and total_steps % opt.save_interval == 0:
+                        agent.save(BrifEnvName[opt.env_index])
+
+                # Close episode progress bar when episode ends
+                episode_pbar.close()
+
+                # Log episode stats
+                log.info(f"Episode {total_episode} completed with reward {ep_reward:.2f} in {episode_steps} steps")
 
         # Evaluate the trained agent
         eval_num = 20
         log.info(f"Training completed. Evaluating across {eval_num} episodes")
         scores = []
-        for _ in range(eval_num):
+
+        # Create a progress bar for evaluation
+        for i in tqdm(range(eval_num), desc="Final Evaluation", ncols=100):
             score = evaluate_policy(eval_env, agent, turns=1)
             scores.append(score)
 
