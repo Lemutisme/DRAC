@@ -4,11 +4,11 @@ This repository contains a Distributionally Robust Soft Actor-Critic (SAC) imple
 
 ## Setup
 
-1. Install required dependencies:
-   ```
-   conda env create -f requirement.yaml -n DRAC
-   conda activate DRAC
-   ```
+Install required dependencies:
+```
+conda env create -f requirement.yaml -n DRAC
+conda activate DRAC
+```
 
 ## Running the Code
 
