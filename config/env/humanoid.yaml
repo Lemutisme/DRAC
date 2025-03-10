@@ -1,0 +1,6 @@
+# @package _global_
+
+# Humanoid environment config
+env_name: Humanoid-v5
+env_index: 3
+max_train_steps: 400000
