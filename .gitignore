@@ -1,3 +1,6 @@
 __pycache__
 *.pyc
 runs
+outputs
+models/SAC_model
+models/PPO_model
