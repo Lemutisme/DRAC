@@ -432,7 +432,7 @@ class SAC_countinuous():
         self.v_critic.load_state_dict(torch.load(model_dir / f"v_{params}.pth", map_location=self.device, weights_only=True))
 
 
-@hydra.main(version_base=None, config_path="config", config_name="config")
+@hydra.main(version_base=None, config_path="config", config_name="sac_config")
 def main(cfg: DictConfig):
     """
     Main function to train and evaluate an SAC agent on different environments.
