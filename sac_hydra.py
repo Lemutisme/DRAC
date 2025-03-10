@@ -251,7 +251,7 @@ class SAC_countinuous():
         v_next = v_next.cpu().numpy()
         return - beta * (logsumexp(-v_next/beta) - math.log(size)) - beta * self.delta           
 
-    def train(self, robust_update, printer, writer, step):
+    def train(self, robust_update, writer, step):
         s, a, r, s_next, dw = self.replay_buffer.sample(self.batch_size)
 
         #----------------------------- ↓↓↓↓↓ Update R Net ↓↓↓↓↓ ------------------------------#
@@ -261,7 +261,7 @@ class SAC_countinuous():
             self.trans_optimizer.zero_grad()
             tr_loss.backward()
             self.trans_optimizer.step()
-            if printer:
+            if self.debug_print:
                 print(f"tr_loss: {tr_loss.item()}")
             if writer:
                 writer.add_scalar('tr_loss', tr_loss, global_step=step)
@@ -280,8 +280,8 @@ class SAC_countinuous():
                     opt_loss = -self.dual_func_beta(s_next_sample, self.beta)
                     self.beta_optimizer.zero_grad()
                     opt_loss.mean().backward()
-                    #if printer:
-                    #    print(opt_loss.sum().item())
+                    if self.debug_print:
+                        print(opt_loss.sum().item())
                     self.beta_optimizer.step() 
 
                 V_next_opt = self.dual_func(s_next_sample, torch.exp(self.log_beta)) 
@@ -295,8 +295,8 @@ class SAC_countinuous():
                     self.g_optimizer.zero_grad()
                     opt_loss.mean().backward()
                     self.g_optimizer.step() 
-                    # if printer:
-                    #     print(opt_loss.mean().item())
+                    if self.debug_print:
+                        print(opt_loss.mean().item())
 
                 V_next_opt = self.dual_func_g(s, a, s_next_sample) 
             #############################################################		
@@ -326,7 +326,7 @@ class SAC_countinuous():
             ### Q(s, a) = r + γ * (1 - done) * V(s') ###
             if robust_update:
                 target_Q = r + (~dw) * self.gamma * V_next_opt
-                if printer:
+                if self.debug_print:
                     print(((V_next_opt - V_next) / V_next).norm().item()) # difference of robust update
                     # print(((V_next_opt - V_next_opt_acc) / V_next_opt).norm().item()) # difference of reparate and joint optimize
             else:
@@ -346,7 +346,7 @@ class SAC_countinuous():
         self.q_critic_optimizer.zero_grad()
         q_loss.backward()
         self.q_critic_optimizer.step()
-        if printer:
+        if self.debug_print:
             print(f"q_loss: {q_loss.item()}")
         if writer:
             writer.add_scalar('q_loss', q_loss, global_step=step)
@@ -373,7 +373,7 @@ class SAC_countinuous():
         self.v_critic_optimizer.zero_grad()
         v_loss.backward()
         self.v_critic_optimizer.step()
-        if printer:
+        if self.debug_print:
             print(f"v_loss: {v_loss.item()}")
         if writer:
             writer.add_scalar('v_loss', v_loss, global_step=step)
@@ -396,7 +396,7 @@ class SAC_countinuous():
         self.actor_optimizer.zero_grad()
         a_loss.backward()
         self.actor_optimizer.step()
-        if printer:
+        if self.debug_print:
             print(f"a_loss: {a_loss.item()}\n")
         if writer:
             writer.add_scalar('a_loss', a_loss, global_step=step)
@@ -623,18 +623,13 @@ def main(cfg: DictConfig):
 
                     # (c) Train the agent at fixed intervals (batch updates)
                     if (total_steps >= 50 * opt.max_e_steps) and (total_steps % opt.update_every == 0):
-                        printer = False
                         writer_copy = writer
-                        if total_steps % 500 == 0:
-                            printer = True
-
                         train_bar = tqdm(range(opt.update_every), 
                                         desc="Model Update", 
                                         leave=False, ncols=100, position=2)
 
                         for i in train_bar:
-                            agent.train(agent.robust, printer, writer_copy, total_steps)
-                            printer = False
+                            agent.train(agent.robust, writer_copy, total_steps)
                             writer_copy = False
 
                         # Learning rate decay
