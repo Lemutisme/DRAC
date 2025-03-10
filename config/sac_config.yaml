@@ -48,9 +48,9 @@ delta: 0.0
 # Hydra output directory
 hydra:
   run:
-    dir: ./outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}
+    dir: ./outputs/SAC/${now:%Y-%m-%d}/${now:%H-%M-%S}
   sweep:
-    dir: ./multirun/${now:%Y-%m-%d}/${now:%H-%M-%S}
+    dir: ./multirun/SAC/${now:%Y-%m-%d}/${now:%H-%M-%S}
     subdir: ${hydra.job.num}
   job:
     name: ${env_name}_training
