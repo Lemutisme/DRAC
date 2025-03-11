@@ -2,6 +2,7 @@ import argparse
 import torch.nn as nn
 import numpy as np
 from numpy.random import normal
+import scipy.stats as stats
 from gymnasium.envs.classic_control.pendulum import PendulumEnv, angle_normalize
 from gymnasium.envs.registration import register
 
@@ -16,18 +17,36 @@ def build_net(layer_shape, hidden_activation, output_activation):
 
 # Disrupted Env
 class CustomPendulumEnv(PendulumEnv):
-    def __init__(self, render_mode=None, type=None, damp_mean=0.0, damp_std=0.0, noise_std=0.0, seed=None):
+    def __init__(self, render_mode=None, type=None, perturb_arg=None, seed=None):
         super().__init__(render_mode=render_mode)
         if seed:
             np.random.seed(seed)
         self.b = 0.0
         self.type = type
         if type == 'damp':
+            damp_mean, damp_std = perturb_arg
             self.b = abs(normal(damp_mean, damp_std))
             print(f"Penludum Env with Damping Factor: {self.b: .5f}.")
         elif type == 'noise':
-            self.noise_std = noise_std
-            print(f"Penludum Env with Observation Noise STD: {noise_std: .5f}.")
+            noise_type, noise_std = perturb_arg[0], 0.5*float(perturb_arg[1])
+            if noise_type == 'Normal':
+                self.dist = stats.norm(loc=0, scale=noise_std)
+                print(f"Penludum Env with Normal Observation Noise STD: {noise_std: .5f}.")
+            elif noise_type == 'Cauchy':
+                self.dist = stats.cauchy(loc=0, scale=noise_std)
+                print(f"Penludum Env with Cauchy Observation Noise STD: {noise_std: .5f}.")
+            elif noise_type == 'Laplace':
+                self.dist = stats.laplace(loc=0, scale=noise_std)
+                print(f"Penludum Env with Laplace Observation Noise STD: {noise_std: .5f}.")
+            elif noise_type == 't':
+                self.dist = stats.t(df=2, loc=0, scale=noise_std)
+                print(f"Penludum Env with t Observation Noise STD: {noise_std: .5f}.")
+            elif noise_type == 'Uniform':
+                self.dist = stats.uniform(loc=-0.5*noise_std, scale=noise_std)
+                print(f"Penludum Env with Uniform Observation Noise STD: {noise_std: .5f}.")
+            else:
+                print("Wrong Noise Type.")
+                return 
         
     def step(self, u):
         th, thdot = self.state  # th := theta
@@ -47,9 +66,9 @@ class CustomPendulumEnv(PendulumEnv):
         newth = th + newthdot * dt 
         #############################################################	
         if self.type == 'noise':
-            # Universal Normal noise
-            newth += normal(0, self.noise_std)
-        
+            # Universal noise
+            newth += self.dist.rvs()
+            
             # Always adverse Normal noise 
             # newth += abs(normal(0, self.noise_std)) * np.sign(newth) 
         #############################################################	
@@ -65,7 +84,7 @@ register(
     id="CustomPendulum-v1",
     entry_point="utils:CustomPendulumEnv",
     max_episode_steps=200,
-    kwargs={'type':None, 'damp_mean':0.0, 'damp_std':0.0, 'noise_std':0.0}
+    kwargs={'type':None, 'perturb_arg':None}
 )
 
 
