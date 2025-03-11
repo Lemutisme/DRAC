@@ -183,7 +183,7 @@ class ReplayBuffer(object):
         return self.s[ind], self.a[ind], self.r[ind], self.s_next[ind], self.dw[ind]
 
 
-class SAC_countinuous():
+class SAC_continuous():
     def __init__(self, **kwargs):
         # Init hyperparameters for agent, just like "self.gamma = opt.gamma, self.lambd = opt.lambd, ..."
         self.__dict__.update(kwargs)
@@ -559,7 +559,7 @@ def main(cfg: DictConfig):
     log.info(f"Models will be saved to {model_dir}")
 
     # 8. Initialize the SAC agent
-    agent = SAC_countinuous(**OmegaConf.to_container(opt, resolve=True))
+    agent = SAC_continuous(**OmegaConf.to_container(opt, resolve=True))
 
     # 9. Load a saved model if requested
     if opt.load_model:
