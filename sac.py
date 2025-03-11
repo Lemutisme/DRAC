@@ -50,7 +50,7 @@ class Actor(nn.Module):
         net_out = self.a_net(state)
         mu = self.mu_layer(net_out)
         log_std = self.log_std_layer(net_out)
-        log_std = torch.clamp(log_std, self.LOG_STD_MIN, self.LOG_STD_MAX)  
+        log_std = torch.clamp(log_std, min=self.LOG_STD_MIN, max=self.LOG_STD_MAX)  
         std = torch.exp(log_std)
         dist = Normal(mu, std)
         u = mu if deterministic else dist.rsample()
@@ -252,7 +252,7 @@ class SAC_continuous():
         v_next = v_next.cpu().numpy()
         return - beta * (logsumexp(-v_next/beta) - math.log(size)) - beta * self.delta           
 
-    def train(self, robust_update, writer, step):
+    def train(self, writer, step):
         s, a, r, s_next, dw = self.replay_buffer.sample(self.batch_size)
 
         #----------------------------- ↓↓↓↓↓ Update R Net ↓↓↓↓↓ ------------------------------#
@@ -267,7 +267,6 @@ class SAC_continuous():
             if writer:
                 writer.add_scalar('tr_loss', tr_loss, global_step=step)
 
-        if robust_update:   
             with torch.no_grad():
                 s_next_sample = self.transition.sample(s, a, 200)
 
@@ -285,7 +284,7 @@ class SAC_continuous():
                         print(opt_loss.sum().item())
                     self.beta_optimizer.step() 
 
-                V_next_opt = self.dual_func(s_next_sample, torch.exp(self.log_beta)) 
+                V_next_opt = self.dual_func_beta(s_next_sample, torch.exp(self.log_beta)) 
             #############################################################		
 
             #############################################################		
@@ -300,6 +299,9 @@ class SAC_continuous():
                         print(opt_loss.mean().item())
 
                 V_next_opt = self.dual_func_g(s, a, s_next_sample) 
+                if torch.max(V_next_opt) > 1e4 or torch.min(V_next_opt) < -1e4:
+                    print(torch.max(torch.abs(V_next_opt)))
+                    return
             #############################################################		
 
             #############################################################		
@@ -325,7 +327,7 @@ class SAC_continuous():
             V_next = self.v_critic_target(s_next)
             #############################################################		
             ### Q(s, a) = r + γ * (1 - done) * V(s') ###
-            if robust_update:
+            if self.robust:
                 target_Q = r + (~dw) * self.gamma * V_next_opt
                 if self.debug_print:
                     print(((V_next_opt - V_next) / V_next).norm().item()) # difference of robust update
@@ -701,7 +703,7 @@ def main(cfg: DictConfig):
                                         leave=False, ncols=100, position=2)
 
                         for i in train_bar:
-                            agent.train(agent.robust, writer_copy, total_steps)
+                            agent.train(writer_copy, total_steps)
                             writer_copy = False
 
                         # Learning rate decay
