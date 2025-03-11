@@ -467,6 +467,7 @@ def main(cfg: DictConfig):
     summary_logger = logging.getLogger("summary")
     summary_logger.setLevel(logging.INFO)
     summary_logger.addHandler(summary_handler)
+    summary_logger.propagate = False
     summary_logger.info(f"Starting SAC training with configuration: {cfg.env_name}")
 
     # Log system information
@@ -523,8 +524,8 @@ def main(cfg: DictConfig):
         env, eval_env = create_env_with_mods(EnvName[opt.env_index], cfg.env_mods)
         
         # Log the modifications being applied
-        log.info(f"Applied modifications: {OmegaConf.to_yaml(cfg.env_mods)}")
-        summary_logger.info(f"Environment modifications enabled: {cfg.env_mods.use_mods}")
+        # log.info(f"Applied modifications: {OmegaConf.to_yaml(cfg.env_mods)}") # kind of repeated
+        summary_logger.info(f"Environment modifications enabled: {cfg.env_mods.use_mods}") 
     else:
         # Use legacy noise settings if env_mods is not used
         if not opt.noise:

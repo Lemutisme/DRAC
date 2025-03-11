@@ -147,6 +147,7 @@ class ObservationNoiseWrapper(gym.Wrapper):
             noise_freq: Frequency of applying noise (1.0 = every step)
         """
         super().__init__(env)
+        self._max_episode_steps = env._max_episode_steps
         self.noise_type = noise_type
         self.noise_level = noise_level
         self.noise_freq = noise_freq
@@ -424,7 +425,7 @@ def create_env_with_mods(env_name, env_config):
         )
     
     # Create evaluation environment with potentially different modifications
-    logger.info("Configuring evaluation environment")
+    logger.info("Applying modifications to evaluation environment")
     
     # Decide evaluation environment configuration based on settings
     if env_config.eval.use_modified:
