@@ -1,10 +1,5 @@
 import argparse
 import torch.nn as nn
-import numpy as np
-from numpy.random import normal
-from gymnasium.envs.classic_control.pendulum import PendulumEnv, angle_normalize
-from gymnasium.envs.registration import register
-
 
 def build_net(layer_shape, hidden_activation, output_activation):
     '''Build net with for loop'''
@@ -13,51 +8,6 @@ def build_net(layer_shape, hidden_activation, output_activation):
         act = hidden_activation if j < len(layer_shape)-2 else output_activation
         layers += [nn.Linear(layer_shape[j], layer_shape[j+1]), act()]
     return nn.Sequential(*layers)
-
-# Disrupted Env
-class CustomPendulumEnv(PendulumEnv):
-    def __init__(self, render_mode=None, std=0.0):
-        super().__init__(render_mode=render_mode)
-        self.noise_std = std
-        print(f"Penludum Env with Observation Noise STD={std}.")
-        
-    def step(self, u):
-        th, thdot = self.state  # th := theta
-
-        g = self.g
-        m = self.m
-        l = self.l
-        dt = self.dt
-
-        u = np.clip(u, -self.max_torque, self.max_torque)[0]
-        self.last_u = u  # for rendering
-        costs = angle_normalize(th) ** 2 + 0.1 * thdot**2 + 0.001 * (u**2)
-
-        newthdot = thdot + (3 * g / (2 * l) * np.sin(th) + 3.0 / (m * l**2) * u) * dt
-        newthdot = np.clip(newthdot, -self.max_speed, self.max_speed)
-        newth = th + newthdot * dt 
-        #############################################################	
-        # Universal Normal noise
-        # newth += normal(0, self.noise_std)
-        
-        # Always adverse Normal noise 
-        newth += abs(normal(0, self.noise_std)) * np.sign(newth) 
-        #############################################################	
-
-        self.state = np.array([newth, newthdot])
-
-        if self.render_mode == "human":
-            self.render()
-        # truncation=False as the time limit is handled by the `TimeLimit` wrapper added during `make`
-        return self._get_obs(), -costs, False, False, {}
-
-register(
-    id="CustomPendulum-v1",
-    entry_point="utils:CustomPendulumEnv",
-    max_episode_steps=200,
-    kwargs={'std': 0.0}
-)
-
 
 # Reward engineering for better training
 def Reward_adapter(r, EnvIdex):

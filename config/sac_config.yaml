@@ -4,6 +4,7 @@
 defaults:
   - _self_
   - env: pendulum
+  - env_mods  # New include for environment modifications
   - override hydra/job_logging: default
   - override hydra/hydra_logging: default
 
@@ -41,8 +42,8 @@ adaptive_alpha: true
 reward_adapt: true
 robust: false
 robust_optimizer: functional # beta, functional, separate
-noise: false
-std: 0.0
+noise: false  # Legacy noise setting - consider using env_mods instead
+std: 0.0      # Legacy std setting - consider using env_mods instead
 delta: 0.0
 
 # Hydra output directory

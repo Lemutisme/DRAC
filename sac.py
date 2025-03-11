@@ -204,7 +204,7 @@ class SAC_continuous():
 
         if self.robust:    
             print('This is a robust policy.')
-            self.transition = TransitionVAE(self.state_dim, self.action_dim, self.state_dim, (self.net_width, self.net_width), self.net_layer).to(self.device)
+            self.transition = TransitionVAE(self.state_dim, self.action_dim, self.state_dim, self.net_width, self.net_width, self.net_layer).to(self.device)
             self.trans_optimizer = torch.optim.Adam(self.transition.parameters(), lr=self.r_lr)
 
             self.log_beta = nn.Parameter(torch.ones((self.batch_size,1), requires_grad=True, device=self.device) * 1.0)
@@ -510,13 +510,25 @@ def main(cfg: DictConfig):
             setattr(opt, key, value)
 
     # 2. Create training and evaluation environments
-    if not opt.noise:
-        env = gym.make(EnvName[opt.env_index])
-        eval_env = gym.make(EnvName[opt.env_index])
+    # Import environment modifier if environment modifications are enabled
+    if hasattr(cfg, 'env_mods') and cfg.env_mods.use_mods:
+        # Import the environment_modifiers module
+        from environment_modifiers import create_env_with_mods
+        log.info("Using environment modifications from config")
+        env, eval_env = create_env_with_mods(EnvName[opt.env_index], cfg.env_mods)
+        
+        # Log the modifications being applied
+        log.info(f"Applied modifications: {OmegaConf.to_yaml(cfg.env_mods)}")
+        summary_logger.info(f"Environment modifications enabled: {cfg.env_mods.use_mods}")
     else:
-        if opt.env_index == 0:
-            env = gym.make("CustomPendulum-v1", std=opt.std) # Add noise when updating angle
-            eval_env = gym.make("CustomPendulum-v1", std=2*opt.std) # Add noise when updating angle
+        # Use legacy noise settings if env_mods is not used
+        if not opt.noise:
+            env = gym.make(EnvName[opt.env_index])
+            eval_env = gym.make(EnvName[opt.env_index])
+        else:
+            if opt.env_index == 0:
+                env = gym.make("CustomPendulum-v1", std=opt.std) # Add noise when updating angle
+                eval_env = gym.make("CustomPendulum-v1", std=2*opt.std) # Add noise when updating angle
 
     # 3. Extract environment properties
     opt.state_dim = env.observation_space.shape[0]

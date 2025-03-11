@@ -1,0 +1,53 @@
+# @package env_mods
+# Configuration for environment modifications
+
+use_mods: false  # Master switch for all modifications
+
+# Observation noise configuration
+observation_noise:
+  enabled: false
+  type: "gaussian"  # Options: gaussian, uniform, saltpepper, adversarial
+  level: 0.1  # Noise magnitude
+  frequency: 1.0  # Frequency of applying noise (1.0 = every step)
+
+# Action perturbation configuration
+action_perturb:
+  enabled: false
+  type: "noise"  # Options: drop, noise, delay, stuck
+  probability: 0.1  # Probability of perturbation
+  level: 0.1  # Magnitude of perturbation
+
+# Reward shift configuration
+reward_shift:
+  enabled: false
+  type: "scale"  # Options: scale, delay, noise, sparse, sign_flip
+  param: 0.9  # Parameter for the specific shift type
+  noise_level: 0.1  # Standard deviation of noise (for 'noise' type)
+
+# Transition dynamics perturbation
+transition_perturb:
+  enabled: false
+  type: "teleport"  # Options: teleport, random_force, friction
+  probability: 0.05  # Probability of applying the perturbation
+  level: 0.1  # Magnitude of the perturbation
+
+# Parameter shift configuration (for supported environments)
+param_shift:
+  enabled: false
+  # For Pendulum:
+  g_factor: 1.0  # Gravity factor
+  m_factor: 1.0  # Mass factor
+  l_factor: 1.0  # Length factor
+  # For LunarLander:
+  gravity_factor: 1.0  # Gravity factor
+  wind_power: 0.0  # Constant wind force
+  turbulence_power: 0.0  # Random turbulence
+
+# Evaluation environment configuration
+eval:
+  use_modified: true  # Whether to use modified env for evaluation
+  scale_noise: false  # Whether to scale noise in eval env
+  noise_scale_factor: 2.0  # Factor to scale noise by in eval
+  include_action_perturb: true  # Include action perturbations in eval
+  include_reward_shift: true  # Include reward shifts in eval
+  include_transition_perturb: true  # Include transition perturbations in eval
