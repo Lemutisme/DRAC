@@ -5,5 +5,6 @@ outputs/SAC
 outputs/PPO
 multirun/SAC
 multirun/PPO
-models/SAC_model
-models/PPO_model
+SAC_model
+PPO_model
+waste_files
