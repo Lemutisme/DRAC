@@ -1,92 +1,120 @@
-# Dependencies
+# DR-SAC
 
-```python
-gymnasium==1.0.0
-numpy==2.1.3
-pytorch==2.5.1
+This repository contains a Distributionally Robust Soft Actor-Critic (SAC) implementation.
 
-python==3.11.15
+## Setup
+
+Install required dependencies:
+```
+conda env create -f requirement.yaml -n DRAC
+conda activate DRAC
 ```
 
-## How to use my code
+## Running the Code
 
-First, replace the `model` to your wanted algorithm
+### Basic Training
 
-### Train from scratch
+Train with default configuration (Pendulum environment):
 
-```bash
-python model.py
+```
+python sac.py # SAC
+python ppo.py # PPO
 ```
 
-where the default enviroment is 'Pendulum'.
+### Changing Environments
 
-### Play with trained model
+Train on a different environment:
 
-```bash
-python model.py --EnvIdex 0 --render True --Loadmodel True --ModelIdex 10
+```
+python sac.py env=lunarlander
 ```
 
-which will render the 'Pendulum'.
+Available environments:
 
-### Change Enviroment
+* `pendulum` (default)
+* `cartpole`
+* `lunarlander`
+* `humanoid`
+* `halfcheetah`
 
-If you want to train on different enviroments, just run
+### Using Robust Policy
 
-```bash
-python model.py --EnvIdex 1
+Train with robust policy:
+
+```
+python sac.py robust=true
 ```
 
-The ``--EnvIdex`` can be set to be 0~5, where
+### Adding Noise
 
-```bash
-'--EnvIdex 0' for 'Pendulum-v1'  
-'--EnvIdex 1' for 'LunarLanderContinuous-v2'  
-'--EnvIdex 2' for 'Humanoid-v4'  
-'--EnvIdex 3' for 'HalfCheetah-v4'  
-'--EnvIdex 4' for 'BipedalWalker-v3'  
-'--EnvIdex 5' for 'BipedalWalkerHardcore-v3' 
+Add noise to the environment:
+
+```
+python sac.py noise=true std=0.1
 ```
 
-Note: if you want train on **BipedalWalker, BipedalWalkerHardcore, or LunarLanderContinuous**, you need to install [box2d-py](https://gymnasium.farama.org/environments/box2d/) first. You can install box2d-py via:
+### Changing Hyperparameters
 
-```bash
-pip install gymnasium[box2d]
+Change any hyperparameter directly from command line:
+
+```
+python sac.py batch_size=512 a_lr=0.001 net_width=128
 ```
 
-if you want train on **Humanoid or HalfCheetah**, you need to install [MuJoCo](https://gymnasium.farama.org/environments/mujoco/) first. You can install MuJoCo via:
+### Evaluation Mode
 
-```bash
-pip install mujoco
-pip install gymnasium[mujoco]
+Run in evaluation mode:
+
+```
+python sac.py eval_model=true
 ```
 
-### Visualize the training curve
+### Multirun with Different Configurations
 
-You can use the [tensorboard](https://pytorch.org/docs/stable/tensorboard.html) to record anv visualize the training curve.
+Run multiple configurations in parallel:
 
-- Installation (please make sure PyTorch is installed already):
-
-```bash
-pip install tensorboard
-pip install packaging
+```
+python sac.py --multirun env=pendulum,lunarlander robust=true,false
 ```
 
-- Record (the training curves will be saved at '**\runs**'):
+This will run 4 experiments with all combinations of environments and robust settings.
 
-```bash
-python main.py --write True
-```
+## Configuration Structure
 
-- Visualization:
+### Main Configuration
 
-```bash
-tensorboard --logdir runs
-```
+The main configuration file (`config.yaml`) contains default settings for the algorithm.
 
-### Hyperparameter Setting
+### Environment Configurations
 
-For more details of Hyperparameter Setting, please check 'main.py'
+Environment-specific configurations are stored in the `config/env/` directory. They define:
 
-### Reference
+* Environment name and index
+* Recommended training steps
 
-[Soft Actor-Critic Algorithms and Applications](https://arxiv.org/pdf/1812.05905.pdf)
+## Output Structure
+
+When running with Hydra:
+
+* Logs, configs, and outputs are saved to `outputs/YYYY-MM-DD/HH-MM-SS/`
+* For multirun experiments, outputs are saved to `multirun/YYYY-MM-DD/HH-MM-SS/`
+* TensorBoard logs are in the `tensorboard/` subdirectory
+* Models are saved to `models/SAC_model/{ENV_NAME}/`
+
+## Advanced Usage
+
+### Adding New Environments
+
+To add a new environment:
+
+1. Create a YAML file in `config/env/`
+2. Define environment parameters (name, index, training steps)
+3. Update the environment lists in `sac.py` if needed
+
+### Creating Custom Configuration Groups
+
+You can create custom configuration groups for different experiments:
+
+1. Create a directory in `config/` (e.g., `config/experiment/`)
+2. Add YAML files with different configurations
+3. Run with: `python sac_hydra.py +experiment=my_config`

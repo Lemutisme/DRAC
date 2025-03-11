@@ -1,0 +1,57 @@
+# @package _global_
+
+# Default configuration for SAC algorithm
+defaults:
+  - _self_
+  - env: pendulum
+  - override hydra/job_logging: default
+  - override hydra/hydra_logging: default
+
+# General settings
+device: cuda
+write: false
+debug_print: false
+render: false
+load_model: false
+eval_model: false
+save_model: true
+
+# Training settings
+seed: 42
+max_train_steps: 200000
+save_interval: 10000
+eval_interval: 1000
+update_every: 50
+
+# Algorithm hyperparameters
+gamma: 0.99
+net_width: 256
+net_layer: 1
+a_lr: 0.005 # 5e-3
+c_lr: 0.00005 # 5e-5
+b_lr: 0.00005 # 5e-5
+g_lr: 0.0005 # 5e-4
+r_lr: 0.00005 # 5e-5
+l2_reg: 0.001 # 1e-3
+batch_size: 4096 #256
+alpha: 0.12
+adaptive_alpha: true
+
+# Environment configurations
+reward_adapt: true
+robust: false
+robust_optimizer: functional # beta, functional, separate
+noise: false
+std: 0.0
+delta: 0.0
+
+# Hydra output directory
+hydra:
+  run:
+    dir: ./outputs/SAC/${now:%Y-%m-%d}/${now:%H-%M-%S}
+  sweep:
+    dir: ./multirun/SAC/${now:%Y-%m-%d}/${now:%H-%M-%S}
+    subdir: ${hydra.job.num}
+  job:
+    name: ${env_name}_training
+    chdir: true  # Change to the output directory

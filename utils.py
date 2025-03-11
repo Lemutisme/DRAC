@@ -14,17 +14,6 @@ def build_net(layer_shape, hidden_activation, output_activation):
         layers += [nn.Linear(layer_shape[j], layer_shape[j+1]), act()]
     return nn.Sequential(*layers)
 
-# def discretize(state, grid):
-#     # if len(state.shape) < 2:
-#     # 	state = state.view(1,-1)
-#     assert state.shape[0] == len(grid)
-#     dis_state = []
-#     for i in range(state.shape[0]):
-#         idx = torch.searchsorted(grid[i], state[i], right=True)
-#         idx = (idx - 1).clamp(min = 0)
-#         dis_state.append(grid[i][idx])
-#     return torch.stack(dis_state, dim=-1)
-
 # Disrupted Env
 class CustomPendulumEnv(PendulumEnv):
     def __init__(self, render_mode=None, std=0.0):
@@ -46,7 +35,14 @@ class CustomPendulumEnv(PendulumEnv):
 
         newthdot = thdot + (3 * g / (2 * l) * np.sin(th) + 3.0 / (m * l**2) * u) * dt
         newthdot = np.clip(newthdot, -self.max_speed, self.max_speed)
-        newth = th + newthdot * dt + normal(0, self.noise_std) # theta computation is not accurate.
+        newth = th + newthdot * dt 
+        #############################################################	
+        # Universal Normal noise
+        # newth += normal(0, self.noise_std)
+        
+        # Always adverse Normal noise 
+        newth += abs(normal(0, self.noise_std)) * np.sign(newth) 
+        #############################################################	
 
         self.state = np.array([newth, newthdot])
 
@@ -78,23 +74,30 @@ def Reward_adapter(r, EnvIdex):
         if r <= -100: r = -1
     return r
 
-def Action_adapter(a,max_action):
+def Action_adapter_symm(a,max_action):
     #from [-1,1] to [-max,max]
     return  a*max_action
 
-def Action_adapter_reverse(act,max_action):
+def Action_adapter_symm_reverse(act,max_action):
     #from [-max,max] to [-1,1]
     return  act/max_action
 
-def evaluate_policy(env, agent, turns = 5):
+def Action_adapter_pos(a, max_action):
+    #from [0,1] to [-max,max]
+    return  2 * (a - 0.5) * max_action
+
+def evaluate_policy_SAC(env, agent, turns = 1, seeds_list = []):
     total_scores = 0
     for j in range(turns):
-        s, info = env.reset()
+        if len(seeds_list) > 0:
+            s, info = env.reset(seed=seeds_list[j])
+        else:
+            s, info = env.reset()
         done = False
         while not done:
             # Take deterministic actions at test time
             a = agent.select_action(s, deterministic=True)
-            a_env = Action_adapter(a, agent.max_action)
+            a_env = Action_adapter_symm(a, agent.max_action)
             s_next, r, dw, tr, info = env.step(a_env)
             done = (dw or tr)
 
@@ -102,20 +105,21 @@ def evaluate_policy(env, agent, turns = 5):
             s = s_next
     return int(total_scores/turns)
 
-# def evaluate_policy_PPOD(env, agent, turns = 3):
-#     total_scores = 0
-#     for j in range(turns):
-#         s, info = env.reset()
-#         done = False
-#         while not done:
-#             # Take deterministic actions at test time
-#             a = agent.select_action(s, deterministic=True)
-#             s_next, r, dw, tr, info = env.step(a)
-#             done = (dw or tr)
+def evaluate_policy_PPO(env, agent, max_action, turns=3):
+    total_scores = 0
+    for j in range(turns):
+        s, info = env.reset()
+        done = False
+        while not done:
+            a, logprob_a = agent.select_action(s, deterministic=True) # Take deterministic actions when evaluation
+            act = Action_adapter_pos(a, max_action)  # [0,1] to [-max,max]
+            s_next, r, dw, tr, info = env.step(act)
+            done = (dw or tr)
 
-#             total_scores += r
-#             s = s_next
-#     return int(total_scores/turns)
+            total_scores += r
+            s = s_next
+
+    return total_scores/turns
 
 def str2bool(v):
     '''transfer str to bool for argparse'''
