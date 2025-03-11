@@ -263,11 +263,14 @@ class PPO_agent(object):
         dw = torch.from_numpy(self.dw_holder).to(self.device)
 
         if self.robust:
-           s_next_recon, mu, logvar = self.transition(s, a, s_next)
-           tr_loss = self.vae_loss(s_next, s_next_recon, mu, logvar)
-           self.trans_optimizer.zero_grad()
-           tr_loss.backward()
-           self.trans_optimizer.step()
+           num = self.T_horizon // 256
+           for i in range(num):
+               s0, a0, s_next0 = s[i*256:(i+1)*256], a[i*256:(i+1)*256], s_next[i*256:(i+1)*256]
+               s_next_recon0, mu, logvar = self.transition(s0, a0, s_next0)
+               tr_loss = self.vae_loss(s_next0, s_next_recon0, mu, logvar)
+               self.trans_optimizer.zero_grad()
+               tr_loss.backward()
+               self.trans_optimizer.step()
            if printer:
                print(f"tr_loss: {tr_loss.item()}")
            if writer:
@@ -280,8 +283,8 @@ class PPO_agent(object):
                opt_loss = -self.dual_func_g(s, a, s_next_sample)
                self.g_optimizer.zero_grad()
                opt_loss.mean().backward()
-               if printer:
-                   print(opt_loss.mean().item())    
+            #    if printer:
+            #        print(opt_loss.mean().item())    
                self.g_optimizer.step() 
            
            vs_opt = self.dual_func_g(s, a, s_next_sample) 
@@ -291,6 +294,9 @@ class PPO_agent(object):
         with torch.no_grad():
             vs = self.critic(s)
             vs_ = self.critic(s_next)
+            
+            if self.robust and printer: 
+                print(((vs_opt - vs_) / vs_).norm().item())
 
             '''dw for TD_target and Adv'''
             if self.robust:
@@ -339,6 +345,8 @@ class PPO_agent(object):
                 a_loss.mean().backward()
                 torch.nn.utils.clip_grad_norm_(self.actor.parameters(), 40)
                 self.actor_optimizer.step()
+                if i == 0 and printer:
+                    print(f"a_loss: {a_loss.mean().item()}")
                 if writer:
                     writer.add_scalar('a_loss', a_loss.mean(), global_step=step)
             
@@ -354,8 +362,12 @@ class PPO_agent(object):
                 self.critic_optimizer.zero_grad()
                 c_loss.backward()
                 self.critic_optimizer.step()
-                if writer:
+                if i == 0 and printer:
+                       print(f"c_loss: {c_loss.item()}")
+                if i == 0 and writer:
                     writer.add_scalar('c_loss', c_loss, global_step=step)
+            
+            printer = False
             
 
     def put_data(self, s, a, r, s_next, logprob_a, done, dw, idx):
@@ -398,15 +410,19 @@ def main(opt):
     ]
     
     # 2. Build Training and Evaluation Environments
-    env = gym.make(EnvName[opt.EnvIdex])
+    # env = gym.make(EnvName[opt.EnvIdex])
     
     if not opt.noise:
+        env = gym.make(EnvName[opt.EnvIdex])
         eval_env =  gym.make(EnvName[opt.EnvIdex])
     else:
         if opt.EnvIdex == 0:
-            eval_env = gym.make("CustomPendulum-v1", std=opt.std) # Add noise when updating angle
+            env = gym.make("CustomPendulum-v1", std=opt.std)
+            eval_env = gym.make("CustomPendulum-v1", std=2*opt.std) # Add noise when updating angle
         elif opt.EnvIdex == 1:
             eval_env = gym.make("CustomCartPole", std=opt.std) # Add noise when updating angle
+        elif opt.EnvIdex == 2:
+            eval_env = gym.make('LunarLanderContinuous-v3', enable_wind = True)
 
 
     # 3. Extract environment/state/action info
@@ -494,6 +510,7 @@ def main(opt):
             s, info = env.reset(seed=env_seed)
             env_seed += 1
             done = False
+            printer = False
 
             # 11-a. Interact & train for one episode
             while not done:
@@ -520,10 +537,12 @@ def main(opt):
                 total_steps += 1
 
                 # (v) Update agent if horizon reached
-                printer = traj_length % (10 * opt.T_horizon) == 0
+                if total_steps % 4096 == 0:
+                    printer = True
                 if traj_length % opt.T_horizon == 0:
                     agent.train(printer, writer, total_steps)
                     traj_length = 0
+                    printer = False
                 
                 # if total_steps >= 4e5 and total_steps % 5e3 == 0:
                 #     agent.a_lr *= 0.95
@@ -537,7 +556,7 @@ def main(opt):
                     print(
                         f"EnvName: {EnvName[opt.EnvIdex]} | "
                         f"Steps: {int(total_steps/1000)}k | "
-                        f"Score: {score}"
+                        f"Score: {score}\n"
                     )
 
                 # (vii) Periodically save model
@@ -571,16 +590,16 @@ if __name__ == '__main__':
     parser.add_argument('--lambd', type=float, default=0.95, help='GAE Factor')
     parser.add_argument('--clip_rate', type=float, default=0.2, help='PPO Clip rate')
     parser.add_argument('--K_epochs', type=int, default=10, help='PPO update times')
-    parser.add_argument('--net_width', type=int, default=128, help='Hidden net width')
+    parser.add_argument('--net_width', type=int, default=256, help='Hidden net width')
     parser.add_argument('--net_layer', type=int, default=1, help='Hidden net layers')
     parser.add_argument('--a_lr', type=float, default=2e-5, help='Learning rate of actor')
     parser.add_argument('--c_lr', type=float, default=2e-5, help='Learning rate of critic')
     parser.add_argument('--b_lr', type=float, default=2e-4, help='Learning rate of dual optimization problem')
-    parser.add_argument('--g_lr', type=float, default=2e-4, help='Learning rate of dual optimization problem')
-    parser.add_argument('--r_lr', type=float, default=2e-4, help='Learning rate of reward')
+    parser.add_argument('--g_lr', type=float, default=2e-5, help='Learning rate of dual optimization problem')
+    parser.add_argument('--r_lr', type=float, default=2e-5, help='Learning rate of reward')
     parser.add_argument('--l2_reg', type=float, default=1e-3, help='L2 regulization coefficient for Critic')
-    parser.add_argument('--a_optim_batch_size', type=int, default=64, help='lenth of sliced trajectory of actor')
-    parser.add_argument('--c_optim_batch_size', type=int, default=64, help='lenth of sliced trajectory of critic')
+    parser.add_argument('--a_optim_batch_size', type=int, default=64, help='length of sliced trajectory of actor')
+    parser.add_argument('--c_optim_batch_size', type=int, default=64, help='length of sliced trajectory of critic')
     parser.add_argument('--entropy_coef', type=float, default=1e-3, help='Entropy coefficient of Actor')
     parser.add_argument('--entropy_coef_decay', type=float, default=0.99, help='Decay rate of entropy_coef')
     
