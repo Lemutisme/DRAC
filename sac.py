@@ -299,9 +299,6 @@ class SAC_continuous():
                         print(opt_loss.mean().item())
 
                 V_next_opt = self.dual_func_g(s, a, s_next_sample) 
-                if torch.max(V_next_opt) > 1e4 or torch.min(V_next_opt) < -1e4:
-                    print(torch.max(torch.abs(V_next_opt)))
-                    return
             #############################################################		
 
             #############################################################		
