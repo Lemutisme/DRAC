@@ -467,15 +467,14 @@ def main(opt):
             if opt.type == 'damp':
                 damp_mean, damp_std = opt.perturb_arg
                 print("Training Env:")
-                env = gym.make("CustomPendulum-v1", type='damp', damp_mean=damp_mean, damp_std=0.0) 
+                env = gym.make("CustomPendulum-v1", type='damp') 
                 print("Evaluation Env:")
-                eval_env = gym.make("CustomPendulum-v1", type='damp', damp_mean=damp_mean, damp_std=damp_std) 
+                eval_env = gym.make("CustomPendulum-v1", type='damp') 
             elif opt.type == 'noise':
-                noise_std = opt.perturb_arg[0]
                 print("Training Env:")
-                env = gym.make("CustomPendulum-v1", type='noise', noise_std=noise_std) 
+                env = gym.make("CustomPendulum-v1", type='noise', perturb_arg=opt.perturb_arg) 
                 print("Evaluation Env:")
-                eval_env = gym.make("CustomPendulum-v1", type='noise', noise_std=noise_std)
+                eval_env = gym.make("CustomPendulum-v1", type='noise', perturb_arg=opt.perturb_arg)
 
     # 3. Extract environment properties
     opt.state_dim = env.observation_space.shape[0]
@@ -551,9 +550,17 @@ def main(opt):
         for i in range(eval_num):
             if opt.type == 'damp':
                 if i % 10 == 0:
-                    eval_env = gym.make("CustomPendulum-v1", type='damp', damp_mean=damp_mean, damp_std=damp_std, seed=opt.seeds_list[i])
+                    eval_env = gym.make("CustomPendulum-v1", type='damp', seed=opt.seeds_list[i])
+            elif opt.type == 'noise':
+                distributions = ['Normal', 'Cauchy', 'Laplace', 't', 'Uniform']
+                if i % 20 == 0:
+                     if i > 0:
+                         print(np.mean(score_lst[i-20:i]))
+                     eval_env = gym.make("CustomPendulum-v1", type='noise', perturb_arg=[distributions[i//20], opt.perturb_arg[1]])
             score = evaluate_policy(eval_env, agent, turns=1, seeds_list=[opt.seeds_list[i]])
             score_lst.append(score)
+                
+            
         # filename = "outcome.txt"
         # with open(filename, 'a') as f:
         #     f.write(f"{[BrifEnvName[opt.EnvIdex], opt.std, opt.robust] + [np.mean(scores), np.std(scores), np.quantile(scores, 0.9), np.quantile(scores, 0.1)]}\n")
@@ -693,7 +700,7 @@ if __name__ == '__main__':
     parser.add_argument('--robust', type=bool, default=False, help='Robust policy')
     parser.add_argument('--perturb', type=bool, default=False, help='Env with perturbation')
     parser.add_argument('--type', type=str, default=None, help='Env Perturbation Type')
-    parser.add_argument('--perturb_arg', nargs='+', type=float, default=0.0, help='Env Perturbation Arg')
+    parser.add_argument('--perturb_arg', nargs='+', default=None, help='Env Perturbation Arg')
     parser.add_argument('--delta', type=float, default=0.0, help='Distribution Discrepancy') 
    
     opt = parser.parse_args()
