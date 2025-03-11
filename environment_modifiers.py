@@ -52,7 +52,7 @@ class CustomPendulumEnv(PendulumEnv):
 
 register(
     id="CustomPendulum-v1",
-    entry_point="utils:CustomPendulumEnv",
+    entry_point="environment_modifiers:CustomPendulumEnv",
     max_episode_steps=200,
     kwargs={'std': 0.0}
 )

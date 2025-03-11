@@ -2,6 +2,7 @@ from utils import evaluate_policy_SAC as evaluate_policy
 from utils import Action_adapter_symm as Action_adapter
 from utils import Action_adapter_symm_reverse as Action_adapter_reverse
 from utils import build_net, Reward_adapter
+from environment_modifiers import register
 
 import copy
 import math
