@@ -99,13 +99,13 @@ class TransitionVAE(nn.Module):
         self.latent_dim = latent_dim
 
         # Encoder layers
-        e_layers = [state_dim * 2 + action_dim] + [hidden_dim] * hidden_layers
+        e_layers = [state_dim * 2 + action_dim] + list(hidden_dim) * hidden_layers
         self.encoder = build_net(e_layers, nn.ReLU, nn.Identity)
         self.e_mu = nn.Linear(e_layers[-1], latent_dim)
         self.e_logvar = nn.Linear(e_layers[-1], latent_dim)
 
         # Decoder layers
-        d_layers = [state_dim + action_dim + latent_dim] + [hidden_dim] * hidden_layers + [out_dim]
+        d_layers = [state_dim + action_dim + latent_dim] + list(hidden_dim) * hidden_layers + [out_dim]
         self.decoder = build_net(d_layers, nn.ReLU, nn.Identity)
 
     def encode(self, s, a, s_next):
@@ -190,22 +190,27 @@ class SAC_continuous():
         self.__dict__.update(kwargs)
         self.tau = 0.005
 
-        self.actor = Actor(self.state_dim, self.action_dim, (self.net_width, self.net_width), self.net_layer).to(self.device)
+        self.actor = Actor(self.state_dim, self.action_dim, hid_shape=(self.net_width, self.net_width), hid_layers=self.net_layer).to(self.device)
         self.actor_optimizer = torch.optim.Adam(self.actor.parameters(), lr=self.a_lr)
 
-        self.v_critic = V_Critic(self.state_dim, (self.net_width, self.net_width), self.net_layer).to(self.device)
+        self.v_critic = V_Critic(self.state_dim, hid_shape=(self.net_width, self.net_width), hid_layers=self.net_layer).to(self.device)
         self.v_critic_optimizer = torch.optim.Adam(self.v_critic.parameters(), lr=self.c_lr)
         self.v_critic_target = copy.deepcopy(self.v_critic)
         # Freeze target networks with respect to optimizers (only update via polyak averaging)
         for p in self.v_critic_target.parameters():
             p.requires_grad = False
 
-        self.q_critic = Double_Q_Critic(self.state_dim, self.action_dim, (self.net_width, self.net_width), self.net_layer).to(self.device)
+        self.q_critic = Double_Q_Critic(self.state_dim, self.action_dim, 
+                                        hid_shape=(self.net_width, self.net_width), 
+                                        hid_layers=self.net_layer).to(self.device)
         self.q_critic_optimizer = torch.optim.Adam(self.q_critic.parameters(), lr=self.c_lr)
 
         if self.robust:    
             print('This is a robust policy.')
-            self.transition = TransitionVAE(self.state_dim, self.action_dim, self.state_dim, self.net_width, self.net_width, self.net_layer).to(self.device)
+            self.transition = TransitionVAE(self.state_dim, self.action_dim, self.state_dim, 
+                                            hidden_dim=(self.net_width, self.net_width), 
+                                            hidden_layers=self.net_layer, 
+                                            latent_dim=5).to(self.device)
             self.trans_optimizer = torch.optim.Adam(self.transition.parameters(), lr=self.r_lr)
 
             self.log_beta = nn.Parameter(torch.ones((self.batch_size,1), requires_grad=True, device=self.device) * 1.0)
