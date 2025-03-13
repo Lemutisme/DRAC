@@ -208,6 +208,7 @@ class ActionPerturbationWrapper(gym.Wrapper):
         self.stuck_action = None
         self.stuck_count = 0
         self.delay_buffer = []
+        self._max_episode_steps = env._max_episode_steps
         print(f"Action perturbation: {perturb_type} with prob {perturb_prob}")
 
     def reset(self, **kwargs):
