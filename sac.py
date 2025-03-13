@@ -295,8 +295,14 @@ class SAC_continuous():
             #############################################################		
             ### option2: optimize w.r.t functional g ###
             elif self.robust_optimizer == 'functional':
-                for _ in range(5):
+                old_loss = 1e4
+                for _ in range(10):
                     opt_loss = -self.dual_func_g(s, a, s_next_sample)
+                    # Stopping Criteria
+                    if abs(opt_loss.mean().item() - old_loss) < 1e-3 * old_loss:
+                        break
+                    old_loss = opt_loss.mean().item()
+                    
                     self.g_optimizer.zero_grad()
                     opt_loss.mean().backward()
                     self.g_optimizer.step() 
@@ -429,8 +435,8 @@ class SAC_continuous():
         torch.save(self.q_critic.state_dict(), model_dir / f"q_{params}.pth")
         torch.save(self.v_critic.state_dict(), model_dir / f"v_{params}.pth")
 
-    def load(self, EnvName, params):
-        model_dir = Path(f"./models/SAC_model/{EnvName}")
+    def load(self, EnvName, params, load_path):
+        model_dir = Path(f"{load_path}/models/SAC_model/{EnvName}")
 
         self.actor.load_state_dict(torch.load(model_dir / f"actor_{params}.pth", map_location=self.device, weights_only=True))
         self.q_critic.load_state_dict(torch.load(model_dir / f"q_{params}.pth", map_location=self.device, weights_only=True))
@@ -583,7 +589,7 @@ def main(cfg: DictConfig):
     if opt.load_model:
         log.info("Loading pre-trained model")
         params = f"{opt.std}_{opt.robust}"
-        agent.load(BrifEnvName[opt.env_index], params)
+        agent.load(BrifEnvName[opt.env_index], params, opt.load_path)
 
     # 10. If rendering mode is on, run an infinite evaluation loop
     if opt.render:
@@ -595,7 +601,7 @@ def main(cfg: DictConfig):
     elif opt.eval_model:
         eval_num = 100
         log.info(f"Evaluating agent across {eval_num} episodes")
-        seeds_list = [random.randint(0, 100000) for _ in range(eval_num)] if not hasattr(opt, 'seeds_list') else opt.seeds_list
+        seeds_list = [random.randint(0, 100000) for _ in range(eval_num)] if not hasattr(opt, 'seeds_list') else json.loads(opt.seeds_list)
 
         scores = []
         # Use tqdm for evaluation progress
