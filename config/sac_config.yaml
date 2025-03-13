@@ -14,6 +14,7 @@ write: false
 debug_print: false
 render: false
 load_model: false
+load_path: None
 eval_model: false
 save_model: true
 
@@ -49,7 +50,7 @@ delta: 0.0
 # Hydra output directory
 hydra:
   run:
-    dir: ./outputs/SAC/${now:%Y-%m-%d}/${now:%H-%M-%S}
+    dir: ./outputs/SAC/${now:%Y-%m-%d}/${now:%H-%M-%S}_${env_mods.action_perturb.type}_${env_mods.action_perturb.probability}_${robust}
   sweep:
     dir: ./multirun/SAC/${now:%Y-%m-%d}/${now:%H-%M-%S}
     subdir: ${hydra.job.num}

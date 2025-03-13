@@ -601,7 +601,7 @@ def main(cfg: DictConfig):
     elif opt.eval_model:
         eval_num = 100
         log.info(f"Evaluating agent across {eval_num} episodes")
-        seeds_list = [random.randint(0, 100000) for _ in range(eval_num)] if not hasattr(opt, 'seeds_list') else json.loads(opt.seeds_list)
+        seeds_list = [random.randint(0, 100000) for _ in range(eval_num)] if not hasattr(opt, 'seeds_list') else opt.seeds_list
 
         scores = []
         # Use tqdm for evaluation progress
