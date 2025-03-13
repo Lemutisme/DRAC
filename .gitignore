@@ -9,4 +9,7 @@ SAC_model
 PPO_model
 waste_files
 run1.sh
+run2.sh
+eval.sh
 debug_outputs
+eval_outputs
