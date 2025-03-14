@@ -8,6 +8,7 @@ import copy
 import math
 import hydra
 import logging
+import platform
 
 import random
 import numpy as np
@@ -22,6 +23,7 @@ from pathlib import Path
 from scipy.special import logsumexp
 from scipy.optimize import minimize_scalar
 from omegaconf import DictConfig, OmegaConf
+from abc import ABC, abstractmethod
 
 ######################################################
 # NOTE: 
@@ -436,178 +438,234 @@ class SAC_continuous():
         self.q_critic.load_state_dict(torch.load(model_dir / f"q_{params}.pth", map_location=self.device, weights_only=True))
         self.v_critic.load_state_dict(torch.load(model_dir / f"v_{params}.pth", map_location=self.device, weights_only=True))
 
+class Abstract_AC(ABC):
+    def __init__(self, cfg: DictConfig):
+        """Initialize the SAC trainer with configuration"""
+        # Store config
+        self.cfg = cfg
 
-@hydra.main(version_base=None, config_path="config", config_name="sac_config")
-def main(cfg: DictConfig):
-    """
-    Main function to train and evaluate an SAC agent on different environments.
-    """
-    # Set up logger
-    log = logging.getLogger(__name__)
-    log.info(f"Configuration:\n{OmegaConf.to_yaml(cfg)}")
+        # Set up main logger
+        self.log = logging.getLogger(__name__)
+        self.setup_logging()
 
-    # Create a summary log file for key information
-    output_dir = Path(hydra.core.hydra_config.HydraConfig.get().runtime.output_dir)
-    output_dir.mkdir(parents=True, exist_ok=True)
+        # Initialize environment and agent
+        self.setup_environment()
+        self.setup_agent()
 
-    summary_path = output_dir / "summary.log"
+        # Set up TensorBoard if needed
+        self.setup_tensorboard()
 
-    # Configure file logging manually to ensure it works
-    file_handler = logging.FileHandler(output_dir / "train.log")
-    file_handler.setFormatter(logging.Formatter('[%(asctime)s][%(name)s][%(levelname)s] - %(message)s'))
-    log.addHandler(file_handler)
+    def setup_logging(self):
+        """Set up logging facilities"""
+        self.log.info(f"Configuration:\n{OmegaConf.to_yaml(self.cfg)}")
 
-    # Create file handler for summary log
-    summary_handler = logging.FileHandler(summary_path)
-    summary_handler.setLevel(logging.INFO)
-    summary_formatter = logging.Formatter('[%(asctime)s] %(message)s')
-    summary_handler.setFormatter(summary_formatter)
+        # Create output directory
+        self.output_dir = Path(hydra.core.hydra_config.HydraConfig.get().runtime.output_dir)
+        self.output_dir.mkdir(parents=True, exist_ok=True)
 
-    # Create a separate logger for summary information
-    summary_logger = logging.getLogger("summary")
-    summary_logger.setLevel(logging.INFO)
-    summary_logger.addHandler(summary_handler)
-    summary_logger.propagate = False
-    summary_logger.info(f"Starting SAC training with configuration: {cfg.env_name}")
+        # Configure file logging
+        file_handler = logging.FileHandler(self.output_dir / "train.log")
+        file_handler.setFormatter(logging.Formatter('[%(asctime)s][%(name)s][%(levelname)s] - %(message)s'))
+        self.log.addHandler(file_handler)
 
-    # Log system information
-    import platform
-    import torch.cuda
-    system_info = {
-        "Platform": platform.platform(),
-        "Python": platform.python_version(),
-        "PyTorch": torch.__version__,
-        "CUDA Available": torch.cuda.is_available(),
-        "CUDA Version": torch.version.cuda if torch.cuda.is_available() else "N/A",
-        "GPU": torch.cuda.get_device_name(0) if torch.cuda.is_available() else "N/A"
-    }
+        # Set up summary logger
+        self.summary_path = self.output_dir / "summary.log"
+        summary_handler = logging.FileHandler(self.summary_path)
+        summary_handler.setLevel(logging.INFO)
+        summary_formatter = logging.Formatter('[%(asctime)s] %(message)s')
+        summary_handler.setFormatter(summary_formatter)
 
-    log.info(f"System information:")
-    for key, value in system_info.items():
-        log.info(f"  {key}: {value}")
-    summary_logger.info(f"System: {system_info['Platform']}, PyTorch: {system_info['PyTorch']}, GPU: {system_info['GPU']}")
+        self.summary_logger = logging.getLogger("summary")
+        self.summary_logger.setLevel(logging.INFO)
+        self.summary_logger.addHandler(summary_handler)
+        self.summary_logger.propagate = False
+        self.summary_logger.info(f"Starting SAC training with configuration: {self.cfg.env_name}")
 
-    # 1. Define environment names and abbreviations
-    EnvName = [
-        'Pendulum-v1',
-        "ContinuousCartPole",
-        'LunarLanderContinuous-v3',
-        'Humanoid-v5',
-        'HalfCheetah-v4',
-        'BipedalWalker-v3',
-        'BipedalWalkerHardcore-v3',
-        'FrozenLake-v1'
-    ]
-    BrifEnvName = [
-        'PV1',
-        "CPV0",
-        'LLdV2',
-        'Humanv5',
-        'HCv4',
-        'BWv3',
-        'BWHv3',
-        'CRv3'
-    ]
+        # Log system information
+        system_info = {
+            "Platform": platform.platform(),
+            "Python": platform.python_version(),
+            "PyTorch": torch.__version__,
+            "CUDA Available": torch.cuda.is_available(),
+            "CUDA Version": torch.version.cuda if torch.cuda.is_available() else "N/A",
+            "GPU": torch.cuda.get_device_name(0) if torch.cuda.is_available() else "N/A"
+        }
 
-    # Create a config object from Hydra for compatibility with rest of code
-    opt = DictConfig({})
-    for key, value in cfg.items():
-        if key not in ['hydra']:  # Skip hydra config
-            setattr(opt, key, value)
+        self.log.info(f"System information:")
+        for key, value in system_info.items():
+            self.log.info(f"  {key}: {value}")
+        self.summary_logger.info(f"System: {system_info['Platform']}, PyTorch: {system_info['PyTorch']}, GPU: {system_info['GPU']}")
 
-    # 2. Create training and evaluation environments
-    # Import environment modifier if environment modifications are enabled
-    if hasattr(cfg, 'env_mods') and cfg.env_mods.use_mods:
-        # Import the environment_modifiers module
-        from environment_modifiers import create_env_with_mods
-        log.info("Using environment modifications from config")
-        env, eval_env = create_env_with_mods(EnvName[opt.env_index], cfg.env_mods)
-        
-        # Log the modifications being applied
-        # log.info(f"Applied modifications: {OmegaConf.to_yaml(cfg.env_mods)}") # kind of repeated
-        summary_logger.info(f"Environment modifications enabled: {cfg.env_mods.use_mods}") 
-    else:
-        # Use legacy noise settings if env_mods is not used
-        if not opt.noise:
-            env = gym.make(EnvName[opt.env_index])
-            eval_env = gym.make(EnvName[opt.env_index])
+    def setup_environment(self):
+        """Set up training and evaluation environments"""
+        # Define environment names and abbreviations
+        self.env_names = [
+            'Pendulum-v1',
+            "ContinuousCartPole",
+            'LunarLanderContinuous-v3',
+            'Humanoid-v5',
+            'HalfCheetah-v4',
+            'BipedalWalker-v3',
+            'BipedalWalkerHardcore-v3',
+            'FrozenLake-v1'
+        ]
+        self.brief_env_names = [
+            'PV1',
+            "CPV0",
+            'LLdV2',
+            'Humanv5',
+            'HCv4',
+            'BWv3',
+            'BWHv3',
+            'CRv3'
+        ]
+
+        # Create opt object from cfg for compatibility with existing code
+        self.opt = DictConfig({})
+        for key, value in self.cfg.items():
+            if key not in ['hydra']:  # Skip hydra config
+                setattr(self.opt, key, value)
+
+        # Create environments based on config
+        if hasattr(self.cfg, 'env_mods') and self.cfg.env_mods.use_mods:
+            # Import the environment_modifiers module
+            from environment_modifiers import create_env_with_mods
+            self.log.info("Using environment modifications from config")
+            self.env, self.eval_env = create_env_with_mods(
+                self.env_names[self.opt.env_index], 
+                self.cfg.env_mods
+            )
+            self.summary_logger.info(f"Environment modifications enabled: {self.cfg.env_mods.use_mods}")
         else:
-            if opt.env_index == 0:
-                env = gym.make("CustomPendulum-v1", std=opt.std) # Add noise when updating angle
-                eval_env = gym.make("CustomPendulum-v1", std=2*opt.std) # Add noise when updating angle
+            # Use legacy noise settings if env_mods is not used
+            if not self.opt.noise:
+                self.env = gym.make(self.env_names[self.opt.env_index])
+                self.eval_env = gym.make(self.env_names[self.opt.env_index])
+            else:
+                if self.opt.env_index == 0:
+                    self.env = gym.make("CustomPendulum-v1", std=self.opt.std)
+                    self.eval_env = gym.make("CustomPendulum-v1", std=2*self.opt.std)
 
-    # 3. Extract environment properties
-    opt.state_dim = env.observation_space.shape[0]
-    opt.action_dim = env.action_space.shape[0]  # Continuous action dimension
-    opt.max_action = float(env.action_space.high[0])  # Action range [-max_action, max_action]
-    opt.max_e_steps = env._max_episode_steps    
+        # Extract environment properties
+        self.opt.state_dim = self.env.observation_space.shape[0]
+        self.opt.action_dim = self.env.action_space.shape[0]
+        self.opt.max_action = float(self.env.action_space.high[0])
+        self.opt.max_e_steps = self.env._max_episode_steps
 
-    # 4. Print environment info
-    log.info(
-        f"Env: {EnvName[opt.env_index]}  "
-        f"state_dim: {opt.state_dim}  "
-        f"action_dim: {opt.action_dim}  "
-        f"max_a: {opt.max_action}  "
-        f"min_a: {env.action_space.low[0]}  "
-        f"max_e_steps: {opt.max_e_steps}"
-    )
+        # Log environment info
+        self.log.info(
+            f"Env: {self.env_names[self.opt.env_index]}  "
+            f"state_dim: {self.opt.state_dim}  "
+            f"action_dim: {self.opt.action_dim}  "
+            f"max_a: {self.opt.max_action}  "
+            f"min_a: {self.env.action_space.low[0]}  "
+            f"max_e_steps: {self.opt.max_e_steps}"
+        )
 
-    # 5. Seed everything for reproducibility
-    env_seed = opt.seed
-    random.seed(opt.seed)
-    np.random.seed(opt.seed)
-    torch.manual_seed(opt.seed)
-    torch.cuda.manual_seed(opt.seed)
-    torch.backends.cudnn.deterministic = True
-    torch.backends.cudnn.benchmark = False
-    log.info(f"Random Seed: {opt.seed}")
+        # Seed everything for reproducibility
+        self.env_seed = self.opt.seed
+        random.seed(self.opt.seed)
+        np.random.seed(self.opt.seed)
+        torch.manual_seed(self.opt.seed)
+        torch.cuda.manual_seed(self.opt.seed)
+        torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.benchmark = False
+        self.log.info(f"Random Seed: {self.opt.seed}")
 
-    # 6. Set up TensorBoard for logging (if requested)
-    writer = None
-    if opt.write:
-        from torch.utils.tensorboard import SummaryWriter
-        writepath = Path(hydra.core.hydra_config.HydraConfig.get().runtime.output_dir) / "tensorboard"
-        writepath.mkdir(exist_ok=True)
-        writer = SummaryWriter(log_dir=writepath)
-        log.info(f"TensorBoard logs will be saved to {writepath}")
+    @abstractmethod
+    def setup_agent(self):
+        """Initialize the agent"""
+        pass
 
-    # 7. Create a directory for saving models
-    model_dir = Path(f'models/SAC_model/{BrifEnvName[opt.env_index]}')
-    model_dir.mkdir(parents=True, exist_ok=True)
-    log.info(f"Models will be saved to {model_dir}")
+    def setup_tensorboard(self):
+        """Set up TensorBoard logging if enabled"""
+        self.writer = None
+        if self.opt.write:
+            from torch.utils.tensorboard import SummaryWriter
+            writepath = self.output_dir / "tensorboard"
+            writepath.mkdir(exist_ok=True)
+            self.writer = SummaryWriter(log_dir=writepath)
+            self.log.info(f"TensorBoard logs will be saved to {writepath}")
 
-    # 8. Initialize the SAC agent
-    agent = SAC_continuous(**OmegaConf.to_container(opt, resolve=True))
+    @abstractmethod
+    def render(self):
+        """Render the agent in the environment"""
+        pass
 
-    # 9. Load a saved model if requested
-    if opt.load_model:
-        log.info("Loading pre-trained model")
-        params = f"{opt.std}_{opt.robust}"
-        agent.load(BrifEnvName[opt.env_index], params)
+    @abstractmethod
+    def evaluate(self):
+        """Evaluate the agent's performance"""
+        pass
 
-    # 10. If rendering mode is on, run an infinite evaluation loop
-    if opt.render:
+    @abstractmethod
+    def train(self):
+        """Train the agent"""
+        pass
+
+    def run(self):
+        """Main method to run the appropriate action based on config"""
+        if self.opt.render:
+            self.render()
+        elif self.opt.eval_model:
+            self.evaluate()
+        else:
+            self.train()
+
+        # Clean up
+        self.env.close()
+        self.eval_env.close()
+        
+        if self.writer is not None:
+            self.writer.close()
+
+        return self.agent
+
+class DR_SAC(Abstract_AC):
+    def __init__(self, cfg: DictConfig):
+        super().__init__(cfg)
+
+    def setup_agent(self):
+        """Initialize the SAC agent"""
+        # Create directory for saving models
+        self.model_dir = Path(f'models/SAC_model/{self.brief_env_names[self.opt.env_index]}')
+        self.model_dir.mkdir(parents=True, exist_ok=True)
+        self.log.info(f"Models will be saved to {self.model_dir}")
+
+        # Initialize agent
+        self.agent = SAC_continuous(**OmegaConf.to_container(self.opt, resolve=True))
+
+        # Load a saved model if requested
+        if self.opt.load_model:
+            self.log.info("Loading pre-trained model")
+            params = f"{self.opt.std}_{self.opt.robust}"
+            self.agent.load(self.brief_env_names[self.opt.env_index], params)
+
+    def render(self):
+        """Run agent in render mode for visualization"""
+        self.log.info("Starting render mode")
         while True:
-            ep_r = evaluate_policy(env, agent, opt.max_action, turns=1)
-            log.info(f"Env: {EnvName[opt.env_index]}, Episode Reward: {ep_r}")
+            ep_r = evaluate_policy(self.env, self.agent, self.opt.max_action, turns=1)
+            self.log.info(f"Env: {self.env_names[self.opt.env_index]}, Episode Reward: {ep_r}")
 
-    # 11. If evaluating only, print result
-    elif opt.eval_model:
+    def evaluate(self):
+        """Evaluate the agent's performance"""
         eval_num = 100
-        log.info(f"Evaluating agent across {eval_num} episodes")
-        seeds_list = [random.randint(0, 100000) for _ in range(eval_num)] if not hasattr(opt, 'seeds_list') else opt.seeds_list
+        self.log.info(f"Evaluating agent across {eval_num} episodes")
+
+        # Setup seed list for reproducibility
+        seeds_list = [random.randint(0, 100000) for _ in range(eval_num)] if not hasattr(self.opt, 'seeds_list') else self.opt.seeds_list
 
         scores = []
         # Use tqdm for evaluation progress
         for i in tqdm(range(eval_num), desc="Evaluation Progress", ncols=100):
-            score = evaluate_policy(eval_env, agent, turns=1, seeds_list=[seeds_list[i]])
+            score = evaluate_policy(self.eval_env, self.agent, turns=1, seeds_list=[seeds_list[i]])
             scores.append(score)
             # Update progress bar with current mean score
             if i > 0 and i % 5 == 0:
                 current_mean = np.mean(scores[:i])
                 tqdm.write(f"Current mean score after {i} episodes: {current_mean:.2f}")
                 # Log intermediate results to summary
-                summary_logger.info(f"Intermediate evaluation ({i}/{eval_num}): Mean score = {current_mean:.2f}")
+                self.summary_logger.info(f"Intermediate evaluation ({i}/{eval_num}): Mean score = {current_mean:.2f}")
 
         # Calculate statistics
         mean_score = np.mean(scores)
@@ -616,71 +674,73 @@ def main(cfg: DictConfig):
         p10_score = np.quantile(scores, 0.1)
 
         # Save results to output directory
-        results_path = Path(hydra.core.hydra_config.HydraConfig.get().runtime.output_dir) / "results.txt"
+        results_path = self.output_dir / "results.txt"
         with open(results_path, 'a') as f:
-            f.write(f"{[BrifEnvName[opt.env_index], opt.std, opt.robust, mean_score, std_score, p90_score, p10_score]}\n")
+            f.write(f"{[self.brief_env_names[self.opt.env_index], self.opt.std, self.opt.robust, mean_score, std_score, p90_score, p10_score]}\n")
 
-        log.info(f"Results: {BrifEnvName[opt.env_index]}, Mean: {mean_score:.2f}, Std: {std_score:.2f}")
-        log.info(f"90th percentile: {p90_score:.2f}, 10th percentile: {p10_score:.2f}")
-        log.info(f"Results saved to {results_path}")
+        self.log.info(f"Results: {self.brief_env_names[self.opt.env_index]}, Mean: {mean_score:.2f}, Std: {std_score:.2f}")
+        self.log.info(f"90th percentile: {p90_score:.2f}, 10th percentile: {p10_score:.2f}")
+        self.log.info(f"Results saved to {results_path}")
 
         # Log final results to summary file
-        summary_logger.info("-" * 50)
-        summary_logger.info("EVALUATION COMPLETED")
-        summary_logger.info(f"Environment: {EnvName[opt.env_index]}")
-        summary_logger.info(f"Evaluation over {eval_num} episodes:")
-        summary_logger.info(f"  Mean reward: {mean_score:.2f} ± {std_score:.2f}")
-        summary_logger.info(f"  90th percentile: {p90_score:.2f}")
-        summary_logger.info(f"  10th percentile: {p10_score:.2f}")
-        summary_logger.info("-" * 50)
+        self.summary_logger.info("-" * 50)
+        self.summary_logger.info("EVALUATION COMPLETED")
+        self.summary_logger.info(f"Environment: {self.env_names[self.opt.env_index]}")
+        self.summary_logger.info(f"Evaluation over {eval_num} episodes:")
+        self.summary_logger.info(f"  Mean reward: {mean_score:.2f} ± {std_score:.2f}")
+        self.summary_logger.info(f"  90th percentile: {p90_score:.2f}")
+        self.summary_logger.info(f"  10th percentile: {p10_score:.2f}")
+        self.summary_logger.info("-" * 50)
 
-    # 12. Otherwise, proceed with training
-    else:
+        return mean_score, std_score
+    
+    def train(self):
+        """Train the agent"""
         total_steps = 0
         total_episode = 0
 
         # Create a progress bar for the total training steps
-        with tqdm(total=opt.max_train_steps, desc="Training Progress", ncols=100) as pbar:
-            while total_steps < opt.max_train_steps:
+        with tqdm(total=self.opt.max_train_steps, desc="Training Progress", ncols=100) as pbar:
+            while total_steps < self.opt.max_train_steps:
                 # (a) Reset environment with incremented seed
-                state, info = env.reset(seed=env_seed)
-                env_seed += 1
+                state, info = self.env.reset(seed=self.env_seed)
+                self.env_seed += 1
                 total_episode += 1
                 done = False
                 ep_reward = 0
 
                 # Create a progress bar for steps within this episode
-                episode_pbar = tqdm(total=opt.max_e_steps, desc=f"Episode {total_episode}", 
+                episode_pbar = tqdm(total=self.opt.max_e_steps, desc=f"Episode {total_episode}", 
                                     leave=False, ncols=100, position=1)
 
                 # (b) Interact with environment until episode finishes
                 episode_steps = 0
                 while not done:
-                    # Random exploration for first 50 episodes (each episode is up to max_e_steps)
-                    if total_steps < (50 * opt.max_e_steps):
+                    # Random exploration for first 50 episodes
+                    if total_steps < (50 * self.opt.max_e_steps):
                         # Sample action directly from environment's action space
-                        action_env = env.action_space.sample()  # Range: [-max_action, max_action]
+                        action_env = self.env.action_space.sample()
                         # Convert env action back to agent's internal range [-1,1]
-                        action_agent = Action_adapter_reverse(action_env, opt.max_action)
+                        action_agent = Action_adapter_reverse(action_env, self.opt.max_action)
                     else:
                         # Select action from agent (internal range [-1,1])
-                        action_agent = agent.select_action(state, deterministic=False)
+                        action_agent = self.agent.select_action(state, deterministic=False)
                         # Convert agent action to environment range
-                        action_env = Action_adapter(action_agent, opt.max_action)
+                        action_env = Action_adapter(action_agent, self.opt.max_action)
 
                     # Step the environment
-                    next_state, reward, dw, tr, info = env.step(action_env)
+                    next_state, reward, dw, tr, info = self.env.step(action_env)
                     ep_reward += reward
 
                     # Custom reward shaping, if needed
-                    if opt.reward_adapt:
-                        reward = Reward_adapter(reward, opt.env_index)
+                    if self.opt.reward_adapt:
+                        reward = Reward_adapter(reward, self.opt.env_index)
 
                     # Check for terminal state
                     done = (dw or tr)
 
                     # Store transition in replay buffer
-                    agent.replay_buffer.add(state, action_agent, reward, next_state, dw)
+                    self.agent.replay_buffer.add(state, action_agent, reward, next_state, dw)
 
                     # Move to next step
                     state = next_state
@@ -699,32 +759,32 @@ def main(cfg: DictConfig):
                         })
 
                     # (c) Train the agent at fixed intervals (batch updates)
-                    if (total_steps >= 50 * opt.max_e_steps) and (total_steps % opt.update_every == 0):
-                        writer_copy = writer
-                        train_bar = tqdm(range(opt.update_every), 
+                    if (total_steps >= 50 * self.opt.max_e_steps) and (total_steps % self.opt.update_every == 0):
+                        writer_copy = self.writer
+                        train_bar = tqdm(range(self.opt.update_every), 
                                         desc="Model Update", 
                                         leave=False, ncols=100, position=2)
 
                         for i in train_bar:
-                            agent.train(writer_copy, total_steps)
+                            self.agent.train(writer_copy, total_steps)
                             writer_copy = False
 
                         # Learning rate decay
-                        agent.a_lr *= 0.999
-                        agent.c_lr *= 0.999
+                        self.agent.a_lr *= 0.999
+                        self.agent.c_lr *= 0.999
 
                     # (d) Evaluate and log periodically
-                    if total_steps % opt.eval_interval == 0:
+                    if total_steps % self.opt.eval_interval == 0:
                         # Temporarily close progress bars for evaluation
                         episode_pbar.close()
                         pbar.set_description("Evaluating...")
-                        ep_r = evaluate_policy(eval_env, agent, turns=10)
+                        ep_r = evaluate_policy(self.eval_env, self.agent, turns=10)
 
-                        if writer is not None:
-                            writer.add_scalar('ep_r', ep_r, global_step=total_steps)
+                        if self.writer is not None:
+                            self.writer.add_scalar('ep_r', ep_r, global_step=total_steps)
 
-                        log.info(
-                            f"EnvName: {BrifEnvName[opt.env_index]}, "
+                        self.log.info(
+                            f"EnvName: {self.brief_env_names[self.opt.env_index]}, "
                             f"Steps: {int(total_steps/1000)}k, "
                             f"Episodes: {total_episode}, "
                             f"Episode Reward: {ep_r}"
@@ -732,28 +792,37 @@ def main(cfg: DictConfig):
 
                         # Reset progress bar description
                         pbar.set_description("Training Progress")
-                        episode_pbar = tqdm(total=opt.max_e_steps, initial=episode_steps,
+                        episode_pbar = tqdm(total=self.opt.max_e_steps, initial=episode_steps,
                                             desc=f"Episode {total_episode}", 
                                             leave=False, ncols=100, position=1)
 
                     # (e) Save model at fixed intervals
-                    if opt.save_model and total_steps % opt.save_interval == 0:
-                        agent.save(BrifEnvName[opt.env_index])
+                    if self.opt.save_model and total_steps % self.opt.save_interval == 0:
+                        self.agent.save(self.brief_env_names[self.opt.env_index])
 
                 # Close episode progress bar when episode ends
                 episode_pbar.close()
 
                 # Log episode stats
-                log.info(f"Episode {total_episode} completed with reward {ep_reward:.2f} in {episode_steps} steps")
+                self.log.info(f"Episode {total_episode} completed with reward {ep_reward:.2f} in {episode_steps} steps")
 
-        # Evaluate the trained agent
+        # Final evaluation after training
+        self._evaluate_final(total_steps, total_episode)
+
+        # Save final model
+        if self.opt.save_model:
+            self.agent.save(self.brief_env_names[self.opt.env_index])
+            self.log.info(f"Final model saved to models/SAC_model/{self.brief_env_names[self.opt.env_index]}")
+
+    def _evaluate_final(self, total_steps, total_episode):
+        """Evaluate the agent after training is complete"""
         eval_num = 20
-        log.info(f"Training completed. Evaluating across {eval_num} episodes")
+        self.log.info(f"Training completed. Evaluating across {eval_num} episodes")
         scores = []
 
         # Create a progress bar for evaluation
         for i in tqdm(range(eval_num), desc="Final Evaluation", ncols=100):
-            score = evaluate_policy(eval_env, agent, turns=1)
+            score = evaluate_policy(self.eval_env, self.agent, turns=1)
             scores.append(score)
 
         mean_score = np.mean(scores)
@@ -761,33 +830,28 @@ def main(cfg: DictConfig):
         p90_score = np.quantile(scores, 0.9)
         p10_score = np.quantile(scores, 0.1)
 
-        log.info(f"Final evaluation - Mean: {mean_score:.2f}, Std: {std_score:.2f}")
-        log.info(f"90th percentile: {p90_score:.2f}, 10th percentile: {p10_score:.2f}")
+        self.log.info(f"Final evaluation - Mean: {mean_score:.2f}, Std: {std_score:.2f}")
+        self.log.info(f"90th percentile: {p90_score:.2f}, 10th percentile: {p10_score:.2f}")
 
         # Log final results to summary file
-        summary_logger.info("-" * 50)
-        summary_logger.info("TRAINING COMPLETED")
-        summary_logger.info(f"Environment: {EnvName[opt.env_index]}")
-        summary_logger.info(f"Total steps: {total_steps}")
-        summary_logger.info(f"Total episodes: {total_episode}")
-        summary_logger.info(f"Final evaluation over {eval_num} episodes:")
-        summary_logger.info(f"  Mean reward: {mean_score:.2f} ± {std_score:.2f}")
-        summary_logger.info(f"  90th percentile: {p90_score:.2f}")
-        summary_logger.info(f"  10th percentile: {p10_score:.2f}")
-        summary_logger.info("-" * 50)
+        self.summary_logger.info("-" * 50)
+        self.summary_logger.info("TRAINING COMPLETED")
+        self.summary_logger.info(f"Environment: {self.env_names[self.opt.env_index]}")
+        self.summary_logger.info(f"Total steps: {total_steps}")
+        self.summary_logger.info(f"Total episodes: {total_episode}")
+        self.summary_logger.info(f"Final evaluation over {eval_num} episodes:")
+        self.summary_logger.info(f"  Mean reward: {mean_score:.2f} ± {std_score:.2f}")
+        self.summary_logger.info(f"  90th percentile: {p90_score:.2f}")
+        self.summary_logger.info(f"  10th percentile: {p10_score:.2f}")
+        self.summary_logger.info("-" * 50)
 
-        # Save final model
-        if opt.save_model:
-            agent.save(BrifEnvName[opt.env_index])
-            log.info(f"Final model saved to models/SAC_model/{BrifEnvName[opt.env_index]}")
-
-    env.close()
-    eval_env.close()
-
-    if writer is not None:
-        writer.close()
-
-    return agent
+@hydra.main(version_base=None, config_path="config", config_name="sac_config")
+def main(cfg: DictConfig):
+    """
+    Main function to train and evaluate an SAC agent on different environments.
+    """
+    trainer = DR_SAC(cfg)
+    return trainer.run()
 
 if __name__ == '__main__':
     main()
