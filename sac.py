@@ -421,7 +421,6 @@ class SAC_continuous():
         for param, target_param in zip(self.v_critic.parameters(), self.v_critic_target.parameters()):
             target_param.data.copy_(self.tau * param.data + (1 - self.tau) * target_param.data)
 
-
     def save(self, EnvName):
         params = f"{self.std}_{self.robust}"
         model_dir = Path(f"./models/SAC_model/{EnvName}")
@@ -572,11 +571,6 @@ class Abstract_AC(ABC):
         torch.backends.cudnn.benchmark = False
         self.log.info(f"Random Seed: {self.opt.seed}")
 
-    @abstractmethod
-    def setup_agent(self):
-        """Initialize the agent"""
-        pass
-
     def setup_tensorboard(self):
         """Set up TensorBoard logging if enabled"""
         self.writer = None
@@ -586,59 +580,6 @@ class Abstract_AC(ABC):
             writepath.mkdir(exist_ok=True)
             self.writer = SummaryWriter(log_dir=writepath)
             self.log.info(f"TensorBoard logs will be saved to {writepath}")
-
-    @abstractmethod
-    def render(self):
-        """Render the agent in the environment"""
-        pass
-
-    @abstractmethod
-    def evaluate(self):
-        """Evaluate the agent's performance"""
-        pass
-
-    @abstractmethod
-    def train(self):
-        """Train the agent"""
-        pass
-
-    def run(self):
-        """Main method to run the appropriate action based on config"""
-        if self.opt.render:
-            self.render()
-        elif self.opt.eval_model:
-            self.evaluate()
-        else:
-            self.train()
-
-        # Clean up
-        self.env.close()
-        self.eval_env.close()
-        
-        if self.writer is not None:
-            self.writer.close()
-
-        return self.agent
-
-class DR_SAC(Abstract_AC):
-    def __init__(self, cfg: DictConfig):
-        super().__init__(cfg)
-
-    def setup_agent(self):
-        """Initialize the SAC agent"""
-        # Create directory for saving models
-        self.model_dir = Path(f'models/SAC_model/{self.brief_env_names[self.opt.env_index]}')
-        self.model_dir.mkdir(parents=True, exist_ok=True)
-        self.log.info(f"Models will be saved to {self.model_dir}")
-
-        # Initialize agent
-        self.agent = SAC_continuous(**OmegaConf.to_container(self.opt, resolve=True))
-
-        # Load a saved model if requested
-        if self.opt.load_model:
-            self.log.info("Loading pre-trained model")
-            params = f"{self.opt.std}_{self.opt.robust}"
-            self.agent.load(self.brief_env_names[self.opt.env_index], params)
 
     def render(self):
         """Run agent in render mode for visualization"""
@@ -693,7 +634,86 @@ class DR_SAC(Abstract_AC):
         self.summary_logger.info("-" * 50)
 
         return mean_score, std_score
-    
+
+    def _evaluate_final(self, total_steps, total_episode):
+        """Evaluate the agent after training is complete"""
+        eval_num = 20
+        self.log.info(f"Training completed. Evaluating across {eval_num} episodes")
+        scores = []
+
+        # Create a progress bar for evaluation
+        for i in tqdm(range(eval_num), desc="Final Evaluation", ncols=100):
+            score = evaluate_policy(self.eval_env, self.agent, turns=1)
+            scores.append(score)
+
+        mean_score = np.mean(scores)
+        std_score = np.std(scores)
+        p90_score = np.quantile(scores, 0.9)
+        p10_score = np.quantile(scores, 0.1)
+
+        self.log.info(f"Final evaluation - Mean: {mean_score:.2f}, Std: {std_score:.2f}")
+        self.log.info(f"90th percentile: {p90_score:.2f}, 10th percentile: {p10_score:.2f}")
+
+        # Log final results to summary file
+        self.summary_logger.info("-" * 50)
+        self.summary_logger.info("TRAINING COMPLETED")
+        self.summary_logger.info(f"Environment: {self.env_names[self.opt.env_index]}")
+        self.summary_logger.info(f"Total steps: {total_steps}")
+        self.summary_logger.info(f"Total episodes: {total_episode}")
+        self.summary_logger.info(f"Final evaluation over {eval_num} episodes:")
+        self.summary_logger.info(f"  Mean reward: {mean_score:.2f} ± {std_score:.2f}")
+        self.summary_logger.info(f"  90th percentile: {p90_score:.2f}")
+        self.summary_logger.info(f"  10th percentile: {p10_score:.2f}")
+        self.summary_logger.info("-" * 50)
+
+    def run(self):
+        """Main method to run the appropriate action based on config"""
+        if self.opt.render:
+            self.render()
+        elif self.opt.eval_model:
+            self.evaluate()
+        else:
+            self.train()
+
+        # Clean up
+        self.env.close()
+        self.eval_env.close()
+        
+        if self.writer is not None:
+            self.writer.close()
+
+        return self.agent
+
+    @abstractmethod
+    def setup_agent(self):
+        """Initialize the agent"""
+        pass
+
+    @abstractmethod
+    def train(self):
+        """Train the agent"""
+        pass
+
+class DR_SAC(Abstract_AC):
+    def __init__(self, cfg: DictConfig):
+        super().__init__(cfg)
+
+    def setup_agent(self):
+        """Initialize the SAC agent"""
+        # Create directory for saving models
+        self.model_dir = Path(f'models/SAC_model/{self.brief_env_names[self.opt.env_index]}')
+        self.model_dir.mkdir(parents=True, exist_ok=True)
+        self.log.info(f"Models will be saved to {self.model_dir}")
+
+        # Initialize agent
+        self.agent = SAC_continuous(**OmegaConf.to_container(self.opt, resolve=True))
+
+        # Load a saved model if requested
+        if self.opt.load_model:
+            self.log.info("Loading pre-trained model")
+            params = f"{self.opt.std}_{self.opt.robust}"
+            self.agent.load(self.brief_env_names[self.opt.env_index], params)
+
     def train(self):
         """Train the agent"""
         total_steps = 0
@@ -813,37 +833,6 @@ class DR_SAC(Abstract_AC):
         if self.opt.save_model:
             self.agent.save(self.brief_env_names[self.opt.env_index])
             self.log.info(f"Final model saved to models/SAC_model/{self.brief_env_names[self.opt.env_index]}")
-
-    def _evaluate_final(self, total_steps, total_episode):
-        """Evaluate the agent after training is complete"""
-        eval_num = 20
-        self.log.info(f"Training completed. Evaluating across {eval_num} episodes")
-        scores = []
-
-        # Create a progress bar for evaluation
-        for i in tqdm(range(eval_num), desc="Final Evaluation", ncols=100):
-            score = evaluate_policy(self.eval_env, self.agent, turns=1)
-            scores.append(score)
-
-        mean_score = np.mean(scores)
-        std_score = np.std(scores)
-        p90_score = np.quantile(scores, 0.9)
-        p10_score = np.quantile(scores, 0.1)
-
-        self.log.info(f"Final evaluation - Mean: {mean_score:.2f}, Std: {std_score:.2f}")
-        self.log.info(f"90th percentile: {p90_score:.2f}, 10th percentile: {p10_score:.2f}")
-
-        # Log final results to summary file
-        self.summary_logger.info("-" * 50)
-        self.summary_logger.info("TRAINING COMPLETED")
-        self.summary_logger.info(f"Environment: {self.env_names[self.opt.env_index]}")
-        self.summary_logger.info(f"Total steps: {total_steps}")
-        self.summary_logger.info(f"Total episodes: {total_episode}")
-        self.summary_logger.info(f"Final evaluation over {eval_num} episodes:")
-        self.summary_logger.info(f"  Mean reward: {mean_score:.2f} ± {std_score:.2f}")
-        self.summary_logger.info(f"  90th percentile: {p90_score:.2f}")
-        self.summary_logger.info(f"  10th percentile: {p10_score:.2f}")
-        self.summary_logger.info("-" * 50)
 
 @hydra.main(version_base=None, config_path="config", config_name="sac_config")
 def main(cfg: DictConfig):
