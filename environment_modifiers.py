@@ -87,7 +87,7 @@ class ParameterShiftedLunarLander(LunarLander):
     def __init__(self, render_mode=None, gravity_factor=1.0, wind_power=0.0, turbulence_power=0.0):
         """
         LunarLander environment with shifted parameters.
-        
+
         Args:
             gravity_factor: Factor to multiply gravity by
             wind_power: Constant wind force applied
@@ -139,7 +139,7 @@ class ObservationNoiseWrapper(gym.Wrapper):
     def __init__(self, env, noise_type='gaussian', noise_level=0.1, noise_freq=1.0):
         """
         Add noise to observations.
-        
+
         Args:
             env: The environment to wrap
             noise_type: Type of noise ('gaussian', 'uniform', 'saltpepper', 'adversarial')
@@ -193,7 +193,7 @@ class ActionPerturbationWrapper(gym.Wrapper):
     def __init__(self, env, perturb_type='drop', perturb_prob=0.1, perturb_level=0.1):
         """
         Perturb actions before they are executed.
-        
+
         Args:
             env: The environment to wrap
             perturb_type: Type of perturbation ('drop', 'noise', 'delay', 'stuck')
@@ -256,7 +256,7 @@ class RewardShiftWrapper(gym.Wrapper):
     def __init__(self, env, shift_type='scale', shift_param=0.9, noise_level=0.1):
         """
         Modify rewards to create distribution shifts.
-        
+
         Args:
             env: The environment to wrap
             shift_type: Type of shift ('scale', 'delay', 'noise', 'sparse', 'sign_flip')
@@ -310,7 +310,7 @@ class RewardShiftWrapper(gym.Wrapper):
 
         else:
             modified_reward = reward
-        
+
         return obs, modified_reward, terminated, truncated, info
 
 # Transition Perturbation Wrapper
@@ -366,24 +366,24 @@ def create_env_with_mods(env_name, env_config):
     Args:
         env_name (str): Name of the environment to create
         env_config (DictConfig): Configuration for environment modifications
-        
+
     Returns:
         tuple: (train_env, eval_env) - Training and evaluation environments
     """
     logger.info(f"Creating environment: {env_name}")
-    
+
     # Create base environments
     train_env = gym.make(env_name)
     eval_env = gym.make(env_name)
-    
+
     # If no modifications, return base environments
     if not env_config.use_mods:
         logger.info("No environment modifications applied")
         return train_env, eval_env
-    
+
     # Apply modifications to training environment
     logger.info("Applying modifications to training environment")
-    
+
     # Apply observation noise if configured
     if env_config.observation_noise.enabled:
         logger.info(f"Adding observation noise: {env_config.observation_noise.type} with level {env_config.observation_noise.level}")
@@ -393,7 +393,7 @@ def create_env_with_mods(env_name, env_config):
             noise_level=env_config.observation_noise.level,
             noise_freq=env_config.observation_noise.frequency
         )
-    
+
     # Apply action perturbation if configured
     if env_config.action_perturb.enabled:
         logger.info(f"Adding action perturbation: {env_config.action_perturb.type}")
@@ -403,7 +403,7 @@ def create_env_with_mods(env_name, env_config):
             perturb_prob=env_config.action_perturb.probability,
             perturb_level=env_config.action_perturb.level
         )
-    
+
     # Apply reward shift if configured
     if env_config.reward_shift.enabled:
         logger.info(f"Adding reward shift: {env_config.reward_shift.type}")
@@ -413,7 +413,7 @@ def create_env_with_mods(env_name, env_config):
             shift_param=env_config.reward_shift.param,
             noise_level=env_config.reward_shift.noise_level
         )
-    
+
     # Apply transition perturbation if configured
     if env_config.transition_perturb.enabled:
         logger.info(f"Adding transition perturbation: {env_config.transition_perturb.type}")
@@ -423,20 +423,20 @@ def create_env_with_mods(env_name, env_config):
             perturb_prob=env_config.transition_perturb.probability,
             perturb_level=env_config.transition_perturb.level
         )
-    
+
     # Create evaluation environment with potentially different modifications
     logger.info("Applying modifications to evaluation environment")
-    
+
     # Decide evaluation environment configuration based on settings
     if env_config.eval.use_modified:
         logger.info("Using modified environment for evaluation")
-        
+
         # Create evaluation environment with same modifications but potentially different parameters
         if env_config.observation_noise.enabled:
             eval_noise_level = env_config.observation_noise.level
             if env_config.eval.scale_noise:
                 eval_noise_level *= env_config.eval.noise_scale_factor
-                
+
             eval_env = ObservationNoiseWrapper(
                 eval_env,
                 noise_type=env_config.observation_noise.type,
@@ -444,7 +444,7 @@ def create_env_with_mods(env_name, env_config):
                 noise_freq=env_config.observation_noise.frequency
             )
             logger.info(f"Evaluation environment using observation noise level: {eval_noise_level}")
-        
+
         # Apply other modifications to eval env if needed...
         if env_config.action_perturb.enabled and env_config.eval.include_action_perturb:
             eval_env = ActionPerturbationWrapper(
@@ -453,7 +453,7 @@ def create_env_with_mods(env_name, env_config):
                 perturb_prob=env_config.action_perturb.probability,
                 perturb_level=env_config.action_perturb.level
             )
-            
+
         if env_config.reward_shift.enabled and env_config.eval.include_reward_shift:
             eval_env = RewardShiftWrapper(
                 eval_env,
@@ -461,7 +461,7 @@ def create_env_with_mods(env_name, env_config):
                 shift_param=env_config.reward_shift.param,
                 noise_level=env_config.reward_shift.noise_level
             )
-            
+
         if env_config.transition_perturb.enabled and env_config.eval.include_transition_perturb:
             eval_env = TransitionPerturbationWrapper(
                 eval_env,
@@ -471,5 +471,5 @@ def create_env_with_mods(env_name, env_config):
             )
     else:
         logger.info("Using standard environment for evaluation")
-    
+
     return train_env, eval_env
