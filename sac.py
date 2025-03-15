@@ -36,7 +36,7 @@ from omegaconf import DictConfig, OmegaConf
 class Actor(nn.Module):
     def __init__(self, state_dim, action_dim, hid_shape, hid_layers, hidden_activation=nn.ReLU, output_activation=nn.ReLU):
         super(Actor, self).__init__()
-        layers = [state_dim] + list(hid_shape) * hid_layers
+        layers = [state_dim] + hid_shape * hid_layers
 
         self.a_net = build_net(layers, hidden_activation, output_activation)
         self.mu_layer = nn.Linear(layers[-1], action_dim)
@@ -72,7 +72,7 @@ class V_Critic(nn.Module):
         super(V_Critic, self).__init__()
         self.state_dim = state_dim
 
-        layers = [state_dim] + list(hid_shape) * hid_layers + [1]
+        layers = [state_dim] + hid_shape * hid_layers + [1]
         self.V = build_net(layers, nn.ReLU, nn.Identity)
 
     def forward(self, state):
@@ -82,7 +82,7 @@ class V_Critic(nn.Module):
 class Double_Q_Critic(nn.Module):
     def __init__(self, state_dim, action_dim, hid_shape, hid_layers):
         super(Double_Q_Critic, self).__init__()
-        layers = [state_dim + action_dim] + list(hid_shape) * hid_layers + [1]
+        layers = [state_dim + action_dim] + hid_shape * hid_layers + [1]
 
         self.Q_1 = build_net(layers, nn.ReLU, nn.Identity)
         self.Q_2 = build_net(layers, nn.ReLU, nn.Identity)   
@@ -99,13 +99,13 @@ class TransitionVAE(nn.Module):
         self.latent_dim = latent_dim
 
         # Encoder layers
-        e_layers = [state_dim * 2 + action_dim] + list(hidden_dim) * hidden_layers
+        e_layers = [state_dim * 2 + action_dim] + hidden_dim * hidden_layers
         self.encoder = build_net(e_layers, nn.ReLU, nn.Identity)
         self.e_mu = nn.Linear(e_layers[-1], latent_dim)
         self.e_logvar = nn.Linear(e_layers[-1], latent_dim)
 
         # Decoder layers
-        d_layers = [state_dim + action_dim + latent_dim] + list(hidden_dim) * hidden_layers + [out_dim]
+        d_layers = [state_dim + action_dim + latent_dim] + hidden_dim * hidden_layers + [out_dim]
         self.decoder = build_net(d_layers, nn.ReLU, nn.Identity)
 
     def encode(self, s, a, s_next):
@@ -148,7 +148,7 @@ class ExpActivation(nn.Module):
 class dual(nn.Module):
     def __init__(self, state_dim, action_dim, hid_shape, hid_layers):
         super(dual, self).__init__()  
-        layers = [state_dim + action_dim] + list(hid_shape) * hid_layers + [1]
+        layers = [state_dim + action_dim] + hid_shape * hid_layers + [1]
 
         self.G = build_net(layers, nn.ReLU, ExpActivation)
 
@@ -188,12 +188,11 @@ class SAC_continuous():
     def __init__(self, **kwargs):
         # Init hyperparameters for agent, just like "self.gamma = opt.gamma, self.lambd = opt.lambd, ..."
         self.__dict__.update(kwargs)
-        self.tau = 0.005
 
-        self.actor = Actor(self.state_dim, self.action_dim, hid_shape=(self.net_width, self.net_width), hid_layers=self.net_layer).to(self.device)
+        self.actor = Actor(self.state_dim, self.action_dim, hid_shape=self.net_arch, hid_layers=self.net_layer).to(self.device)
         self.actor_optimizer = torch.optim.Adam(self.actor.parameters(), lr=self.a_lr)
 
-        self.v_critic = V_Critic(self.state_dim, hid_shape=(self.net_width, self.net_width), hid_layers=self.net_layer).to(self.device)
+        self.v_critic = V_Critic(self.state_dim, hid_shape=self.net_arch, hid_layers=self.net_layer).to(self.device)
         self.v_critic_optimizer = torch.optim.Adam(self.v_critic.parameters(), lr=self.c_lr)
         self.v_critic_target = copy.deepcopy(self.v_critic)
         # Freeze target networks with respect to optimizers (only update via polyak averaging)
@@ -201,14 +200,14 @@ class SAC_continuous():
             p.requires_grad = False
 
         self.q_critic = Double_Q_Critic(self.state_dim, self.action_dim, 
-                                        hid_shape=(self.net_width, self.net_width), 
+                                        hid_shape=self.net_arch, 
                                         hid_layers=self.net_layer).to(self.device)
         self.q_critic_optimizer = torch.optim.Adam(self.q_critic.parameters(), lr=self.c_lr)
 
         if self.robust:    
             print('This is a robust policy.')
             self.transition = TransitionVAE(self.state_dim, self.action_dim, self.state_dim, 
-                                            hidden_dim=(self.net_width, self.net_width), 
+                                            hidden_dim=self.net_arch, 
                                             hidden_layers=self.net_layer, 
                                             latent_dim=5).to(self.device)
             self.trans_optimizer = torch.optim.Adam(self.transition.parameters(), lr=self.r_lr)
@@ -216,7 +215,7 @@ class SAC_continuous():
             self.log_beta = nn.Parameter(torch.ones((self.batch_size,1), requires_grad=True, device=self.device) * 1.0)
             self.beta_optimizer = torch.optim.Adam([self.log_beta], lr=self.b_lr)
 
-            self.g = dual(self.state_dim, self.action_dim, (self.net_width, self.net_width), self.net_layer).to(self.device)
+            self.g = dual(self.state_dim, self.action_dim, self.net_arch, self.net_layer).to(self.device)
             self.g_optimizer = torch.optim.Adam(self.g.parameters(), lr=self.g_lr)
 
         self.replay_buffer = ReplayBuffer(self.state_dim, self.action_dim, max_size=int(1e6), device=self.device)
@@ -507,7 +506,7 @@ def main(cfg: DictConfig):
     BrifEnvName = [
         'PV1',
         "CPV0",
-        'LLdV2',
+        'LLdV3',
         'Humanv5',
         'HCv4',
         'BWv3',
@@ -540,7 +539,7 @@ def main(cfg: DictConfig):
         else:
             if opt.env_index == 0:
                 env = gym.make("CustomPendulum-v1", std=opt.std) # Add noise when updating angle
-                eval_env = gym.make("CustomPendulum-v1", std=2*opt.std) # Add noise when updating angle
+                eval_env = gym.make("CustomPendulum-v1", std=opt.scale*opt.std) # Add noise when updating angle
 
     # 3. Extract environment properties
     opt.state_dim = env.observation_space.shape[0]
@@ -705,7 +704,7 @@ def main(cfg: DictConfig):
                         })
 
                     # (c) Train the agent at fixed intervals (batch updates)
-                    if (total_steps >= 50 * opt.max_e_steps) and (total_steps % opt.update_every == 0):
+                    if (total_steps >= 100 * opt.max_e_steps) and (total_steps % opt.update_every == 0):
                         writer_copy = writer
                         train_bar = tqdm(range(opt.update_every), 
                                         desc="Model Update", 

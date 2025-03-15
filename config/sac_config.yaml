@@ -3,13 +3,14 @@
 # Default configuration for SAC algorithm
 defaults:
   - _self_
-  - env: pendulum
+  # - env: pendulum
   - env_mods  # New include for environment modifications
   - override hydra/job_logging: default
   - override hydra/hydra_logging: default
 
 # General settings
 device: cuda
+env: pendulum
 write: false
 debug_print: false
 render: false
@@ -27,7 +28,8 @@ update_every: 50
 
 # Algorithm hyperparameters
 gamma: 0.99
-net_width: 256
+tau: 0.005
+net_arch: [256,256]
 net_layer: 1
 a_lr: 0.005 # 5e-3
 c_lr: 0.00005 # 5e-5
@@ -45,12 +47,13 @@ robust: false
 robust_optimizer: functional # beta, functional, separate
 noise: false  # Legacy noise setting - consider using env_mods instead
 std: 0.0      # Legacy std setting - consider using env_mods instead
+scale: 1.0    # Legacy scale setting - consider using env_mods instead
 delta: 0.0
 
 # Hydra output directory
 hydra:
   run:
-    dir: ./outputs/SAC/${now:%Y-%m-%d}/${now:%H-%M-%S}_${env_mods.action_perturb.type}_${env_mods.action_perturb.probability}_${robust}
+    dir: ./debug_outputs/SAC/${now:%Y-%m-%d}/${now:%H-%M-%S}
   sweep:
     dir: ./multirun/SAC/${now:%Y-%m-%d}/${now:%H-%M-%S}
     subdir: ${hydra.job.num}
