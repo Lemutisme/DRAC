@@ -6,6 +6,7 @@ This module provides functions to create environments with various distribution 
 import logging
 import numpy as np
 from numpy.random import normal
+import scipy.stats as stats
 import gymnasium as gym
 
 from gymnasium.envs.classic_control.pendulum import PendulumEnv, angle_normalize
@@ -14,11 +15,24 @@ from gymnasium.envs.registration import register
 
 logger = logging.getLogger(__name__)
 
-class CustomPendulumEnv(PendulumEnv):
-    def __init__(self, render_mode=None, std=0.0):
+class CustomPendulum(PendulumEnv):
+    def __init__(self, render_mode=None, std=0.0, type='gaussian', adv=False):
         super().__init__(render_mode=render_mode)
         self.noise_std = std
-        print(f"Penludum Env with Observation Noise STD={std}.")
+        self.type = type
+        self.adv = adv
+        
+        if type == 'gaussian':
+            self.dist = stats.norm(loc=0, scale=std)
+        elif type == 'cauchy':
+            self.dist = stats.cauchy(loc=0, scale=std)
+        elif type == 'laplace':
+            self.dist = stats.laplace(loc=0, scale=std)
+        elif type == 't':
+            self.dist = stats.t(df=2, loc=0, scale=std)
+        elif type == 'uniform':
+            self.dist = stats.uniform(loc=-0.5*std, scale=std)
+        logger.info(f"Pendulum Env with {type} theta noise std={std}.")
         
     def step(self, u):
         th, thdot = self.state  # th := theta
@@ -37,10 +51,12 @@ class CustomPendulumEnv(PendulumEnv):
         newth = th + newthdot * dt 
         #############################################################	
         # Universal Normal noise
-        # newth += normal(0, self.noise_std)
+        if not self.adv:
+            newth += self.dist.rvs()
         
         # Always adverse Normal noise 
-        newth += abs(normal(0, self.noise_std)) * np.sign(newth) 
+        else:
+            newth += abs(self.dist.rvs()) * np.sign(newth) 
         #############################################################	
 
         self.state = np.array([newth, newthdot])
@@ -52,9 +68,9 @@ class CustomPendulumEnv(PendulumEnv):
 
 register(
     id="CustomPendulum-v1",
-    entry_point="environment_modifiers:CustomPendulumEnv",
+    entry_point="environment_modifiers:CustomPendulum",
     max_episode_steps=200,
-    kwargs={'std': 0.0}
+    kwargs={'std': 0.0, 'type':'gaussian', 'adv':False}
 )
 
 # Parameter Shifted Env
@@ -74,13 +90,14 @@ class ParameterShiftedPendulum(PendulumEnv):
         self.m = self.m * m_factor  # Mass
         self.l = self.l * l_factor  # Length
         
-        print(f"Parameter Shifted Pendulum: g={self.g:.2f}, m={self.m:.2f}, l={self.l:.2f}")
+        logger.info(f"Parameter Shifted Pendulum: g={self.g:.2f}, m={self.m:.2f}, l={self.l:.2f}")
 
 # Register the environments
 register(
     id="ParameterShiftedPendulum-v1",
-    entry_point="param_shifted_envs:ParameterShiftedPendulum",
+    entry_point="environment_modifiers:ParameterShiftedPendulum",
     max_episode_steps=200,
+    kwargs={'g_factor':1.0, 'm_factor':1.0, 'l_factor':1.0}
 )
 
 class ParameterShiftedLunarLander(LunarLander):
@@ -97,7 +114,7 @@ class ParameterShiftedLunarLander(LunarLander):
         self.gravity_factor = gravity_factor
         self.wind_power = wind_power
         self.turbulence_power = turbulence_power
-        print(f"Parameter Shifted LunarLander: gravity_factor={gravity_factor:.2f}, "
+        logger.info(f"Parameter Shifted LunarLander: gravity_factor={gravity_factor:.2f}, "
                 f"wind_power={wind_power:.2f}, turbulence_power={turbulence_power:.2f}")
 
     def step(self, action):
@@ -129,9 +146,10 @@ class ParameterShiftedLunarLander(LunarLander):
         return obs, reward, terminated, truncated, info
 
 register(
-    id="ParameterShiftedLunarLander-v1",
-    entry_point="param_shifted_envs:ParameterShiftedLunarLander",
+    id="ParameterShiftedLunarLander-v3",
+    entry_point="environment_modifiers:ParameterShiftedLunarLander",
     max_episode_steps=1000,
+    kwargs={'gravity_factor':1.0, 'wind_power':0.0, 'turbulence_power':0.0}
 )
 
 # Observation Noise Wrapper
@@ -152,7 +170,7 @@ class ObservationNoiseWrapper(gym.Wrapper):
         self.noise_level = noise_level
         self.noise_freq = noise_freq
         self.observation_space = env.observation_space
-        print(f"Observation {noise_type} noise with level {noise_level}")
+        logger.info(f"Observation {noise_type} noise with level {noise_level}")
 
     def reset(self, **kwargs):
         obs, info = self.env.reset(**kwargs)
@@ -209,7 +227,7 @@ class ActionPerturbationWrapper(gym.Wrapper):
         self.stuck_count = 0
         self.delay_buffer = []
         self._max_episode_steps = env._max_episode_steps
-        print(f"Action perturbation: {perturb_type} with prob {perturb_prob}")
+        logger.info(f"Action perturbation: {perturb_type} with prob {perturb_prob}")
 
     def reset(self, **kwargs):
         self.last_action = None
@@ -269,7 +287,7 @@ class RewardShiftWrapper(gym.Wrapper):
         self.shift_param = shift_param
         self.noise_level = noise_level
         self.reward_buffer = []
-        print(f"Reward shift: {shift_type} with param {shift_param}")
+        logger.info(f"Reward shift: {shift_type} with param {shift_param}")
 
     def reset(self, **kwargs):
         self.reward_buffer = []
@@ -333,7 +351,7 @@ class TransitionPerturbationWrapper(gym.Wrapper):
         self.perturb_prob = perturb_prob
         self.perturb_level = perturb_level
         self.state_dim = env.observation_space.shape[0]
-        print(f"Transition perturbation: {perturb_type} with prob {perturb_prob}")
+        logger.info(f"Transition perturbation: {perturb_type} with prob {perturb_prob}")
 
     def step(self, action):
         obs, reward, terminated, truncated, info = self.env.step(action)
@@ -373,6 +391,44 @@ def create_env_with_mods(env_name, env_config):
     """
     logger.info(f"Creating environment: {env_name}")
 
+    #----------------------------- ↓↓↓↓↓ Self-defined Env ↓↓↓↓↓ ------------------------------#
+    # Param_shift environments
+    if env_config.use_mods and env_config.param_shift.enabled:
+        assert env_config.param_shift.train_apply or env_config.param_shift.eval_apply
+        if env_name == "Pendulum-v1": 
+            if env_config.param_shift.train_apply:
+                logger.info("Applying modifications to training environment")
+                train_env = gym.make("ParameterShiftedPendulum-v1",
+                                    g_factor=env_config.param_shift.g_factor,
+                                    m_factor=env_config.param_shift.m_factor,
+                                    l_factor=env_config.param_shift.l_factor)
+            else:
+                train_env = gym.make(env_name)
+            if env_config.param_shift.eval_apply:
+                logger.info("Using modified environment for evaluation")
+                eval_env = gym.make("ParameterShiftedPendulum-v1",
+                                    g_factor=env_config.param_shift.g_factor,
+                                    m_factor=env_config.param_shift.m_factor,
+                                    l_factor=env_config.param_shift.l_factor)
+            else:
+                eval_env = gym.make(env_name)
+                
+        elif env_name == "LunarLanderContinuous-v3":
+            train_env = gym.make("ParameterShiftedLunarLander-v3",
+                                 gravity_factor=env_config.param_shift.gravity_factor, 
+                                 wind_power=env_config.param_shift.wind_power, 
+                                 turbulence_power=env_config.param_shift.turbulence_power)
+            if env_config.eval.use_modified:
+                logger.info("Using modified environment for evaluation")
+                eval_env = gym.make("ParameterShiftedLunarLander-v3",
+                                    gravity_factor=env_config.param_shift.gravity_factor, 
+                                    wind_power=env_config.param_shift.wind_power, 
+                                    turbulence_power=env_config.param_shift.turbulence_power)
+            else:
+                eval_env = gym.make(env_name)
+            
+        return train_env, eval_env
+                
     # Create base environments
     train_env = gym.make(env_name)
     eval_env = gym.make(env_name)
@@ -382,6 +438,7 @@ def create_env_with_mods(env_name, env_config):
         logger.info("No environment modifications applied")
         return train_env, eval_env
 
+    #----------------------------- ↓↓↓↓↓ Add General Wrapper ↓↓↓↓↓ ------------------------------#
     # Apply modifications to training environment
     logger.info("Applying modifications to training environment")
 

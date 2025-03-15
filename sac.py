@@ -295,7 +295,7 @@ class SAC_continuous():
             ### option2: optimize w.r.t functional g ###
             elif self.robust_optimizer == 'functional':
                 old_loss = 1e4
-                for _ in range(10):
+                for _ in range(5):
                     opt_loss = -self.dual_func_g(s, a, s_next_sample)
                     # Stopping Criteria
                     if abs(opt_loss.mean().item() - old_loss) < 1e-3 * old_loss:
@@ -538,8 +538,8 @@ def main(cfg: DictConfig):
             eval_env = gym.make(EnvName[opt.env_index])
         else:
             if opt.env_index == 0:
-                env = gym.make("CustomPendulum-v1", std=opt.std) # Add noise when updating angle
-                eval_env = gym.make("CustomPendulum-v1", std=opt.scale*opt.std) # Add noise when updating angle
+                env = gym.make("CustomPendulum-v1", std=opt.std, type=opt.type, adv=opt.adv) # Add noise when updating angle
+                eval_env = gym.make("CustomPendulum-v1", std=opt.scale*opt.std, type=opt.type, adv=opt.adv) # Add noise when updating angle
 
     # 3. Extract environment properties
     opt.state_dim = env.observation_space.shape[0]
@@ -604,15 +604,19 @@ def main(cfg: DictConfig):
 
         scores = []
         # Use tqdm for evaluation progress
+        type_lst = ['gaussian', 'cauchy', 'laplace', 't', 'uniform']
         for i in tqdm(range(eval_num), desc="Evaluation Progress", ncols=100):
+            if i % (eval_num // 5) == 0:
+                type = type_lst[i // (eval_num//5)]
+                eval_env = gym.make("CustomPendulum-v1", std=opt.scale*opt.std, type=type, adv=opt.adv) # Add noise when updating angle
             score = evaluate_policy(eval_env, agent, turns=1, seeds_list=[seeds_list[i]])
             scores.append(score)
             # Update progress bar with current mean score
-            if i > 0 and i % 5 == 0:
+            if i > 0 and i % 5 == 4:
                 current_mean = np.mean(scores[:i])
-                tqdm.write(f"Current mean score after {i} episodes: {current_mean:.2f}")
+                tqdm.write(f"Current mean score after {i+1} episodes: {current_mean:.2f}")
                 # Log intermediate results to summary
-                summary_logger.info(f"Intermediate evaluation ({i}/{eval_num}): Mean score = {current_mean:.2f}")
+                summary_logger.info(f"Intermediate evaluation ({i+1}/{eval_num}): Mean score = {current_mean:.2f}")
 
         # Calculate statistics
         mean_score = np.mean(scores)
@@ -704,7 +708,7 @@ def main(cfg: DictConfig):
                         })
 
                     # (c) Train the agent at fixed intervals (batch updates)
-                    if (total_steps >= 100 * opt.max_e_steps) and (total_steps % opt.update_every == 0):
+                    if (total_steps >= 50 * opt.max_e_steps) and (total_steps % opt.update_every == 0):
                         writer_copy = writer
                         train_bar = tqdm(range(opt.update_every), 
                                         desc="Model Update", 

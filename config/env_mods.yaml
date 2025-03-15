@@ -34,6 +34,8 @@ transition_perturb:
 # Parameter shift configuration (for supported environments)
 param_shift:
   enabled: false
+  train_apply: false
+  eval_apply: true
   # For Pendulum:
   g_factor: 1.0  # Gravity factor
   m_factor: 1.0  # Mass factor
