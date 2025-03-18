@@ -15,24 +15,26 @@ from gymnasium.envs.registration import register
 
 logger = logging.getLogger(__name__)
 
+#----------------------------- ↓↓↓↓↓ Custom Env (Change Step Function) ↓↓↓↓↓ ------------------------------#
+# Custom Pendulum Env (Add Noise in Step Function)
 class CustomPendulum(PendulumEnv):
-    def __init__(self, render_mode=None, std=0.0, type='gaussian', adv=False):
+    def __init__(self, render_mode=None, spread=0.0, type="gaussian", adv=False):
         super().__init__(render_mode=render_mode)
-        self.noise_std = std
-        self.type = type
-        self.adv = adv
+        self.noise_spread = spread #
+        self.type = type # noise distribution
+        self.adv = adv # adverse noise
         
-        if type == 'gaussian':
-            self.dist = stats.norm(loc=0, scale=std)
-        elif type == 'cauchy':
-            self.dist = stats.cauchy(loc=0, scale=std)
-        elif type == 'laplace':
-            self.dist = stats.laplace(loc=0, scale=std)
-        elif type == 't':
-            self.dist = stats.t(df=2, loc=0, scale=std)
-        elif type == 'uniform':
-            self.dist = stats.uniform(loc=-0.5*std, scale=std)
-        logger.info(f"Pendulum Env with {type} theta noise std={std}.")
+        if type == "gaussian":
+            self.dist = stats.norm(loc=0, scale=spread)
+        elif type == "cauchy":
+            self.dist = stats.cauchy(loc=0, scale=spread)
+        elif type == "laplace":
+            self.dist = stats.laplace(loc=0, scale=spread)
+        elif type == "t":
+            self.dist = stats.t(df=2, loc=0, scale=spread)
+        elif type == "uniform":
+            self.dist = stats.uniform(loc=-0.5*spread, scale=spread)
+        logger.info(f"Pendulum Env with {type} theta noise std={spread}.")
         
     def step(self, u):
         th, thdot = self.state  # th := theta
@@ -73,7 +75,7 @@ register(
     kwargs={'std': 0.0, 'type':'gaussian', 'adv':False}
 )
 
-# Parameter Shifted Env
+#----------------------------- ↓↓↓↓↓ Parameter Shifted Env ↓↓↓↓↓ ------------------------------#
 class ParameterShiftedPendulum(PendulumEnv):
     def __init__(self, render_mode=None, g_factor=1.0, m_factor=1.0, l_factor=1.0):
         """
@@ -115,7 +117,7 @@ class ParameterShiftedLunarLander(LunarLander):
         self.wind_power = wind_power
         self.turbulence_power = turbulence_power
         logger.info(f"Parameter Shifted LunarLander: gravity_factor={gravity_factor:.2f}, "
-                f"wind_power={wind_power:.2f}, turbulence_power={turbulence_power:.2f}")
+                    f"wind_power={wind_power:.2f}, turbulence_power={turbulence_power:.2f}")
 
     def step(self, action):
         # Apply wind as a constant force in the x direction
@@ -152,11 +154,12 @@ register(
     kwargs={'gravity_factor':1.0, 'wind_power':0.0, 'turbulence_power':0.0}
 )
 
+#----------------------------- ↓↓↓↓↓ Env Modification Wrapper ↓↓↓↓↓ ------------------------------#
 # Observation Noise Wrapper
 class ObservationNoiseWrapper(gym.Wrapper):
     def __init__(self, env, noise_type='gaussian', noise_level=0.1, noise_freq=1.0):
         """
-        Add noise to observations.
+        Add noise to observations (all dimensions).
 
         Args:
             env: The environment to wrap
@@ -392,20 +395,36 @@ def create_env_with_mods(env_name, env_config):
     logger.info(f"Creating environment: {env_name}")
 
     #----------------------------- ↓↓↓↓↓ Self-defined Env ↓↓↓↓↓ ------------------------------#
+    # Custom environments
+    if env_config.use_mods and env_config.custom.enabled:
+         if env_name == "Pendulum-v1": 
+             logger.info("Customizing training environment")
+             train_env = gym.make("CustomPendulum-v1",
+                                  scale=env_config.custom.scale, 
+                                  type=env_config.custom.type, 
+                                  adv=env_config.custom.adv)
+             
+             logger.info("Customizing evaluation environment")
+             eval_env = gym.make("CustomPendulum-v1",
+                                  scale=env_config.custom.scale, 
+                                  type=env_config.custom.type, 
+                                  adv=env_config.custom.adv)
+
     # Param_shift environments
     if env_config.use_mods and env_config.param_shift.enabled:
         assert env_config.param_shift.train_apply or env_config.param_shift.eval_apply
         if env_name == "Pendulum-v1": 
             if env_config.param_shift.train_apply:
-                logger.info("Applying modifications to training environment")
+                logger.info("Applying parameter shift to training environment")
                 train_env = gym.make("ParameterShiftedPendulum-v1",
                                     g_factor=env_config.param_shift.g_factor,
                                     m_factor=env_config.param_shift.m_factor,
                                     l_factor=env_config.param_shift.l_factor)
             else:
                 train_env = gym.make(env_name)
+                
             if env_config.param_shift.eval_apply:
-                logger.info("Using modified environment for evaluation")
+                logger.info("Applying parameter shift to evaluation environment")
                 eval_env = gym.make("ParameterShiftedPendulum-v1",
                                     g_factor=env_config.param_shift.g_factor,
                                     m_factor=env_config.param_shift.m_factor,
@@ -426,8 +445,6 @@ def create_env_with_mods(env_name, env_config):
                                     turbulence_power=env_config.param_shift.turbulence_power)
             else:
                 eval_env = gym.make(env_name)
-            
-        return train_env, eval_env
                 
     # Create base environments
     train_env = gym.make(env_name)

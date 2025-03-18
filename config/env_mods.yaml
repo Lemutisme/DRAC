@@ -45,6 +45,15 @@ param_shift:
   wind_power: 0.0  # Constant wind force
   turbulence_power: 0.0  # Random turbulence
 
+# Custom env configuration (for supported environments)
+custom:
+  enabled: false
+  # For Pendulum:
+  spread: 0.0
+  type: "gaussian" # Options: gaussian, cauchy, laplace, t, uniform
+  adv: false
+
+
 # Evaluation environment configuration
 eval:
   use_modified: true  # Whether to use modified env for evaluation

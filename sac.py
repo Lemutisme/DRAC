@@ -426,20 +426,20 @@ class SAC_continuous():
 
 
     def save(self, EnvName):
-        params = f"{self.std}_{self.robust}"
+        # params = f"{self.std}_{self.robust}"
         model_dir = Path(f"./models/SAC_model/{EnvName}")
         model_dir.mkdir(parents=True, exist_ok=True)
 
-        torch.save(self.actor.state_dict(), model_dir / f"actor_{params}.pth")
-        torch.save(self.q_critic.state_dict(), model_dir / f"q_{params}.pth")
-        torch.save(self.v_critic.state_dict(), model_dir / f"v_{params}.pth")
+        torch.save(self.actor.state_dict(), model_dir / f"actor.pth")
+        torch.save(self.q_critic.state_dict(), model_dir / f"q.pth")
+        torch.save(self.v_critic.state_dict(), model_dir / f"v.pth")
 
-    def load(self, EnvName, params, load_path):
+    def load(self, EnvName, load_path):
         model_dir = Path(f"{load_path}/models/SAC_model/{EnvName}")
 
-        self.actor.load_state_dict(torch.load(model_dir / f"actor_{params}.pth", map_location=self.device, weights_only=True))
-        self.q_critic.load_state_dict(torch.load(model_dir / f"q_{params}.pth", map_location=self.device, weights_only=True))
-        self.v_critic.load_state_dict(torch.load(model_dir / f"v_{params}.pth", map_location=self.device, weights_only=True))
+        self.actor.load_state_dict(torch.load(model_dir / f"actor.pth", map_location=self.device, weights_only=True))
+        self.q_critic.load_state_dict(torch.load(model_dir / f"q.pth", map_location=self.device, weights_only=True))
+        self.v_critic.load_state_dict(torch.load(model_dir / f"v.pth", map_location=self.device, weights_only=True))
 
 
 @hydra.main(version_base=None, config_path="config", config_name="sac_config")
@@ -538,8 +538,8 @@ def main(cfg: DictConfig):
             eval_env = gym.make(EnvName[opt.env_index])
         else:
             if opt.env_index == 0:
-                env = gym.make("CustomPendulum-v1", std=opt.std, type=opt.type, adv=opt.adv) # Add noise when updating angle
-                eval_env = gym.make("CustomPendulum-v1", std=opt.scale*opt.std, type=opt.type, adv=opt.adv) # Add noise when updating angle
+                env = gym.make("CustomPendulum-v1", spread=opt.spread, type=opt.type, adv=opt.adv) # Add noise when updating angle
+                eval_env = gym.make("CustomPendulum-v1", spread=opt.scale*opt.spread, type=opt.type, adv=opt.adv) # Add noise when updating angle
 
     # 3. Extract environment properties
     opt.state_dim = env.observation_space.shape[0]
@@ -587,8 +587,8 @@ def main(cfg: DictConfig):
     # 9. Load a saved model if requested
     if opt.load_model:
         log.info("Loading pre-trained model")
-        params = f"{opt.std}_{opt.robust}"
-        agent.load(BrifEnvName[opt.env_index], params, opt.load_path)
+        # params = f"{opt.std}_{opt.robust}"
+        agent.load(BrifEnvName[opt.env_index], opt.load_path)
 
     # 10. If rendering mode is on, run an infinite evaluation loop
     if opt.render:
