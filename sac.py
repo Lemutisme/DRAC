@@ -272,7 +272,10 @@ class SAC_continuous():
                 writer.add_scalar('tr_loss', tr_loss, global_step=step)
 
             with torch.no_grad():
-                s_next_sample = self.transition.sample(s, a, 200)
+                if self.generate:
+                    s_next_sample = self.transition.sample(s, a, 200)
+                else:
+                    s_next_sample = s_next
 
             #############################################################		
             ### option1: optimize w.r.t beta ###
@@ -604,11 +607,16 @@ def main(cfg: DictConfig):
 
         scores = []
         # Use tqdm for evaluation progress
-        type_lst = ['gaussian', 'cauchy', 'laplace', 't', 'uniform']
+        type_lst = ['gaussian','laplace', 't', 'uniform', 'uniform']
+        scale_lst = [2.0, 1.5, 1.0, 0.5, 3.5]
+        type = 'gaussian'
         for i in tqdm(range(eval_num), desc="Evaluation Progress", ncols=100):
-            if i % (eval_num // 5) == 0:
-                type = type_lst[i // (eval_num//5)]
-                eval_env = gym.make("CustomPendulum-v1", std=opt.scale*opt.std, type=type, adv=opt.adv) # Add noise when updating angle
+            # if i % (eval_num // 5) == 0:
+            #     if i > 0:
+            #          summary_logger.info(f"Mean score of last env: {np.mean(scores[i-eval_num//5:i]):.2f}")
+            #     type = type_lst[i // (eval_num//5)]
+            #     scale = scale_lst[i // (eval_num//5)]
+            #     eval_env = gym.make("CustomPendulum-v1", spread=scale*opt.spread, type=type, adv=opt.adv) # Add noise when updating angle
             score = evaluate_policy(eval_env, agent, turns=1, seeds_list=[seeds_list[i]])
             scores.append(score)
             # Update progress bar with current mean score
@@ -627,7 +635,7 @@ def main(cfg: DictConfig):
         # Save results to output directory
         results_path = Path(hydra.core.hydra_config.HydraConfig.get().runtime.output_dir) / "results.txt"
         with open(results_path, 'a') as f:
-            f.write(f"{[BrifEnvName[opt.env_index], opt.std, opt.robust, mean_score, std_score, p90_score, p10_score]}\n")
+            f.write(f"{[BrifEnvName[opt.env_index], opt.spread, "robust="+str(opt.robust), "adv="+str(opt.adv), mean_score, std_score, p90_score, p10_score]}\n")
 
         log.info(f"Results: {BrifEnvName[opt.env_index]}, Mean: {mean_score:.2f}, Std: {std_score:.2f}")
         log.info(f"90th percentile: {p90_score:.2f}, 10th percentile: {p10_score:.2f}")
@@ -665,8 +673,8 @@ def main(cfg: DictConfig):
                 # (b) Interact with environment until episode finishes
                 episode_steps = 0
                 while not done:
-                    # Random exploration for first 50 episodes (each episode is up to max_e_steps)
-                    if total_steps < (50 * opt.max_e_steps):
+                    # Random exploration for some episodes (each episode is up to max_e_steps)
+                    if total_steps < (opt.explore_episode * opt.max_e_steps):
                         # Sample action directly from environment's action space
                         action_env = env.action_space.sample()  # Range: [-max_action, max_action]
                         # Convert env action back to agent's internal range [-1,1]
@@ -708,7 +716,7 @@ def main(cfg: DictConfig):
                         })
 
                     # (c) Train the agent at fixed intervals (batch updates)
-                    if (total_steps >= 50 * opt.max_e_steps) and (total_steps % opt.update_every == 0):
+                    if (total_steps >= opt.explore_episode * opt.max_e_steps) and (total_steps % opt.update_every == 0):
                         writer_copy = writer
                         train_bar = tqdm(range(opt.update_every), 
                                         desc="Model Update", 

@@ -15,10 +15,10 @@ def Reward_adapter(r, EnvIdex):
     if EnvIdex == 0:
         r = (r + 8) / 8
     # For LunarLander
-    elif EnvIdex == 1:
-        if r <= -100: r = -10
     elif EnvIdex == 2:
-        r = r / 5
+        if r <= -100: r = -10
+    # elif EnvIdex == 2:
+    #     r = r / 5
     # For BipedalWalker
     elif EnvIdex == 4 or EnvIdex == 5:
         if r <= -100: r = -1

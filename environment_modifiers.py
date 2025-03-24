@@ -34,7 +34,9 @@ class CustomPendulum(PendulumEnv):
             self.dist = stats.t(df=2, loc=0, scale=spread)
         elif type == "uniform":
             self.dist = stats.uniform(loc=-0.5*spread, scale=spread)
-        logger.info(f"Pendulum Env with {type} theta noise std={spread}.")
+        logger.info(f"Pendulum Env with {type} theta noise spread={spread}.")
+        if adv:
+            logger.info(f"Always adverse noise.")
         
     def step(self, u):
         th, thdot = self.state  # th := theta
@@ -52,11 +54,11 @@ class CustomPendulum(PendulumEnv):
         newthdot = np.clip(newthdot, -self.max_speed, self.max_speed)
         newth = th + newthdot * dt 
         #############################################################	
-        # Universal Normal noise
+        # Universal noise
         if not self.adv:
             newth += self.dist.rvs()
         
-        # Always adverse Normal noise 
+        # Always adverse noise 
         else:
             newth += abs(self.dist.rvs()) * np.sign(newth) 
         #############################################################	
@@ -72,7 +74,7 @@ register(
     id="CustomPendulum-v1",
     entry_point="environment_modifiers:CustomPendulum",
     max_episode_steps=200,
-    kwargs={'std': 0.0, 'type':'gaussian', 'adv':False}
+    kwargs={'spread': 0.0, 'type':'gaussian', 'adv':False}
 )
 
 #----------------------------- ↓↓↓↓↓ Parameter Shifted Env ↓↓↓↓↓ ------------------------------#
@@ -230,7 +232,7 @@ class ActionPerturbationWrapper(gym.Wrapper):
         self.stuck_count = 0
         self.delay_buffer = []
         self._max_episode_steps = env._max_episode_steps
-        logger.info(f"Action perturbation: {perturb_type} with prob {perturb_prob}")
+        logger.info(f"Action perturbation: {perturb_type} with prob {perturb_prob}, level {perturb_level}")
 
     def reset(self, **kwargs):
         self.last_action = None
@@ -248,7 +250,7 @@ class ActionPerturbationWrapper(gym.Wrapper):
 
             elif self.perturb_type == 'noise':
                 # Add random noise to action
-                action = action + np.random.normal(0, self.perturb_level, size=action.shape)
+                action = action + np.random.normal(loc=0, scale=self.perturb_level, size=action.shape)
                 action = np.clip(action, self.action_space.low, self.action_space.high)
 
             elif self.perturb_type == 'delay':
@@ -290,6 +292,7 @@ class RewardShiftWrapper(gym.Wrapper):
         self.shift_param = shift_param
         self.noise_level = noise_level
         self.reward_buffer = []
+        self._max_episode_steps = env._max_episode_steps
         logger.info(f"Reward shift: {shift_type} with param {shift_param}")
 
     def reset(self, **kwargs):
@@ -393,6 +396,15 @@ def create_env_with_mods(env_name, env_config):
         tuple: (train_env, eval_env) - Training and evaluation environments
     """
     logger.info(f"Creating environment: {env_name}")
+    
+    # Create base environments
+    train_env = gym.make(env_name)
+    eval_env = gym.make(env_name)
+                    
+    # If no modifications, return base environments
+    if not env_config.use_mods:
+        logger.info("No environment modifications applied")
+        return train_env, eval_env
 
     #----------------------------- ↓↓↓↓↓ Self-defined Env ↓↓↓↓↓ ------------------------------#
     # Custom environments
@@ -400,15 +412,21 @@ def create_env_with_mods(env_name, env_config):
          if env_name == "Pendulum-v1": 
              logger.info("Customizing training environment")
              train_env = gym.make("CustomPendulum-v1",
-                                  scale=env_config.custom.scale, 
+                                  spread=env_config.custom.spread, 
                                   type=env_config.custom.type, 
                                   adv=env_config.custom.adv)
              
-             logger.info("Customizing evaluation environment")
-             eval_env = gym.make("CustomPendulum-v1",
-                                  scale=env_config.custom.scale, 
-                                  type=env_config.custom.type, 
-                                  adv=env_config.custom.adv)
+             if env_config.eval.use_modified:
+                 logger.info("Customizing evaluation environment")
+                 if env_config.eval.scale_noise:
+                     env_config.custom.spread *= env_config.eval.noise_scale_factor
+                 eval_env = gym.make("CustomPendulum-v1",
+                                    spread=env_config.custom.spread, 
+                                    type=env_config.custom.type, 
+                                    adv=env_config.custom.adv)
+             else:
+                 eval_env = gym.make(env_name)
+                      
 
     # Param_shift environments
     if env_config.use_mods and env_config.param_shift.enabled:
@@ -445,15 +463,6 @@ def create_env_with_mods(env_name, env_config):
                                     turbulence_power=env_config.param_shift.turbulence_power)
             else:
                 eval_env = gym.make(env_name)
-                
-    # Create base environments
-    train_env = gym.make(env_name)
-    eval_env = gym.make(env_name)
-
-    # If no modifications, return base environments
-    if not env_config.use_mods:
-        logger.info("No environment modifications applied")
-        return train_env, eval_env
 
     #----------------------------- ↓↓↓↓↓ Add General Wrapper ↓↓↓↓↓ ------------------------------#
     # Apply modifications to training environment
@@ -528,6 +537,7 @@ def create_env_with_mods(env_name, env_config):
                 perturb_prob=env_config.action_perturb.probability,
                 perturb_level=env_config.action_perturb.level
             )
+            logger.info(f"Evaluation environment using action noise level: {env_config.action_perturb.level}")
 
         if env_config.reward_shift.enabled and env_config.eval.include_reward_shift:
             eval_env = RewardShiftWrapper(

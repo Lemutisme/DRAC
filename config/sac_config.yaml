@@ -25,6 +25,7 @@ max_train_steps: 200000
 save_interval: 10000
 eval_interval: 1000
 update_every: 50
+explore_episode: 50 
 
 # Algorithm hyperparameters
 gamma: 0.99
