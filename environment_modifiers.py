@@ -114,7 +114,7 @@ class ParameterShiftedLunarLander(LunarLander):
             wind_power: Constant wind force applied
             turbulence_power: Random turbulence amplitude
         """
-        super().__init__(render_mode=render_mode)
+        super().__init__(render_mode=render_mode, continuous=True)
         self.gravity_factor = gravity_factor
         self.wind_power = wind_power
         self.turbulence_power = turbulence_power
@@ -398,8 +398,8 @@ def create_env_with_mods(env_name, env_config):
     logger.info(f"Creating environment: {env_name}")
     
     # Create base environments
-    train_env = gym.make(env_name)
-    eval_env = gym.make(env_name)
+    train_env = gym.make(env_name, render_mode='human')
+    eval_env = gym.make(env_name, render_mode='human')
                     
     # If no modifications, return base environments
     if not env_config.use_mods:

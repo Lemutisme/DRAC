@@ -1,15 +1,13 @@
 __pycache__
 *.pyc
-runs
 outputs/SAC
-outputs/PPO
 multirun/SAC
 multirun/PPO
 SAC_model
 PPO_model
-waste_files
 run1.sh
 run2.sh
 eval.sh
 debug_outputs
 eval_outputs
+selected_model
