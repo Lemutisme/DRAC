@@ -10,7 +10,7 @@ defaults:
 
 # General settings
 device: cuda
-# env: pendulum
+mode: 'offline' # offline, continuous, generate
 write: false
 debug_print: false
 render: false
@@ -18,6 +18,10 @@ load_model: false
 load_path: None
 eval_model: false
 save_model: true
+data_path: None
+
+# Generating settings(epsilon-greedy)
+epsilon: 0.1
 
 # Training settings
 seed: 42
