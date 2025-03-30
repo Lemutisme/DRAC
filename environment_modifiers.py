@@ -114,40 +114,43 @@ class ParameterShiftedLunarLander(LunarLander):
             wind_power: Constant wind force applied
             turbulence_power: Random turbulence amplitude
         """
-        super().__init__(render_mode=render_mode, continuous=True)
-        self.gravity_factor = gravity_factor
-        self.wind_power = wind_power
-        self.turbulence_power = turbulence_power
-        logger.info(f"Parameter Shifted LunarLander: gravity_factor={gravity_factor:.2f}, "
+        super().__init__(render_mode=render_mode, continuous=True,
+                         gravity=-10.0*gravity_factor,
+                         enable_wind=(wind_power!=0), wind_power=wind_power,
+                         turbulence_power=turbulence_power)
+        # self.gravity_factor = gravity_factor
+        # self.wind_power = wind_power
+        # self.turbulence_power = turbulence_power
+        logger.info(f"Parameter Shifted LunarLander: gravity={-10.0*gravity_factor:.2f}, "
                     f"wind_power={wind_power:.2f}, turbulence_power={turbulence_power:.2f}")
 
-    def step(self, action):
-        # Apply wind as a constant force in the x direction
-        if self.wind_power != 0:
-            self.lander.ApplyForceToCenter(
-                (self.wind_power, 0),
-                True
-            )
+    # def step(self, action):
+    #     # Apply wind as a constant force in the x direction
+    #     if self.wind_power != 0:
+    #         self.lander.ApplyForceToCenter(
+    #             (self.wind_power, 0),
+    #             True
+    #         )
 
-        # Apply random turbulence
-        if self.turbulence_power > 0:
-            turbulence = np.random.normal(0, self.turbulence_power, size=2)
-            self.lander.ApplyForceToCenter(
-                (turbulence[0], turbulence[1]),
-                True
-            )
+    #     # Apply random turbulence
+    #     if self.turbulence_power > 0:
+    #         turbulence = np.random.normal(0, self.turbulence_power, size=2)
+    #         self.lander.ApplyForceToCenter(
+    #             (turbulence[0], turbulence[1]),
+    #             True
+    #         )
 
-        # Modify gravity
-        original_gravity = self.world.gravity
-        self.world.gravity = (original_gravity[0], original_gravity[1] * self.gravity_factor)
+    #     # Modify gravity
+    #     original_gravity = self.world.gravity
+    #     self.world.gravity = (original_gravity[0], original_gravity[1] * self.gravity_factor)
 
-        # Call original step function
-        obs, reward, terminated, truncated, info = super().step(action)
+    #     # Call original step function
+    #     obs, reward, terminated, truncated, info = super().step(action)
 
-        # Restore original gravity for consistency
-        self.world.gravity = original_gravity
+    #     # Restore original gravity for consistency
+    #     self.world.gravity = original_gravity
         
-        return obs, reward, terminated, truncated, info
+    #     return obs, reward, terminated, truncated, info
 
 register(
     id="ParameterShiftedLunarLander-v3",

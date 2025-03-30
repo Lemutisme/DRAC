@@ -592,6 +592,7 @@ def main(cfg: DictConfig):
     torch.cuda.manual_seed(opt.seed)
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
+    env.action_space.seed(opt.seed)
     log.info(f"Random Seed: {opt.seed}")
 
     # 6. Set up TensorBoard for logging (if requested)
