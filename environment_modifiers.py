@@ -11,6 +11,7 @@ import gymnasium as gym
 
 from gymnasium.envs.classic_control.pendulum import PendulumEnv, angle_normalize
 from gymnasium.envs.box2d.lunar_lander import LunarLander
+from continuous_cartpole import ContinuousCartPoleEnv
 from gymnasium.envs.registration import register
 
 logger = logging.getLogger(__name__)
@@ -157,6 +158,30 @@ register(
     entry_point="environment_modifiers:ParameterShiftedLunarLander",
     max_episode_steps=1000,
     kwargs={'gravity_factor':1.0, 'wind_power':0.0, 'turbulence_power':0.0}
+)
+
+class ParameterShiftedCartpole(ContinuousCartPoleEnv):
+    def __init__(self, gravity_factor=1.0, len_factor=1.0, force_mag_factor=1.0):
+        """
+        Cartpole environment with shifted parameters.
+
+        Args:
+            gravity_factor: Factor to multiply gravity by
+            len_factor: Factor to multiply length by
+            force_mag_factor: Factor to multiply force magnitude by
+        """
+        super().__init__()
+        self.gravity *= gravity_factor # 9.8
+        self.length *= len_factor             # 0.5
+        self.force_mag *= force_mag_factor    # 30
+        logger.info(f"Parameter Shifted Cartpole: gravity_facotr={gravity_factor:.2f}, "
+                    f"length facotr={len_factor:.2f}, force_mag_factor={force_mag_factor:.2f}")
+        
+register(
+    id="ParameterShiftedCartpole-v0",
+    entry_point="environment_modifiers:ParameterShiftedCartpole",
+    max_episode_steps=500,
+    kwargs={'gravity_factor':1.0, 'len_factor':1.0, 'force_mag_factor':1.0}
 )
 
 #----------------------------- ↓↓↓↓↓ Env Modification Wrapper ↓↓↓↓↓ ------------------------------#
@@ -401,8 +426,8 @@ def create_env_with_mods(env_name, env_config):
     logger.info(f"Creating environment: {env_name}")
     
     # Create base environments
-    train_env = gym.make(env_name, render_mode='human')
-    eval_env = gym.make(env_name, render_mode='human')
+    train_env = gym.make(env_name)
+    eval_env = gym.make(env_name)
                     
     # If no modifications, return base environments
     if not env_config.use_mods:
@@ -464,6 +489,20 @@ def create_env_with_mods(env_name, env_config):
                                     gravity_factor=env_config.param_shift.gravity_factor, 
                                     wind_power=env_config.param_shift.wind_power, 
                                     turbulence_power=env_config.param_shift.turbulence_power)
+            else:
+                eval_env = gym.make(env_name)
+                
+        elif env_name == "ContinuousCartPole-v0":
+            train_env = gym.make("ParameterShiftedCartpole-v0",
+                                 gravity_factor=env_config.param_shift.gravity_factor, 
+                                 len_factor=env_config.param_shift.len_factor, 
+                                 force_mag_factor=env_config.param_shift.force_mag_factor)
+            if env_config.eval.use_modified:
+                logger.info("Using modified environment for evaluation")
+                eval_env = gym.make("ParameterShiftedCartpole-v0",
+                                 gravity_factor=env_config.param_shift.gravity_factor, 
+                                 len_factor=env_config.param_shift.len_factor, 
+                                 force_mag_factor=env_config.param_shift.force_mag_factor)
             else:
                 eval_env = gym.make(env_name)
 

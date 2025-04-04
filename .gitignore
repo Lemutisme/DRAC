@@ -11,4 +11,8 @@ eval.sh
 debug_outputs
 eval_outputs
 selected_model
+old_selected_model
 dataset
+plot
+plot.py
+RFQI

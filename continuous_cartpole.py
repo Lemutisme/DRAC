@@ -185,7 +185,7 @@ class CustomCartPoleEnv(ContinuousCartPoleEnv):
 
 
 register(
-    id="ContinuousCartPole",
+    id="ContinuousCartPole-v0",
     entry_point="continuous_cartpole:ContinuousCartPoleEnv",
     max_episode_steps=500
 )

@@ -40,6 +40,9 @@ param_shift:
   g_factor: 1.0  # Gravity factor
   m_factor: 1.0  # Mass factor
   l_factor: 1.0  # Length factor
+  # For Cartpole:
+  len_factor: 1.0
+  force_mag_factor: 1.0
   # For LunarLander:
   gravity_factor: 1.0  # Gravity factor
   wind_power: 0.0  # Constant wind force

@@ -203,12 +203,12 @@ class ReplayBuffer(object):
         np.save(f"{path}/dw.npy", self.dw[:self.size].cpu().numpy())
         
     def load(self, path):  
-        self.size = int(np.load(f"{path}/dataset/r.npy")[0]) 
-        self.s[:self.size,] = torch.from_numpy(np.load(f"{path}/dataset/s.npy")).to(self.device)
-        self.a[:self.size,] = torch.from_numpy(np.load(f"{path}/dataset/a.npy")).to(self.device)
-        self.r[:self.size,] = torch.from_numpy(np.load(f"{path}/dataset/r.npy")[1:]).reshape(-1,1).to(self.device)
-        self.s_next[:self.size,] = torch.from_numpy(np.load(f"{path}/dataset/s_next.npy")).to(self.device)
-        self.dw[:self.size,] = torch.from_numpy(np.load(f"{path}/dataset/dw.npy")).to(self.device)
+        self.size = int(np.load(f"{path}/r.npy")[0]) 
+        self.s[:self.size,] = torch.from_numpy(np.load(f"{path}/s.npy")).to(self.device)
+        self.a[:self.size,] = torch.from_numpy(np.load(f"{path}/a.npy")).to(self.device)
+        self.r[:self.size,] = torch.from_numpy(np.load(f"{path}/r.npy")[1:]).reshape(-1,1).to(self.device)
+        self.s_next[:self.size,] = torch.from_numpy(np.load(f"{path}/s_next.npy")).to(self.device)
+        self.dw[:self.size,] = torch.from_numpy(np.load(f"{path}/dw.npy")).to(self.device)
 
 
 class SAC_continuous():
@@ -522,7 +522,7 @@ def main(cfg: DictConfig):
     # 1. Define environment names and abbreviations
     EnvName = [
         'Pendulum-v1',
-        "ContinuousCartPole",
+        "ContinuousCartPole-v0",
         'LunarLanderContinuous-v3',
         'Humanoid-v5',
         'HalfCheetah-v5',
@@ -626,7 +626,7 @@ def main(cfg: DictConfig):
 
     # 11. If evaluating only, print result
     elif opt.eval_model:
-        eval_num = 100
+        eval_num = 50
         log.info(f"Evaluating agent across {eval_num} episodes")
         seeds_list = [random.randint(0, 100000) for _ in range(eval_num)] if not hasattr(opt, 'seeds_list') else opt.seeds_list
 
@@ -902,9 +902,6 @@ def main(cfg: DictConfig):
         if opt.save_model:
             agent.save(BrifEnvName[opt.env_index])
             log.info(f"Final model saved to models/SAC_model/{BrifEnvName[opt.env_index]}")
-            
-        if opt.mode == 'continuous':
-            agent.replay_buffer.save()
 
     env.close()
     eval_env.close()
