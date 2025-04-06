@@ -175,7 +175,7 @@ class ParameterShiftedCartpole(ContinuousCartPoleEnv):
         self.length *= len_factor             # 0.5
         self.force_mag *= force_mag_factor    # 30
         logger.info(f"Parameter Shifted Cartpole: gravity_facotr={gravity_factor:.2f}, "
-                    f"length facotr={len_factor:.2f}, force_mag_factor={force_mag_factor:.2f}")
+                    f"length factor={len_factor:.2f}, force_mag_factor={force_mag_factor:.2f}")
         
 register(
     id="ParameterShiftedCartpole-v0",

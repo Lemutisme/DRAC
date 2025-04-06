@@ -1,6 +1,6 @@
 __pycache__
 *.pyc
-outputs/SAC
+outputs
 multirun/SAC
 multirun/PPO
 SAC_model
@@ -10,9 +10,9 @@ run2.sh
 eval.sh
 debug_outputs
 eval_outputs
+output_to_publish
 selected_model
 offline_model
 dataset
 plot
 plot.py
-RFQI

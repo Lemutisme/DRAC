@@ -4,6 +4,7 @@
 # Baseline Reward: 500 (perfect score, zero-std)
 env_name: ContinuousCartPole
 env_index: 1
-max_train_steps: 200000 #200k
+max_train_steps: 20000 # offline learning: 20k
+#max_train_steps: 200000 # continuous learning: 200k
 explore_episode: 50
 update_every: 10
