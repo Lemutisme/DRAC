@@ -47,6 +47,7 @@ param_shift:
   gravity_factor: 1.0  # Gravity factor
   wind_power: 0.0  # Constant wind force
   turbulence_power: 0.0  # Random turbulence
+  engine_factor: 1.0 # Main and side engine power factor
 
 # Custom env configuration (for supported environments)
 custom:

@@ -1,16 +1,17 @@
 # @package _global_
 
 # LunarLanderContinuous environment config
-# Referenced from https://github.com/DLR-RM/rl-baselines3-zoo/blob/master/hyperparams/sac.yml
 # Benchmark Reward: 250, std: 25
 env_name: LunarLanderContinuous-v3
 env_index: 2
-max_train_steps: 500000 # 500k, smaller will affect reward, has been tested
-net_arch: [256,256]
+max_train_steps: 75000 # Offline learning: 50k
+# max_train_steps: 500000 # Continual learning: 500k
+net_arch: [256 ,256]
+# batch_size: 512
 update_every: 10
 net_layer: 1
-a_lr: 0.0001  # 1e-4
-c_lr: 0.0001 # 1e-4
+a_lr: 0.0001 # 5e-4
+c_lr: 0.0001 # 5e-4
 b_lr: 0.0005 # 5e-5
 g_lr: 0.0005 # 5e-4
 r_lr: 0.00005 # 5e-5

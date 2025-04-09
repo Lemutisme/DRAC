@@ -21,6 +21,7 @@ save_model: true
 data_path: None
 
 # Generating settings(epsilon-greedy)
+d4rl: false
 epsilon: 0.1
 
 # Training settings
