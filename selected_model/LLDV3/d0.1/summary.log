@@ -1,0 +1,12 @@
+[2025-03-29 14:40:37,613] Starting SAC training with configuration: LunarLanderContinuous-v3
+[2025-03-29 14:40:37,657] System: Linux-6.11.0-19-generic-x86_64-with-glibc2.39, PyTorch: 2.5.1, GPU: NVIDIA GeForce GTX 1080 Ti
+[2025-03-29 21:09:11,069] --------------------------------------------------
+[2025-03-29 21:09:11,069] TRAINING COMPLETED
+[2025-03-29 21:09:11,070] Environment: LunarLanderContinuous-v3
+[2025-03-29 21:09:11,070] Total steps: 500793
+[2025-03-29 21:09:11,070] Total episodes: 1302
+[2025-03-29 21:09:11,070] Final evaluation over 20 episodes:
+[2025-03-29 21:09:11,070]   Mean reward: 253.30 ± 62.54
+[2025-03-29 21:09:11,070]   90th percentile: 287.60
+[2025-03-29 21:09:11,070]   10th percentile: 233.60
+[2025-03-29 21:09:11,070] --------------------------------------------------

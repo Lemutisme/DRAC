@@ -1,0 +1,12 @@
+[2025-04-09 00:37:24,687] Starting SAC training with configuration: HalfCheetah-v5
+[2025-04-09 00:37:24,733] System: Linux-6.11.0-21-generic-x86_64-with-glibc2.39, PyTorch: 2.5.1, GPU: NVIDIA GeForce GTX 1080 Ti
+[2025-04-09 00:50:18,841] --------------------------------------------------
+[2025-04-09 00:50:18,841] TRAINING COMPLETED
+[2025-04-09 00:50:18,841] Environment: HalfCheetah-v5
+[2025-04-09 00:50:18,841] Total steps: 1000000
+[2025-04-09 00:50:18,841] Total episodes: 1000
+[2025-04-09 00:50:18,841] Final evaluation over 20 episodes:
+[2025-04-09 00:50:18,842]   Mean reward: 5989.25 ± 74.35
+[2025-04-09 00:50:18,842]   90th percentile: 6109.20
+[2025-04-09 00:50:18,842]   10th percentile: 5882.80
+[2025-04-09 00:50:18,842] --------------------------------------------------

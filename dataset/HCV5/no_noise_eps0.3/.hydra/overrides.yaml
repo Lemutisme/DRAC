@@ -1,0 +1,6 @@
+- env=halfcheetah
+- mode=generate
+- load_model=true
+- load_path=/home/mx/DRAC/selected_model/HCv5
+- max_train_steps=1000000
+- epsilon=0.3

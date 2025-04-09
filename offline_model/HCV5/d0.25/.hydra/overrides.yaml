@@ -1,0 +1,6 @@
+- env=halfcheetah
+- robust=true
+- delta=0.25
+- a_lr=0.0005
+- c_lr=0.0005
+- data_path=/home/mx/DRAC/dataset/HCV5/no_noise_eps0.3/dataset

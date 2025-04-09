@@ -1,0 +1,3 @@
+- robust=false
+- data_path=/home/mx/DRAC/dataset/CPV0/no_noise_eps0.5
+- env=cartpole

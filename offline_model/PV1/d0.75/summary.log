@@ -1,0 +1,12 @@
+[2025-04-05 13:35:38,407] Starting SAC training with configuration: Pendulum-v1
+[2025-04-05 13:35:38,452] System: Linux-6.11.0-21-generic-x86_64-with-glibc2.39, PyTorch: 2.5.1, GPU: NVIDIA GeForce GTX 1080 Ti
+[2025-04-05 13:49:49,805] --------------------------------------------------
+[2025-04-05 13:49:49,805] TRAINING COMPLETED
+[2025-04-05 13:49:49,805] Environment: Pendulum-v1
+[2025-04-05 13:49:49,805] Total steps: 20000
+[2025-04-05 13:49:49,806] Total episodes: 0
+[2025-04-05 13:49:49,806] Final evaluation over 20 episodes:
+[2025-04-05 13:49:49,806]   Mean reward: -166.00 ± 76.17
+[2025-04-05 13:49:49,806]   90th percentile: -116.70
+[2025-04-05 13:49:49,806]   10th percentile: -242.20
+[2025-04-05 13:49:49,806] --------------------------------------------------

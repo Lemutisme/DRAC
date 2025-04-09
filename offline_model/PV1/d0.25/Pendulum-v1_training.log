@@ -1,0 +1,125 @@
+[2025-04-05 13:21:43,195][__main__][INFO] - Configuration:
+device: cuda
+mode: offline
+write: false
+debug_print: false
+render: false
+load_model: false
+load_path: None
+eval_model: false
+save_model: true
+data_path: /home/mx/DRAC/outputs/SAC/2025-04-04/21-37-11/dataset
+epsilon: 0.1
+seed: 42
+max_train_steps: 20000
+save_interval: 10000
+eval_interval: 1000
+update_every: 50
+explore_episode: 50
+gamma: 0.99
+tau: 0.005
+net_arch:
+- 256
+- 256
+net_layer: 1
+a_lr: 0.0005
+c_lr: 0.0005
+b_lr: 5.0e-05
+g_lr: 5.0e-05
+r_lr: 5.0e-05
+l2_reg: 0.0
+batch_size: 256
+alpha: 0.12
+adaptive_alpha: true
+reward_adapt: true
+robust: true
+robust_optimizer: functional
+noise: false
+type: gaussian
+adv: false
+spread: 0.0
+scale: 1.0
+delta: 0.25
+env_name: Pendulum-v1
+env_index: 0
+env_mods:
+  use_mods: false
+  observation_noise:
+    enabled: false
+    type: gaussian
+    level: 0.1
+    frequency: 1.0
+  action_perturb:
+    enabled: false
+    type: noise
+    probability: 0.1
+    level: 0.1
+  reward_shift:
+    enabled: false
+    type: scale
+    param: 0.9
+    noise_level: 0.1
+  transition_perturb:
+    enabled: false
+    type: teleport
+    probability: 0.05
+    level: 0.1
+  param_shift:
+    enabled: false
+    train_apply: false
+    eval_apply: true
+    g_factor: 1.0
+    m_factor: 1.0
+    l_factor: 1.0
+    len_factor: 1.0
+    force_mag_factor: 1.0
+    gravity_factor: 1.0
+    wind_power: 0.0
+    turbulence_power: 0.0
+  custom:
+    enabled: false
+    spread: 0.0
+    type: gaussian
+    adv: false
+  eval:
+    use_modified: true
+    scale_noise: false
+    noise_scale_factor: 2.0
+    include_action_perturb: true
+    include_reward_shift: true
+    include_transition_perturb: true
+
+[2025-04-05 13:21:43,239][__main__][INFO] - System information:
+[2025-04-05 13:21:43,239][__main__][INFO] -   Platform: Linux-6.11.0-21-generic-x86_64-with-glibc2.39
+[2025-04-05 13:21:43,239][__main__][INFO] -   Python: 3.12.2
+[2025-04-05 13:21:43,239][__main__][INFO] -   PyTorch: 2.5.1
+[2025-04-05 13:21:43,239][__main__][INFO] -   CUDA Available: True
+[2025-04-05 13:21:43,239][__main__][INFO] -   CUDA Version: 12.4
+[2025-04-05 13:21:43,239][__main__][INFO] -   GPU: NVIDIA GeForce GTX 1080 Ti
+[2025-04-05 13:21:43,244][__main__][INFO] - Env: Pendulum-v1  state_dim: 3  action_dim: 1  max_a: 2.0  min_a: -2.0  max_e_steps: 200
+[2025-04-05 13:21:43,245][__main__][INFO] - Random Seed: 42
+[2025-04-05 13:21:43,245][__main__][INFO] - Models will be saved to models/SAC_model/PV1
+[2025-04-05 13:22:22,933][__main__][INFO] - EnvName: PV1, Steps: 1k, Episode Reward: -1760
+[2025-04-05 13:22:58,219][__main__][INFO] - EnvName: PV1, Steps: 2k, Episode Reward: -1080
+[2025-04-05 13:23:39,532][__main__][INFO] - EnvName: PV1, Steps: 3k, Episode Reward: -202
+[2025-04-05 13:24:24,317][__main__][INFO] - EnvName: PV1, Steps: 4k, Episode Reward: -185
+[2025-04-05 13:25:12,197][__main__][INFO] - EnvName: PV1, Steps: 5k, Episode Reward: -145
+[2025-04-05 13:25:54,905][__main__][INFO] - EnvName: PV1, Steps: 6k, Episode Reward: -122
+[2025-04-05 13:26:36,283][__main__][INFO] - EnvName: PV1, Steps: 7k, Episode Reward: -187
+[2025-04-05 13:27:21,047][__main__][INFO] - EnvName: PV1, Steps: 8k, Episode Reward: -193
+[2025-04-05 13:27:58,389][__main__][INFO] - EnvName: PV1, Steps: 9k, Episode Reward: -209
+[2025-04-05 13:28:43,593][__main__][INFO] - EnvName: PV1, Steps: 10k, Episode Reward: -253
+[2025-04-05 13:29:30,392][__main__][INFO] - EnvName: PV1, Steps: 11k, Episode Reward: -255
+[2025-04-05 13:30:15,976][__main__][INFO] - EnvName: PV1, Steps: 12k, Episode Reward: -168
+[2025-04-05 13:31:04,769][__main__][INFO] - EnvName: PV1, Steps: 13k, Episode Reward: -143
+[2025-04-05 13:31:45,720][__main__][INFO] - EnvName: PV1, Steps: 14k, Episode Reward: -122
+[2025-04-05 13:32:23,653][__main__][INFO] - EnvName: PV1, Steps: 15k, Episode Reward: -118
+[2025-04-05 13:32:55,310][__main__][INFO] - EnvName: PV1, Steps: 16k, Episode Reward: -121
+[2025-04-05 13:33:31,576][__main__][INFO] - EnvName: PV1, Steps: 17k, Episode Reward: -156
+[2025-04-05 13:34:07,723][__main__][INFO] - EnvName: PV1, Steps: 18k, Episode Reward: -179
+[2025-04-05 13:34:55,328][__main__][INFO] - EnvName: PV1, Steps: 19k, Episode Reward: -120
+[2025-04-05 13:35:33,565][__main__][INFO] - EnvName: PV1, Steps: 20k, Episode Reward: -176
+[2025-04-05 13:35:33,570][__main__][INFO] - Training completed. Evaluating across 20 episodes
+[2025-04-05 13:35:35,668][__main__][INFO] - Final evaluation - Mean: -128.20, Std: 71.11
+[2025-04-05 13:35:35,668][__main__][INFO] - 90th percentile: -3.90, 10th percentile: -236.50
+[2025-04-05 13:35:35,673][__main__][INFO] - Final model saved to models/SAC_model/PV1

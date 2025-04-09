@@ -1,0 +1,116 @@
+[2025-04-09 13:34:48,532][__main__][INFO] - System information:
+[2025-04-09 13:34:48,532][__main__][INFO] -   Platform: Linux-6.11.0-21-generic-x86_64-with-glibc2.39
+[2025-04-09 13:34:48,532][__main__][INFO] -   Python: 3.12.2
+[2025-04-09 13:34:48,532][__main__][INFO] -   PyTorch: 2.5.1
+[2025-04-09 13:34:48,532][__main__][INFO] -   CUDA Available: True
+[2025-04-09 13:34:48,532][__main__][INFO] -   CUDA Version: 12.4
+[2025-04-09 13:34:48,532][__main__][INFO] -   GPU: NVIDIA GeForce GTX 1080 Ti
+[2025-04-09 13:34:48,620][__main__][INFO] - Env: HalfCheetah-v5  state_dim: 17  action_dim: 6  max_a: 1.0  min_a: -1.0  max_e_steps: 1000
+[2025-04-09 13:34:48,621][__main__][INFO] - Random Seed: 42
+[2025-04-09 13:34:48,621][__main__][INFO] - Models will be saved to models/SAC_model/HCv5
+[2025-04-09 13:35:33,764][__main__][INFO] - EnvName: HCv5, Steps: 1k, Episode Reward: -120
+[2025-04-09 13:36:26,527][__main__][INFO] - EnvName: HCv5, Steps: 2k, Episode Reward: -192
+[2025-04-09 13:37:18,354][__main__][INFO] - EnvName: HCv5, Steps: 3k, Episode Reward: -500
+[2025-04-09 13:38:11,201][__main__][INFO] - EnvName: HCv5, Steps: 4k, Episode Reward: -546
+[2025-04-09 13:38:56,049][__main__][INFO] - EnvName: HCv5, Steps: 5k, Episode Reward: -579
+[2025-04-09 13:39:55,725][__main__][INFO] - EnvName: HCv5, Steps: 6k, Episode Reward: -380
+[2025-04-09 13:40:42,742][__main__][INFO] - EnvName: HCv5, Steps: 7k, Episode Reward: -154
+[2025-04-09 13:41:40,607][__main__][INFO] - EnvName: HCv5, Steps: 8k, Episode Reward: -281
+[2025-04-09 13:42:27,612][__main__][INFO] - EnvName: HCv5, Steps: 9k, Episode Reward: -437
+[2025-04-09 13:43:16,308][__main__][INFO] - EnvName: HCv5, Steps: 10k, Episode Reward: -438
+[2025-04-09 13:44:11,714][__main__][INFO] - EnvName: HCv5, Steps: 11k, Episode Reward: -439
+[2025-04-09 13:45:11,036][__main__][INFO] - EnvName: HCv5, Steps: 12k, Episode Reward: -407
+[2025-04-09 13:45:56,134][__main__][INFO] - EnvName: HCv5, Steps: 13k, Episode Reward: -418
+[2025-04-09 13:46:38,780][__main__][INFO] - EnvName: HCv5, Steps: 14k, Episode Reward: -325
+[2025-04-09 13:47:37,863][__main__][INFO] - EnvName: HCv5, Steps: 15k, Episode Reward: -516
+[2025-04-09 13:48:28,704][__main__][INFO] - EnvName: HCv5, Steps: 16k, Episode Reward: -533
+[2025-04-09 13:49:17,236][__main__][INFO] - EnvName: HCv5, Steps: 17k, Episode Reward: -506
+[2025-04-09 13:50:06,575][__main__][INFO] - EnvName: HCv5, Steps: 18k, Episode Reward: -700
+[2025-04-09 13:50:52,100][__main__][INFO] - EnvName: HCv5, Steps: 19k, Episode Reward: -626
+[2025-04-09 13:51:40,312][__main__][INFO] - EnvName: HCv5, Steps: 20k, Episode Reward: -595
+[2025-04-09 13:52:26,434][__main__][INFO] - EnvName: HCv5, Steps: 21k, Episode Reward: -220
+[2025-04-09 13:53:18,512][__main__][INFO] - EnvName: HCv5, Steps: 22k, Episode Reward: -389
+[2025-04-09 13:54:09,419][__main__][INFO] - EnvName: HCv5, Steps: 23k, Episode Reward: -303
+[2025-04-09 13:54:59,472][__main__][INFO] - EnvName: HCv5, Steps: 24k, Episode Reward: -295
+[2025-04-09 13:55:50,671][__main__][INFO] - EnvName: HCv5, Steps: 25k, Episode Reward: -320
+[2025-04-09 13:56:43,414][__main__][INFO] - EnvName: HCv5, Steps: 26k, Episode Reward: -583
+[2025-04-09 13:57:30,949][__main__][INFO] - EnvName: HCv5, Steps: 27k, Episode Reward: -430
+[2025-04-09 13:58:25,703][__main__][INFO] - EnvName: HCv5, Steps: 28k, Episode Reward: -259
+[2025-04-09 13:59:21,807][__main__][INFO] - EnvName: HCv5, Steps: 29k, Episode Reward: -299
+[2025-04-09 14:00:17,838][__main__][INFO] - EnvName: HCv5, Steps: 30k, Episode Reward: -335
+[2025-04-09 14:01:09,570][__main__][INFO] - EnvName: HCv5, Steps: 31k, Episode Reward: -223
+[2025-04-09 14:02:03,208][__main__][INFO] - EnvName: HCv5, Steps: 32k, Episode Reward: -198
+[2025-04-09 14:02:50,105][__main__][INFO] - EnvName: HCv5, Steps: 33k, Episode Reward: -263
+[2025-04-09 14:03:32,183][__main__][INFO] - EnvName: HCv5, Steps: 34k, Episode Reward: -191
+[2025-04-09 14:04:22,984][__main__][INFO] - EnvName: HCv5, Steps: 35k, Episode Reward: -42
+[2025-04-09 14:05:15,025][__main__][INFO] - EnvName: HCv5, Steps: 36k, Episode Reward: -352
+[2025-04-09 14:06:09,445][__main__][INFO] - EnvName: HCv5, Steps: 37k, Episode Reward: -346
+[2025-04-09 14:07:00,012][__main__][INFO] - EnvName: HCv5, Steps: 38k, Episode Reward: -230
+[2025-04-09 14:07:51,165][__main__][INFO] - EnvName: HCv5, Steps: 39k, Episode Reward: -262
+[2025-04-09 14:08:46,780][__main__][INFO] - EnvName: HCv5, Steps: 40k, Episode Reward: -450
+[2025-04-09 14:09:39,526][__main__][INFO] - EnvName: HCv5, Steps: 41k, Episode Reward: -536
+[2025-04-09 14:10:32,477][__main__][INFO] - EnvName: HCv5, Steps: 42k, Episode Reward: -659
+[2025-04-09 14:11:21,916][__main__][INFO] - EnvName: HCv5, Steps: 43k, Episode Reward: -610
+[2025-04-09 14:12:12,415][__main__][INFO] - EnvName: HCv5, Steps: 44k, Episode Reward: -655
+[2025-04-09 14:13:08,093][__main__][INFO] - EnvName: HCv5, Steps: 45k, Episode Reward: -613
+[2025-04-09 14:14:03,328][__main__][INFO] - EnvName: HCv5, Steps: 46k, Episode Reward: -620
+[2025-04-09 14:14:55,379][__main__][INFO] - EnvName: HCv5, Steps: 47k, Episode Reward: -634
+[2025-04-09 14:15:47,202][__main__][INFO] - EnvName: HCv5, Steps: 48k, Episode Reward: -617
+[2025-04-09 14:16:40,758][__main__][INFO] - EnvName: HCv5, Steps: 49k, Episode Reward: -605
+[2025-04-09 14:17:26,043][__main__][INFO] - EnvName: HCv5, Steps: 50k, Episode Reward: -547
+[2025-04-09 14:18:12,395][__main__][INFO] - EnvName: HCv5, Steps: 51k, Episode Reward: -493
+[2025-04-09 14:19:08,405][__main__][INFO] - EnvName: HCv5, Steps: 52k, Episode Reward: -662
+[2025-04-09 14:19:59,316][__main__][INFO] - EnvName: HCv5, Steps: 53k, Episode Reward: -695
+[2025-04-09 14:20:51,979][__main__][INFO] - EnvName: HCv5, Steps: 54k, Episode Reward: -693
+[2025-04-09 14:21:47,288][__main__][INFO] - EnvName: HCv5, Steps: 55k, Episode Reward: -699
+[2025-04-09 14:22:40,294][__main__][INFO] - EnvName: HCv5, Steps: 56k, Episode Reward: -826
+[2025-04-09 14:23:30,276][__main__][INFO] - EnvName: HCv5, Steps: 57k, Episode Reward: -748
+[2025-04-09 14:24:17,129][__main__][INFO] - EnvName: HCv5, Steps: 58k, Episode Reward: -742
+[2025-04-09 14:25:04,329][__main__][INFO] - EnvName: HCv5, Steps: 59k, Episode Reward: -761
+[2025-04-09 14:25:49,778][__main__][INFO] - EnvName: HCv5, Steps: 60k, Episode Reward: -584
+[2025-04-09 14:26:35,866][__main__][INFO] - EnvName: HCv5, Steps: 61k, Episode Reward: -743
+[2025-04-09 14:27:23,551][__main__][INFO] - EnvName: HCv5, Steps: 62k, Episode Reward: -840
+[2025-04-09 14:28:16,696][__main__][INFO] - EnvName: HCv5, Steps: 63k, Episode Reward: -753
+[2025-04-09 14:28:54,467][__main__][INFO] - EnvName: HCv5, Steps: 64k, Episode Reward: -818
+[2025-04-09 14:29:34,323][__main__][INFO] - EnvName: HCv5, Steps: 65k, Episode Reward: -765
+[2025-04-09 14:30:24,538][__main__][INFO] - EnvName: HCv5, Steps: 66k, Episode Reward: -789
+[2025-04-09 14:31:18,479][__main__][INFO] - EnvName: HCv5, Steps: 67k, Episode Reward: -626
+[2025-04-09 14:32:05,528][__main__][INFO] - EnvName: HCv5, Steps: 68k, Episode Reward: -641
+[2025-04-09 14:32:58,980][__main__][INFO] - EnvName: HCv5, Steps: 69k, Episode Reward: -698
+[2025-04-09 14:33:45,489][__main__][INFO] - EnvName: HCv5, Steps: 70k, Episode Reward: -555
+[2025-04-09 14:34:34,733][__main__][INFO] - EnvName: HCv5, Steps: 71k, Episode Reward: -475
+[2025-04-09 14:35:18,522][__main__][INFO] - EnvName: HCv5, Steps: 72k, Episode Reward: -526
+[2025-04-09 14:35:58,958][__main__][INFO] - EnvName: HCv5, Steps: 73k, Episode Reward: -538
+[2025-04-09 14:36:48,129][__main__][INFO] - EnvName: HCv5, Steps: 74k, Episode Reward: -466
+[2025-04-09 14:37:39,367][__main__][INFO] - EnvName: HCv5, Steps: 75k, Episode Reward: -554
+[2025-04-09 14:38:30,000][__main__][INFO] - EnvName: HCv5, Steps: 76k, Episode Reward: -554
+[2025-04-09 14:39:24,539][__main__][INFO] - EnvName: HCv5, Steps: 77k, Episode Reward: -583
+[2025-04-09 14:40:16,563][__main__][INFO] - EnvName: HCv5, Steps: 78k, Episode Reward: -444
+[2025-04-09 14:41:14,997][__main__][INFO] - EnvName: HCv5, Steps: 79k, Episode Reward: -468
+[2025-04-09 14:42:10,887][__main__][INFO] - EnvName: HCv5, Steps: 80k, Episode Reward: -669
+[2025-04-09 14:43:03,781][__main__][INFO] - EnvName: HCv5, Steps: 81k, Episode Reward: -384
+[2025-04-09 14:43:48,562][__main__][INFO] - EnvName: HCv5, Steps: 82k, Episode Reward: -352
+[2025-04-09 14:44:40,281][__main__][INFO] - EnvName: HCv5, Steps: 83k, Episode Reward: -222
+[2025-04-09 14:45:30,243][__main__][INFO] - EnvName: HCv5, Steps: 84k, Episode Reward: -424
+[2025-04-09 14:46:25,132][__main__][INFO] - EnvName: HCv5, Steps: 85k, Episode Reward: -524
+[2025-04-09 14:47:21,124][__main__][INFO] - EnvName: HCv5, Steps: 86k, Episode Reward: -611
+[2025-04-09 14:48:03,109][__main__][INFO] - EnvName: HCv5, Steps: 87k, Episode Reward: -497
+[2025-04-09 14:48:51,067][__main__][INFO] - EnvName: HCv5, Steps: 88k, Episode Reward: -286
+[2025-04-09 14:49:40,144][__main__][INFO] - EnvName: HCv5, Steps: 89k, Episode Reward: -472
+[2025-04-09 14:50:28,058][__main__][INFO] - EnvName: HCv5, Steps: 90k, Episode Reward: -350
+[2025-04-09 14:51:19,096][__main__][INFO] - EnvName: HCv5, Steps: 91k, Episode Reward: -545
+[2025-04-09 14:52:15,098][__main__][INFO] - EnvName: HCv5, Steps: 92k, Episode Reward: -320
+[2025-04-09 14:53:06,113][__main__][INFO] - EnvName: HCv5, Steps: 93k, Episode Reward: -546
+[2025-04-09 14:53:59,957][__main__][INFO] - EnvName: HCv5, Steps: 94k, Episode Reward: -368
+[2025-04-09 14:54:53,336][__main__][INFO] - EnvName: HCv5, Steps: 95k, Episode Reward: -347
+[2025-04-09 14:55:47,089][__main__][INFO] - EnvName: HCv5, Steps: 96k, Episode Reward: -308
+[2025-04-09 14:56:38,954][__main__][INFO] - EnvName: HCv5, Steps: 97k, Episode Reward: -193
+[2025-04-09 14:57:34,275][__main__][INFO] - EnvName: HCv5, Steps: 98k, Episode Reward: -352
+[2025-04-09 14:58:25,878][__main__][INFO] - EnvName: HCv5, Steps: 99k, Episode Reward: -483
+[2025-04-09 14:59:08,328][__main__][INFO] - EnvName: HCv5, Steps: 100k, Episode Reward: -528
+[2025-04-09 14:59:58,321][__main__][INFO] - EnvName: HCv5, Steps: 101k, Episode Reward: -527
+[2025-04-09 15:00:47,773][__main__][INFO] - EnvName: HCv5, Steps: 102k, Episode Reward: -417
+[2025-04-09 15:01:37,842][__main__][INFO] - EnvName: HCv5, Steps: 103k, Episode Reward: -303
+[2025-04-09 15:02:28,623][__main__][INFO] - EnvName: HCv5, Steps: 104k, Episode Reward: -357
+[2025-04-09 15:03:18,528][__main__][INFO] - EnvName: HCv5, Steps: 105k, Episode Reward: -511
+[2025-04-09 15:04:04,707][__main__][INFO] - EnvName: HCv5, Steps: 106k, Episode Reward: -491

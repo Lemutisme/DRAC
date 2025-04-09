@@ -1,0 +1,4 @@
+- env=lunarlander
+- mode=continuous
+- robust=true
+- delta=0.1
