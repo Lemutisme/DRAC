@@ -83,6 +83,7 @@ class V_Critic(nn.Module):
         output = self.V(state)
         return output
 
+
 class Double_Q_Critic(nn.Module):
     def __init__(self, state_dim, action_dim, hid_shape, hid_layers):
         super(Double_Q_Critic, self).__init__()
@@ -96,6 +97,24 @@ class Double_Q_Critic(nn.Module):
         q1 = self.Q_1(sa)
         q2 = self.Q_2(sa)            
         return q1, q2
+
+# class Q_Ensemble_Critic(nn.Module):
+#     def __init__(self, state_dim, action_dim, hid_shape, hid_layers, num_critics=5):
+#         super(Q_Ensemble_Critic, self).__init__()
+#         layers = [state_dim + action_dim] + hid_shape * hid_layers + [1]
+
+#         self.Q_list = nn.ModuleList([ build_net(layers, nn.ReLU, nn.Identity) for _ in range(num_critics) ])
+
+#     def forward(self, state, action):
+#         sa = torch.cat([state, action], dim=1)
+#         # q1 = self.Q_1(sa)
+#         # q2 = self.Q_2(sa)            
+#         return [Q(sa) for Q in self.Q_list]
+    
+#     def min_forward(self, state, action):
+#         Q_list = self.forward(state, action)
+#         return torch.min(torch.stack(Q_list, dim=0), dim=0)[0] 
+        
 
 class TransitionVAE(nn.Module):
     def __init__(self, state_dim, action_dim, out_dim, hidden_dim=64, hidden_layers=1, latent_dim=0):
@@ -295,7 +314,11 @@ class SAC_continuous():
         return - beta * (logsumexp(-v_next/beta) - math.log(size)) - beta * self.delta           
 
     def train(self, writer, step):
-        s, a, r, s_next, dw = self.replay_buffer.sample(self.batch_size)
+        s, a_env, r, s_next, dw = self.replay_buffer.sample(self.batch_size)
+        a = Action_adapter_reverse(a_env, self.max_action)
+        if self.reward_adapt:
+            r = Reward_adapter(r, self.env_index)
+        debug_print = self.debug_print and (step % 1000 == 0)
 
         #----------------------------- ↓↓↓↓↓ Update R Net ↓↓↓↓↓ ------------------------------#
         if self.robust:
@@ -304,7 +327,7 @@ class SAC_continuous():
             self.trans_optimizer.zero_grad()
             tr_loss.backward()
             self.trans_optimizer.step()
-            if self.debug_print:
+            if debug_print:
                 print(f"tr_loss: {tr_loss.item()}")
             if writer:
                 writer.add_scalar('tr_loss', tr_loss, global_step=step)
@@ -383,9 +406,11 @@ class SAC_continuous():
 
         # Get current Q estimates
         current_Q1, current_Q2 = self.q_critic(s, a)
+        # current_Q_list = self.q_critic.forward(s, a)
 
         # JQ(θ)
         q_loss = F.mse_loss(current_Q1, target_Q) + F.mse_loss(current_Q2, target_Q) 
+        # q_loss = sum([F.mse_loss(current_Q, target_Q) for current_Q in current_Q_list])
 
         for name,param in self.q_critic.named_parameters():
             if 'weight' in name:
@@ -393,8 +418,11 @@ class SAC_continuous():
 
         self.q_critic_optimizer.zero_grad()
         q_loss.backward()
+        # torch.nn.utils.clip_grad_norm_(self.q_critic.parameters(), 10.0)
+        if debug_print:
+            print(max([param.grad.abs().mean().item() for _, param in self.q_critic.named_parameters()]))
         self.q_critic_optimizer.step()
-        if self.debug_print:
+        if debug_print:
             print(f"q_loss: {q_loss.item()}")
         if writer:
             writer.add_scalar('q_loss', q_loss, global_step=step)
@@ -408,6 +436,7 @@ class SAC_continuous():
         a, log_pi_a = self.actor(s, deterministic=False, with_logprob=True)
         current_Q1, current_Q2 = self.q_critic(s, a)
         Q = torch.min(current_Q1, current_Q2)
+        # Q = self.q_critic.min_forward(s,a)
         ### V(s) = E_pi(Q(s,a) - α * logπ(a|s)) ###
         target_V = (Q - self.alpha * log_pi_a).detach()
 
@@ -420,8 +449,11 @@ class SAC_continuous():
 
         self.v_critic_optimizer.zero_grad()
         v_loss.backward()
+        # torch.nn.utils.clip_grad_norm_(self.v_critic.parameters(), 10.0)
+        if debug_print:
+            print(max([param.grad.abs().mean().item() for _, param in self.v_critic.named_parameters()]))
         self.v_critic_optimizer.step()
-        if self.debug_print:
+        if debug_print:
             print(f"v_loss: {v_loss.item()}")
         if writer:
             writer.add_scalar('v_loss', v_loss, global_step=step)
@@ -443,8 +475,11 @@ class SAC_continuous():
         #########################################
         self.actor_optimizer.zero_grad()
         a_loss.backward()
+        # torch.nn.utils.clip_grad_norm_(self.actor.parameters(), 10.0)
+        if debug_print:
+            print(max([param.grad.abs().mean().item() for _, param in self.actor.named_parameters()]))
         self.actor_optimizer.step()
-        if self.debug_print:
+        if debug_print:
             print(f"a_loss: {a_loss.item()}\n")
         if writer:
             writer.add_scalar('a_loss', a_loss, global_step=step)
@@ -537,9 +572,7 @@ def main(cfg: DictConfig):
         'LunarLanderContinuous-v3',
         'Humanoid-v5',
         'HalfCheetah-v5',
-        'BipedalWalker-v3',
-        'BipedalWalkerHardcore-v3',
-        'FrozenLake-v1'
+        "Hopper-v5"
     ]
     BrifEnvName = [
         'PV1',
@@ -547,9 +580,7 @@ def main(cfg: DictConfig):
         'LLdV3',
         'Humanv5',
         'HCv5',
-        'BWv3',
-        'BWHv3',
-        'CRv3'
+        'HPv5'
     ]
 
     # Create a config object from Hydra for compatibility with rest of code
@@ -750,14 +781,14 @@ def main(cfg: DictConfig):
                         next_state, reward, dw, tr, info = env.step(action_env)
 
                         # Custom reward shaping, if needed
-                        if opt.reward_adapt:
-                            reward = Reward_adapter(reward, opt.env_index)
+                        # if opt.reward_adapt:
+                        #     reward = Reward_adapter(reward, opt.env_index)
 
                         # Check for terminal state
                         done = (dw or tr)
 
                         # Store transition in replay buffer
-                        agent.replay_buffer.add(state, action_agent, reward, next_state, dw)
+                        agent.replay_buffer.add(state, action_env, reward, next_state, done)
 
                         # Move to next step
                         state = next_state
@@ -806,14 +837,14 @@ def main(cfg: DictConfig):
                         ep_reward += reward
 
                         # Custom reward shaping, if needed
-                        if opt.reward_adapt:
-                            reward = Reward_adapter(reward, opt.env_index)
+                        # if opt.reward_adapt:
+                        #     reward = Reward_adapter(reward, opt.env_index)
 
                         # Check for terminal state
                         done = (dw or tr)
 
                         # Store transition in replay buffer
-                        agent.replay_buffer.add(state, action_agent, reward, next_state, dw)
+                        agent.replay_buffer.add(state, action_agent, reward, next_state, done)
 
                         # Move to next step
                         state = next_state
