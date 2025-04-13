@@ -1,2 +1,0 @@
-[2025-04-09 13:35:26,170] Starting SAC training with configuration: HalfCheetah-v5
-[2025-04-09 13:35:26,215] System: Linux-6.11.0-21-generic-x86_64-with-glibc2.39, PyTorch: 2.5.1, GPU: NVIDIA GeForce GTX 1080 Ti

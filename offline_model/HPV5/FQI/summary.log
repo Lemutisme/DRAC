@@ -1,0 +1,2 @@
+[2025-04-13 11:56:45,966] Starting SAC training with configuration: Hopper-v5
+[2025-04-13 11:56:46,011] System: Linux-6.11.0-21-generic-x86_64-with-glibc2.39, PyTorch: 2.5.1, GPU: NVIDIA GeForce GTX 1080 Ti

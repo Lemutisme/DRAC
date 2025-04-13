@@ -1,0 +1,20 @@
+[2025-04-13 11:56:46,010][__main__][INFO] - System information:
+[2025-04-13 11:56:46,010][__main__][INFO] -   Platform: Linux-6.11.0-21-generic-x86_64-with-glibc2.39
+[2025-04-13 11:56:46,010][__main__][INFO] -   Python: 3.12.2
+[2025-04-13 11:56:46,010][__main__][INFO] -   PyTorch: 2.5.1
+[2025-04-13 11:56:46,010][__main__][INFO] -   CUDA Available: True
+[2025-04-13 11:56:46,011][__main__][INFO] -   CUDA Version: 12.4
+[2025-04-13 11:56:46,011][__main__][INFO] -   GPU: NVIDIA GeForce GTX 1080 Ti
+[2025-04-13 11:56:46,092][__main__][INFO] - Env: Hopper-v5  state_dim: 11  action_dim: 3  max_a: 1.0  min_a: -1.0  max_e_steps: 1000
+[2025-04-13 11:56:46,093][__main__][INFO] - Random Seed: 42
+[2025-04-13 11:56:46,094][__main__][INFO] - Models will be saved to models/FQI_model/HPv5
+[2025-04-13 11:58:39,246][__main__][INFO] - Training iterations: 0. State VAE loss: 0.220.
+[2025-04-13 12:09:00,838][__main__][INFO] - EnvName: HPv5, Steps: 20k, Episode Reward: (616.697476908688, 129.24945023234295)
+[2025-04-13 12:19:31,786][__main__][INFO] - EnvName: HPv5, Steps: 30k, Episode Reward: (3553.1891046065093, 7.107925848745034)
+[2025-04-13 12:30:01,041][__main__][INFO] - EnvName: HPv5, Steps: 40k, Episode Reward: (3501.787644374102, 12.837254397870431)
+[2025-04-13 12:40:32,526][__main__][INFO] - EnvName: HPv5, Steps: 50k, Episode Reward: (3522.0435933580934, 6.771395748865043)
+[2025-04-13 12:50:50,803][__main__][INFO] - EnvName: HPv5, Steps: 60k, Episode Reward: (3525.6881322278145, 9.97797260634717)
+[2025-04-13 13:01:14,452][__main__][INFO] - EnvName: HPv5, Steps: 70k, Episode Reward: (3542.2791710021847, 8.112547186200468)
+[2025-04-13 13:11:40,828][__main__][INFO] - EnvName: HPv5, Steps: 80k, Episode Reward: (3547.8357260046077, 14.713311013479647)
+[2025-04-13 13:22:05,304][__main__][INFO] - EnvName: HPv5, Steps: 90k, Episode Reward: (3569.6405255161235, 25.317419001691384)
+[2025-04-13 13:32:31,378][__main__][INFO] - EnvName: HPv5, Steps: 100k, Episode Reward: (3554.6926293118277, 2.639994969343441)
