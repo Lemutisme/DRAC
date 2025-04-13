@@ -17,20 +17,24 @@ def Reward_adapter(r, EnvIdex):
     # For LunarLander
     elif EnvIdex == 2:
         if r <= -100: r = -10
+    elif EnvIdex == 4:
+        r = r / 100
+    elif EnvIdex == 5:
+        r = r / 100
     # elif EnvIdex == 2:
     #     r = r / 5
     # For BipedalWalker
-    elif EnvIdex == 4 or EnvIdex == 5:
-        if r <= -100: r = -1
+    # elif EnvIdex == 4 or EnvIdex == 5:
+    #     if r <= -100: r = -1
     return r
 
-def Action_adapter_symm(a,max_action):
+def Action_adapter_symm(act, max_action):
     #from [-1,1] to [-max,max]
-    return  a*max_action
+    return  act * max_action
 
-def Action_adapter_symm_reverse(act,max_action):
+def Action_adapter_symm_reverse(act, max_action):
     #from [-max,max] to [-1,1]
-    return  act/max_action
+    return  act / max_action
 
 def Action_adapter_pos(a, max_action):
     #from [0,1] to [-max,max]
