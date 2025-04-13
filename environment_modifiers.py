@@ -381,7 +381,7 @@ register(
     id="ParameterShiftedLunarLander-v3",
     entry_point="environment_modifiers:ParameterShiftedLunarLander",
     max_episode_steps=1000,
-    kwargs={'gravity_factor':1.0, 'wind_power':0.0, 'turbulence_power':0.0}
+    kwargs={'gravity_factor':1.0, 'wind_power':0.0, 'turbulence_power':0.0, "engine_factor": 1.0}
 )
 
 class ParameterShiftedCartpole(ContinuousCartPoleEnv):
