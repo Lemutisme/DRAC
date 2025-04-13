@@ -20,7 +20,7 @@ class ReplayBuffer(object):
         self.a[self.ptr] = torch.from_numpy(a).to(self.device) # Note that a is numpy.array
         self.r[self.ptr] = r
         self.s_next[self.ptr] = torch.from_numpy(s_next).to(self.device)
-        self.dw[self.ptr] = dw
+        self.dw[self.ptr] = torch.tensor(dw, dtype=torch.bool)
 
         self.ptr = (self.ptr + 1) % self.max_size
         self.size = min(self.size + 1, self.max_size)
@@ -34,29 +34,30 @@ class ReplayBuffer(object):
             path = Path(f"./dataset")
         path.mkdir(parents=True, exist_ok=True)
             
-        # Store size in the front of reward buffer
-        r_np = self.r[:self.size].cpu().numpy()
-        r_with_size = np.insert(r_np, 0, self.size)
-        np.save(f"{path}/r.npy", r_with_size)
-        
+        np.save(f"{path}/size.npy", np.array([self.size]))
         np.save(f"{path}/s.npy", self.s[:self.size].cpu().numpy())
         np.save(f"{path}/a.npy", self.a[:self.size].cpu().numpy())
+        np.save(f"{path}/r.npy", self.r[:self.size].cpu().numpy())
         np.save(f"{path}/s_next.npy", self.s_next[:self.size].cpu().numpy())
         np.save(f"{path}/dw.npy", self.dw[:self.size].cpu().numpy())
         
+    def load_old(self, path=None, d4rl_dataset=False):
+        #self.size = int(np.load(f"{path}/size.npy")[0])
+        self.size = int(np.load(f"{path}/r.npy")[0]) 
+        print(f"{self.size} data loaded.")
+        self.s[:self.size,] = torch.from_numpy(np.load(f"{path}/s.npy")).to(self.device)
+        self.a[:self.size,] = torch.from_numpy(np.load(f"{path}/a.npy")).to(self.device)
+        self.r[:self.size,] = torch.from_numpy(np.load(f"{path}/r.npy")[1:]).reshape(-1,1).to(self.device)
+        #self.r[:self.size,] = torch.from_numpy(np.load(f"{path}/r.npy")).to(self.device)
+        self.s_next[:self.size,] = torch.from_numpy(np.load(f"{path}/s_next.npy")).to(self.device)
+        self.dw[:self.size,] = torch.from_numpy(np.load(f"{path}/dw.npy")).to(self.device)
+            
     def load(self, path=None, d4rl_dataset=False):
-        if d4rl_dataset:  
-            self.size = int(d4rl_dataset.rewards.shape[0])
-            self.s[:self.size,] = torch.from_numpy(d4rl_dataset.observations).to(self.device)
-            self.a[:self.size,] = torch.from_numpy(d4rl_dataset.actions).to(self.device)
-            self.r[:self.size,] = torch.from_numpy(d4rl_dataset.rewards).to(self.device)
-            self.s_next[:self.size,] = torch.from_numpy(d4rl_dataset.next_observations).to(self.device)
-            self.dw[:self.size,] = torch.from_numpy(d4rl_dataset.terminals).to(self.device)
-        else:
-            self.size = int(np.load(f"{path}/r.npy")[0]) 
-            self.s[:self.size,] = torch.from_numpy(np.load(f"{path}/s.npy")).to(self.device)
-            self.a[:self.size,] = torch.from_numpy(np.load(f"{path}/a.npy")).to(self.device)
-            self.r[:self.size,] = torch.from_numpy(np.load(f"{path}/r.npy")[1:]).reshape(-1,1).to(self.device)
-            self.s_next[:self.size,] = torch.from_numpy(np.load(f"{path}/s_next.npy")).to(self.device)
-            self.dw[:self.size,] = torch.from_numpy(np.load(f"{path}/dw.npy")).to(self.device)
+        self.size = int(np.load(f"{path}/size.npy")[0])
+        print(f"{self.size} data loaded.")
+        self.s[:self.size,] = torch.from_numpy(np.load(f"{path}/s.npy")).to(self.device)
+        self.a[:self.size,] = torch.from_numpy(np.load(f"{path}/a.npy")).to(self.device)
+        self.r[:self.size,] = torch.from_numpy(np.load(f"{path}/r.npy")).to(self.device)
+        self.s_next[:self.size,] = torch.from_numpy(np.load(f"{path}/s_next.npy")).to(self.device)
+        self.dw[:self.size,] = torch.from_numpy(np.load(f"{path}/dw.npy")).to(self.device)
             
