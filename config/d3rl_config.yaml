@@ -1,9 +1,9 @@
 # @package _global_
 
-# Default configuration for SAC algorithm
+# Default configuration for d3rl algorithm
 defaults:
   - _self_
-  - env/sac: pendulum
+  - env/d3rl: pendulum
   - env_mods  # New include for environment modifications
   - override hydra/job_logging: default
   - override hydra/hydra_logging: default
@@ -11,6 +11,7 @@ defaults:
 # General settings
 device: cuda
 mode: offline # offline, continual, generate
+model: TD3 # TD3, SAC, DDPG
 write: false
 debug_print: false
 render: false
@@ -29,29 +30,20 @@ max_train_steps: 200000
 save_interval: 10000
 eval_interval: 1000
 update_every: 50
-explore_episode: 50 
+learning_starts: 10000
 
 # Algorithm hyperparameters
-gamma: 0.99
+gamma: 0.98
 tau: 0.005
 net_arch: [256,256]
 net_layer: 1
-critic_ensemble: true
-n_critic: 2
 a_lr: 0.005  # 5e-3
-c_lr: 0.00005 # 5e-5
-b_lr: 0.00005 # 5e-5
-g_lr: 0.0005 # 5e-4
-r_lr: 0.0005 # 5e-5
+c_lr: 0.0001 # 1e-4
 l2_reg: 0 # 1e-3
 batch_size: 256 #256
-alpha: 0.12
-adaptive_alpha: true
 
 # Environment configurations
 reward_adapt: true
-robust: false
-robust_optimizer: functional # beta, functional, separate
 noise: false  # Legacy noise setting - consider using env_mods instead
 type: gaussian
 adv: false
@@ -62,9 +54,9 @@ delta: 0.0
 # Hydra output directory
 hydra:
   run:
-    dir: ./outputs/SAC/${now:%Y-%m-%d}/${now:%H-%M-%S}
+    dir: ./outputs/${model}/${now:%Y-%m-%d}/${now:%H-%M-%S}
   sweep:
-    dir: ./multirun/SAC/${now:%Y-%m-%d}/${now:%H-%M-%S}
+    dir: ./multirun/${model}/${now:%Y-%m-%d}/${now:%H-%M-%S}
     subdir: ${hydra.job.num}
   job:
     name: ${env_name}_training
