@@ -1,0 +1,64 @@
+[2025-04-17 13:32:21,473][__main__][INFO] - System information:
+[2025-04-17 13:32:21,474][__main__][INFO] -   Platform: Linux-6.11.0-21-generic-x86_64-with-glibc2.39
+[2025-04-17 13:32:21,474][__main__][INFO] -   Python: 3.12.2
+[2025-04-17 13:32:21,474][__main__][INFO] -   PyTorch: 2.5.1
+[2025-04-17 13:32:21,474][__main__][INFO] -   CUDA Available: True
+[2025-04-17 13:32:21,474][__main__][INFO] -   CUDA Version: 12.4
+[2025-04-17 13:32:21,474][__main__][INFO] -   GPU: NVIDIA GeForce GTX 1080 Ti
+[2025-04-17 13:32:21,479][__main__][INFO] - Env: Pendulum-v1  state_dim: 3  action_dim: 1  max_a: 2.0  min_a: -2.0  max_e_steps: 200
+[2025-04-17 13:32:21,480][__main__][INFO] - Random Seed: 42
+[2025-04-17 13:32:21,480][__main__][INFO] - Models will be saved to models/SAC_model/PV1
+[2025-04-17 13:33:05,128][__main__][INFO] - EnvName: PV1, Steps: 1k, Episode Reward: -1786
+[2025-04-17 13:33:45,911][__main__][INFO] - EnvName: PV1, Steps: 2k, Episode Reward: -1216
+[2025-04-17 13:34:27,185][__main__][INFO] - EnvName: PV1, Steps: 3k, Episode Reward: -386
+[2025-04-17 13:35:08,343][__main__][INFO] - EnvName: PV1, Steps: 4k, Episode Reward: -143
+[2025-04-17 13:35:48,735][__main__][INFO] - EnvName: PV1, Steps: 5k, Episode Reward: -744
+[2025-04-17 13:36:29,338][__main__][INFO] - EnvName: PV1, Steps: 6k, Episode Reward: -539
+[2025-04-17 13:37:08,985][__main__][INFO] - EnvName: PV1, Steps: 7k, Episode Reward: -650
+[2025-04-17 13:37:49,612][__main__][INFO] - EnvName: PV1, Steps: 8k, Episode Reward: -1065
+[2025-04-17 13:38:30,655][__main__][INFO] - EnvName: PV1, Steps: 9k, Episode Reward: -902
+[2025-04-17 13:39:11,111][__main__][INFO] - EnvName: PV1, Steps: 10k, Episode Reward: -1061
+[2025-04-17 13:39:51,952][__main__][INFO] - EnvName: PV1, Steps: 11k, Episode Reward: -1206
+[2025-04-17 13:40:32,443][__main__][INFO] - EnvName: PV1, Steps: 12k, Episode Reward: -946
+[2025-04-17 13:41:13,570][__main__][INFO] - EnvName: PV1, Steps: 13k, Episode Reward: -650
+[2025-04-17 13:41:54,742][__main__][INFO] - EnvName: PV1, Steps: 14k, Episode Reward: -663
+[2025-04-17 13:42:35,905][__main__][INFO] - EnvName: PV1, Steps: 15k, Episode Reward: -1259
+[2025-04-17 13:43:17,800][__main__][INFO] - EnvName: PV1, Steps: 16k, Episode Reward: -696
+[2025-04-17 13:43:59,315][__main__][INFO] - EnvName: PV1, Steps: 17k, Episode Reward: -722
+[2025-04-17 13:44:39,983][__main__][INFO] - EnvName: PV1, Steps: 18k, Episode Reward: -1212
+[2025-04-17 13:45:21,294][__main__][INFO] - EnvName: PV1, Steps: 19k, Episode Reward: -1064
+[2025-04-17 13:46:03,066][__main__][INFO] - EnvName: PV1, Steps: 20k, Episode Reward: -904
+[2025-04-17 13:46:46,053][__main__][INFO] - EnvName: PV1, Steps: 21k, Episode Reward: -700
+[2025-04-17 13:47:28,792][__main__][INFO] - EnvName: PV1, Steps: 22k, Episode Reward: -413
+[2025-04-17 13:48:11,839][__main__][INFO] - EnvName: PV1, Steps: 23k, Episode Reward: -567
+[2025-04-17 13:48:55,135][__main__][INFO] - EnvName: PV1, Steps: 24k, Episode Reward: -860
+[2025-04-17 13:49:37,588][__main__][INFO] - EnvName: PV1, Steps: 25k, Episode Reward: -653
+[2025-04-17 13:50:19,355][__main__][INFO] - EnvName: PV1, Steps: 26k, Episode Reward: -890
+[2025-04-17 13:51:01,412][__main__][INFO] - EnvName: PV1, Steps: 27k, Episode Reward: -625
+[2025-04-17 13:51:43,794][__main__][INFO] - EnvName: PV1, Steps: 28k, Episode Reward: -146
+[2025-04-17 13:52:26,590][__main__][INFO] - EnvName: PV1, Steps: 29k, Episode Reward: -167
+[2025-04-17 13:53:09,746][__main__][INFO] - EnvName: PV1, Steps: 30k, Episode Reward: -171
+[2025-04-17 13:53:53,130][__main__][INFO] - EnvName: PV1, Steps: 31k, Episode Reward: -180
+[2025-04-17 13:54:35,067][__main__][INFO] - EnvName: PV1, Steps: 32k, Episode Reward: -332
+[2025-04-17 13:55:17,050][__main__][INFO] - EnvName: PV1, Steps: 33k, Episode Reward: -341
+[2025-04-17 13:55:59,193][__main__][INFO] - EnvName: PV1, Steps: 34k, Episode Reward: -240
+[2025-04-17 13:56:42,050][__main__][INFO] - EnvName: PV1, Steps: 35k, Episode Reward: -497
+[2025-04-17 13:57:23,414][__main__][INFO] - EnvName: PV1, Steps: 36k, Episode Reward: -222
+[2025-04-17 13:58:03,561][__main__][INFO] - EnvName: PV1, Steps: 37k, Episode Reward: -360
+[2025-04-17 13:58:43,514][__main__][INFO] - EnvName: PV1, Steps: 38k, Episode Reward: -834
+[2025-04-17 13:59:25,538][__main__][INFO] - EnvName: PV1, Steps: 39k, Episode Reward: -155
+[2025-04-17 14:00:05,828][__main__][INFO] - EnvName: PV1, Steps: 40k, Episode Reward: -254
+[2025-04-17 14:00:46,861][__main__][INFO] - EnvName: PV1, Steps: 41k, Episode Reward: -230
+[2025-04-17 14:01:27,234][__main__][INFO] - EnvName: PV1, Steps: 42k, Episode Reward: -332
+[2025-04-17 14:02:08,710][__main__][INFO] - EnvName: PV1, Steps: 43k, Episode Reward: -123
+[2025-04-17 14:02:50,058][__main__][INFO] - EnvName: PV1, Steps: 44k, Episode Reward: -121
+[2025-04-17 14:03:30,928][__main__][INFO] - EnvName: PV1, Steps: 45k, Episode Reward: -172
+[2025-04-17 14:04:11,519][__main__][INFO] - EnvName: PV1, Steps: 46k, Episode Reward: -169
+[2025-04-17 14:04:52,533][__main__][INFO] - EnvName: PV1, Steps: 47k, Episode Reward: -177
+[2025-04-17 14:05:34,336][__main__][INFO] - EnvName: PV1, Steps: 48k, Episode Reward: -159
+[2025-04-17 14:06:17,494][__main__][INFO] - EnvName: PV1, Steps: 49k, Episode Reward: -171
+[2025-04-17 14:07:00,833][__main__][INFO] - EnvName: PV1, Steps: 50k, Episode Reward: -122
+[2025-04-17 14:07:00,839][__main__][INFO] - Training completed. Evaluating across 20 episodes
+[2025-04-17 14:07:03,478][__main__][INFO] - Final evaluation - Mean: -138.10, Std: 54.96
+[2025-04-17 14:07:03,478][__main__][INFO] - 90th percentile: -116.80, 10th percentile: -232.60
+[2025-04-17 14:07:03,484][__main__][INFO] - Final model saved to models/SAC_model/PV1

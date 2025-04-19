@@ -1,0 +1,2 @@
+- env/sac=cartpole
+- data_path=./old_dataset/CPV0/no_noise_eps0.5

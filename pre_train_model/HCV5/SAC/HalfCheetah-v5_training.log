@@ -1,0 +1,706 @@
+[2025-04-15 00:52:29,121][__main__][INFO] - Configuration:
+device: cuda
+mode: continual
+write: false
+debug_print: false
+render: false
+load_model: false
+load_path: None
+eval_model: false
+save_model: true
+data_path: None
+epsilon: 0.1
+seed: 42
+max_train_steps: 300000
+save_interval: 10000
+eval_interval: 1000
+update_every: 10
+explore_episode: 50
+gamma: 0.99
+tau: 0.005
+net_arch:
+- 256
+- 256
+net_layer: 1
+a_lr: 0.001
+c_lr: 0.001
+b_lr: 0.0005
+g_lr: 0.0005
+r_lr: 5.0e-05
+l2_reg: 0.0
+batch_size: 256
+alpha: 0.12
+adaptive_alpha: true
+reward_adapt: true
+robust: false
+robust_optimizer: functional
+noise: false
+type: gaussian
+adv: false
+spread: 0.0
+scale: 1.0
+delta: 0.0
+env_name: HalfCheetah-v5
+env_index: 4
+env_mods:
+  use_mods: false
+  observation_noise:
+    enabled: false
+    type: gaussian
+    level: 0.1
+    frequency: 1.0
+  action_perturb:
+    enabled: false
+    type: noise
+    probability: 0.1
+    level: 0.1
+  reward_shift:
+    enabled: false
+    type: scale
+    param: 0.9
+    noise_level: 0.1
+  transition_perturb:
+    enabled: false
+    type: teleport
+    probability: 0.05
+    level: 0.1
+  param_shift:
+    enabled: false
+    train_apply: false
+    eval_apply: true
+    g_factor: 1.0
+    m_factor: 1.0
+    l_factor: 1.0
+    len_factor: 1.0
+    force_mag_factor: 1.0
+    gravity_factor: 1.0
+    wind_power: 0.0
+    turbulence_power: 0.0
+    engine_factor: 1.0
+  custom:
+    enabled: false
+    spread: 0.0
+    type: gaussian
+    adv: false
+  eval:
+    use_modified: true
+    scale_noise: false
+    noise_scale_factor: 2.0
+    include_action_perturb: true
+    include_reward_shift: true
+    include_transition_perturb: true
+
+[2025-04-15 00:52:29,165][__main__][INFO] - System information:
+[2025-04-15 00:52:29,165][__main__][INFO] -   Platform: Linux-6.11.0-21-generic-x86_64-with-glibc2.39
+[2025-04-15 00:52:29,165][__main__][INFO] -   Python: 3.12.2
+[2025-04-15 00:52:29,165][__main__][INFO] -   PyTorch: 2.5.1
+[2025-04-15 00:52:29,165][__main__][INFO] -   CUDA Available: True
+[2025-04-15 00:52:29,165][__main__][INFO] -   CUDA Version: 12.4
+[2025-04-15 00:52:29,165][__main__][INFO] -   GPU: NVIDIA GeForce GTX 1080 Ti
+[2025-04-15 00:52:29,266][__main__][INFO] - Env: HalfCheetah-v5  state_dim: 17  action_dim: 6  max_a: 1.0  min_a: -1.0  max_e_steps: 1000
+[2025-04-15 00:52:29,267][__main__][INFO] - Random Seed: 42
+[2025-04-15 00:52:29,267][__main__][INFO] - Models will be saved to models/SAC_model/HCV5
+[2025-04-15 00:52:36,341][__main__][INFO] - EnvName: HCV5, Steps: 1k, Episodes: 1, Episode Reward: -2
+[2025-04-15 00:52:36,342][__main__][INFO] - Episode 1 completed with reward -215.86 in 1000 steps
+[2025-04-15 00:52:42,368][__main__][INFO] - EnvName: HCV5, Steps: 2k, Episodes: 2, Episode Reward: -1
+[2025-04-15 00:52:42,369][__main__][INFO] - Episode 2 completed with reward -363.24 in 1000 steps
+[2025-04-15 00:52:48,404][__main__][INFO] - EnvName: HCV5, Steps: 3k, Episodes: 3, Episode Reward: -1
+[2025-04-15 00:52:48,404][__main__][INFO] - Episode 3 completed with reward -226.29 in 1000 steps
+[2025-04-15 00:52:54,434][__main__][INFO] - EnvName: HCV5, Steps: 4k, Episodes: 4, Episode Reward: -1
+[2025-04-15 00:52:54,434][__main__][INFO] - Episode 4 completed with reward -221.38 in 1000 steps
+[2025-04-15 00:53:00,833][__main__][INFO] - EnvName: HCV5, Steps: 5k, Episodes: 5, Episode Reward: -2
+[2025-04-15 00:53:00,833][__main__][INFO] - Episode 5 completed with reward -293.38 in 1000 steps
+[2025-04-15 00:53:06,847][__main__][INFO] - EnvName: HCV5, Steps: 6k, Episodes: 6, Episode Reward: -2
+[2025-04-15 00:53:06,847][__main__][INFO] - Episode 6 completed with reward -322.52 in 1000 steps
+[2025-04-15 00:53:12,864][__main__][INFO] - EnvName: HCV5, Steps: 7k, Episodes: 7, Episode Reward: -1
+[2025-04-15 00:53:12,864][__main__][INFO] - Episode 7 completed with reward -279.66 in 1000 steps
+[2025-04-15 00:53:18,865][__main__][INFO] - EnvName: HCV5, Steps: 8k, Episodes: 8, Episode Reward: -1
+[2025-04-15 00:53:18,866][__main__][INFO] - Episode 8 completed with reward -201.34 in 1000 steps
+[2025-04-15 00:53:24,946][__main__][INFO] - EnvName: HCV5, Steps: 9k, Episodes: 9, Episode Reward: -2
+[2025-04-15 00:53:24,947][__main__][INFO] - Episode 9 completed with reward -203.31 in 1000 steps
+[2025-04-15 00:53:31,014][__main__][INFO] - EnvName: HCV5, Steps: 10k, Episodes: 10, Episode Reward: -1
+[2025-04-15 00:53:31,019][__main__][INFO] - Episode 10 completed with reward -396.20 in 1000 steps
+[2025-04-15 00:53:37,083][__main__][INFO] - EnvName: HCV5, Steps: 11k, Episodes: 11, Episode Reward: -1
+[2025-04-15 00:53:37,083][__main__][INFO] - Episode 11 completed with reward -179.51 in 1000 steps
+[2025-04-15 00:53:43,120][__main__][INFO] - EnvName: HCV5, Steps: 12k, Episodes: 12, Episode Reward: -2
+[2025-04-15 00:53:43,121][__main__][INFO] - Episode 12 completed with reward -470.26 in 1000 steps
+[2025-04-15 00:53:49,160][__main__][INFO] - EnvName: HCV5, Steps: 13k, Episodes: 13, Episode Reward: -1
+[2025-04-15 00:53:49,161][__main__][INFO] - Episode 13 completed with reward -366.27 in 1000 steps
+[2025-04-15 00:53:55,239][__main__][INFO] - EnvName: HCV5, Steps: 14k, Episodes: 14, Episode Reward: -1
+[2025-04-15 00:53:55,239][__main__][INFO] - Episode 14 completed with reward -293.95 in 1000 steps
+[2025-04-15 00:54:01,582][__main__][INFO] - EnvName: HCV5, Steps: 15k, Episodes: 15, Episode Reward: -1
+[2025-04-15 00:54:01,583][__main__][INFO] - Episode 15 completed with reward -374.32 in 1000 steps
+[2025-04-15 00:54:07,635][__main__][INFO] - EnvName: HCV5, Steps: 16k, Episodes: 16, Episode Reward: -1
+[2025-04-15 00:54:07,636][__main__][INFO] - Episode 16 completed with reward -280.69 in 1000 steps
+[2025-04-15 00:54:13,682][__main__][INFO] - EnvName: HCV5, Steps: 17k, Episodes: 17, Episode Reward: -1
+[2025-04-15 00:54:13,682][__main__][INFO] - Episode 17 completed with reward -187.31 in 1000 steps
+[2025-04-15 00:54:19,702][__main__][INFO] - EnvName: HCV5, Steps: 18k, Episodes: 18, Episode Reward: -2
+[2025-04-15 00:54:19,703][__main__][INFO] - Episode 18 completed with reward -231.14 in 1000 steps
+[2025-04-15 00:54:25,770][__main__][INFO] - EnvName: HCV5, Steps: 19k, Episodes: 19, Episode Reward: -1
+[2025-04-15 00:54:25,770][__main__][INFO] - Episode 19 completed with reward -305.13 in 1000 steps
+[2025-04-15 00:54:31,850][__main__][INFO] - EnvName: HCV5, Steps: 20k, Episodes: 20, Episode Reward: -1
+[2025-04-15 00:54:31,855][__main__][INFO] - Episode 20 completed with reward -287.20 in 1000 steps
+[2025-04-15 00:54:37,970][__main__][INFO] - EnvName: HCV5, Steps: 21k, Episodes: 21, Episode Reward: -1
+[2025-04-15 00:54:37,970][__main__][INFO] - Episode 21 completed with reward -228.84 in 1000 steps
+[2025-04-15 00:54:44,065][__main__][INFO] - EnvName: HCV5, Steps: 22k, Episodes: 22, Episode Reward: -2
+[2025-04-15 00:54:44,065][__main__][INFO] - Episode 22 completed with reward -357.78 in 1000 steps
+[2025-04-15 00:54:50,169][__main__][INFO] - EnvName: HCV5, Steps: 23k, Episodes: 23, Episode Reward: -2
+[2025-04-15 00:54:50,169][__main__][INFO] - Episode 23 completed with reward -239.45 in 1000 steps
+[2025-04-15 00:54:56,475][__main__][INFO] - EnvName: HCV5, Steps: 24k, Episodes: 24, Episode Reward: -1
+[2025-04-15 00:54:56,475][__main__][INFO] - Episode 24 completed with reward -256.12 in 1000 steps
+[2025-04-15 00:55:02,578][__main__][INFO] - EnvName: HCV5, Steps: 25k, Episodes: 25, Episode Reward: -1
+[2025-04-15 00:55:02,579][__main__][INFO] - Episode 25 completed with reward -304.18 in 1000 steps
+[2025-04-15 00:55:08,634][__main__][INFO] - EnvName: HCV5, Steps: 26k, Episodes: 26, Episode Reward: -2
+[2025-04-15 00:55:08,635][__main__][INFO] - Episode 26 completed with reward -182.89 in 1000 steps
+[2025-04-15 00:55:14,688][__main__][INFO] - EnvName: HCV5, Steps: 27k, Episodes: 27, Episode Reward: -1
+[2025-04-15 00:55:14,689][__main__][INFO] - Episode 27 completed with reward -181.89 in 1000 steps
+[2025-04-15 00:55:20,776][__main__][INFO] - EnvName: HCV5, Steps: 28k, Episodes: 28, Episode Reward: -1
+[2025-04-15 00:55:20,777][__main__][INFO] - Episode 28 completed with reward -263.55 in 1000 steps
+[2025-04-15 00:55:26,788][__main__][INFO] - EnvName: HCV5, Steps: 29k, Episodes: 29, Episode Reward: -1
+[2025-04-15 00:55:26,789][__main__][INFO] - Episode 29 completed with reward -331.75 in 1000 steps
+[2025-04-15 00:55:32,855][__main__][INFO] - EnvName: HCV5, Steps: 30k, Episodes: 30, Episode Reward: -2
+[2025-04-15 00:55:32,860][__main__][INFO] - Episode 30 completed with reward -159.45 in 1000 steps
+[2025-04-15 00:55:38,930][__main__][INFO] - EnvName: HCV5, Steps: 31k, Episodes: 31, Episode Reward: -2
+[2025-04-15 00:55:38,930][__main__][INFO] - Episode 31 completed with reward -299.47 in 1000 steps
+[2025-04-15 00:55:44,946][__main__][INFO] - EnvName: HCV5, Steps: 32k, Episodes: 32, Episode Reward: -1
+[2025-04-15 00:55:44,947][__main__][INFO] - Episode 32 completed with reward -293.01 in 1000 steps
+[2025-04-15 00:55:51,055][__main__][INFO] - EnvName: HCV5, Steps: 33k, Episodes: 33, Episode Reward: -2
+[2025-04-15 00:55:51,056][__main__][INFO] - Episode 33 completed with reward -348.98 in 1000 steps
+[2025-04-15 00:55:57,278][__main__][INFO] - EnvName: HCV5, Steps: 34k, Episodes: 34, Episode Reward: -1
+[2025-04-15 00:55:57,279][__main__][INFO] - Episode 34 completed with reward -292.36 in 1000 steps
+[2025-04-15 00:56:03,501][__main__][INFO] - EnvName: HCV5, Steps: 35k, Episodes: 35, Episode Reward: -2
+[2025-04-15 00:56:03,502][__main__][INFO] - Episode 35 completed with reward -236.01 in 1000 steps
+[2025-04-15 00:56:09,599][__main__][INFO] - EnvName: HCV5, Steps: 36k, Episodes: 36, Episode Reward: -1
+[2025-04-15 00:56:09,600][__main__][INFO] - Episode 36 completed with reward -233.27 in 1000 steps
+[2025-04-15 00:56:15,640][__main__][INFO] - EnvName: HCV5, Steps: 37k, Episodes: 37, Episode Reward: -1
+[2025-04-15 00:56:15,641][__main__][INFO] - Episode 37 completed with reward -284.60 in 1000 steps
+[2025-04-15 00:56:21,805][__main__][INFO] - EnvName: HCV5, Steps: 38k, Episodes: 38, Episode Reward: -1
+[2025-04-15 00:56:21,806][__main__][INFO] - Episode 38 completed with reward -202.88 in 1000 steps
+[2025-04-15 00:56:27,885][__main__][INFO] - EnvName: HCV5, Steps: 39k, Episodes: 39, Episode Reward: -2
+[2025-04-15 00:56:27,885][__main__][INFO] - Episode 39 completed with reward -243.66 in 1000 steps
+[2025-04-15 00:56:33,928][__main__][INFO] - EnvName: HCV5, Steps: 40k, Episodes: 40, Episode Reward: -1
+[2025-04-15 00:56:33,933][__main__][INFO] - Episode 40 completed with reward -164.80 in 1000 steps
+[2025-04-15 00:56:40,017][__main__][INFO] - EnvName: HCV5, Steps: 41k, Episodes: 41, Episode Reward: -1
+[2025-04-15 00:56:40,017][__main__][INFO] - Episode 41 completed with reward -317.16 in 1000 steps
+[2025-04-15 00:56:46,078][__main__][INFO] - EnvName: HCV5, Steps: 42k, Episodes: 42, Episode Reward: -1
+[2025-04-15 00:56:46,078][__main__][INFO] - Episode 42 completed with reward -383.45 in 1000 steps
+[2025-04-15 00:56:52,108][__main__][INFO] - EnvName: HCV5, Steps: 43k, Episodes: 43, Episode Reward: -2
+[2025-04-15 00:56:52,108][__main__][INFO] - Episode 43 completed with reward -330.28 in 1000 steps
+[2025-04-15 00:56:58,372][__main__][INFO] - EnvName: HCV5, Steps: 44k, Episodes: 44, Episode Reward: -1
+[2025-04-15 00:56:58,372][__main__][INFO] - Episode 44 completed with reward -299.15 in 1000 steps
+[2025-04-15 00:57:04,484][__main__][INFO] - EnvName: HCV5, Steps: 45k, Episodes: 45, Episode Reward: -1
+[2025-04-15 00:57:04,485][__main__][INFO] - Episode 45 completed with reward -44.62 in 1000 steps
+[2025-04-15 00:57:10,519][__main__][INFO] - EnvName: HCV5, Steps: 46k, Episodes: 46, Episode Reward: -1
+[2025-04-15 00:57:10,519][__main__][INFO] - Episode 46 completed with reward -348.21 in 1000 steps
+[2025-04-15 00:57:16,641][__main__][INFO] - EnvName: HCV5, Steps: 47k, Episodes: 47, Episode Reward: -2
+[2025-04-15 00:57:16,642][__main__][INFO] - Episode 47 completed with reward -228.83 in 1000 steps
+[2025-04-15 00:57:22,713][__main__][INFO] - EnvName: HCV5, Steps: 48k, Episodes: 48, Episode Reward: -1
+[2025-04-15 00:57:22,713][__main__][INFO] - Episode 48 completed with reward -321.05 in 1000 steps
+[2025-04-15 00:57:28,767][__main__][INFO] - EnvName: HCV5, Steps: 49k, Episodes: 49, Episode Reward: -2
+[2025-04-15 00:57:28,768][__main__][INFO] - Episode 49 completed with reward -261.39 in 1000 steps
+[2025-04-15 00:57:35,431][__main__][INFO] - EnvName: HCV5, Steps: 50k, Episodes: 50, Episode Reward: -1
+[2025-04-15 00:57:35,435][__main__][INFO] - Episode 50 completed with reward -298.90 in 1000 steps
+[2025-04-15 00:58:03,832][__main__][INFO] - EnvName: HCV5, Steps: 51k, Episodes: 51, Episode Reward: -252
+[2025-04-15 00:58:03,832][__main__][INFO] - Episode 51 completed with reward -220.28 in 1000 steps
+[2025-04-15 00:58:33,325][__main__][INFO] - EnvName: HCV5, Steps: 52k, Episodes: 52, Episode Reward: -305
+[2025-04-15 00:58:33,326][__main__][INFO] - Episode 52 completed with reward -318.00 in 1000 steps
+[2025-04-15 00:59:00,823][__main__][INFO] - EnvName: HCV5, Steps: 53k, Episodes: 53, Episode Reward: -153
+[2025-04-15 00:59:00,823][__main__][INFO] - Episode 53 completed with reward -269.61 in 1000 steps
+[2025-04-15 00:59:30,966][__main__][INFO] - EnvName: HCV5, Steps: 54k, Episodes: 54, Episode Reward: -165
+[2025-04-15 00:59:30,966][__main__][INFO] - Episode 54 completed with reward 31.40 in 1000 steps
+[2025-04-15 01:00:00,826][__main__][INFO] - EnvName: HCV5, Steps: 55k, Episodes: 55, Episode Reward: 499
+[2025-04-15 01:00:00,827][__main__][INFO] - Episode 55 completed with reward 265.21 in 1000 steps
+[2025-04-15 01:00:29,639][__main__][INFO] - EnvName: HCV5, Steps: 56k, Episodes: 56, Episode Reward: 634
+[2025-04-15 01:00:29,640][__main__][INFO] - Episode 56 completed with reward 280.51 in 1000 steps
+[2025-04-15 01:00:56,769][__main__][INFO] - EnvName: HCV5, Steps: 57k, Episodes: 57, Episode Reward: -240
+[2025-04-15 01:00:56,769][__main__][INFO] - Episode 57 completed with reward -409.45 in 1000 steps
+[2025-04-15 01:01:24,588][__main__][INFO] - EnvName: HCV5, Steps: 58k, Episodes: 58, Episode Reward: 1435
+[2025-04-15 01:01:24,589][__main__][INFO] - Episode 58 completed with reward -250.25 in 1000 steps
+[2025-04-15 01:01:51,311][__main__][INFO] - EnvName: HCV5, Steps: 59k, Episodes: 59, Episode Reward: 133
+[2025-04-15 01:01:51,312][__main__][INFO] - Episode 59 completed with reward 1422.66 in 1000 steps
+[2025-04-15 01:02:19,096][__main__][INFO] - EnvName: HCV5, Steps: 60k, Episodes: 60, Episode Reward: 1799
+[2025-04-15 01:02:19,101][__main__][INFO] - Episode 60 completed with reward 381.91 in 1000 steps
+[2025-04-15 01:02:47,760][__main__][INFO] - EnvName: HCV5, Steps: 61k, Episodes: 61, Episode Reward: 2311
+[2025-04-15 01:02:47,760][__main__][INFO] - Episode 61 completed with reward 2132.04 in 1000 steps
+[2025-04-15 01:03:16,334][__main__][INFO] - EnvName: HCV5, Steps: 62k, Episodes: 62, Episode Reward: 2420
+[2025-04-15 01:03:16,335][__main__][INFO] - Episode 62 completed with reward 2291.69 in 1000 steps
+[2025-04-15 01:03:45,848][__main__][INFO] - EnvName: HCV5, Steps: 63k, Episodes: 63, Episode Reward: 2587
+[2025-04-15 01:03:45,848][__main__][INFO] - Episode 63 completed with reward 2676.57 in 1000 steps
+[2025-04-15 01:04:14,871][__main__][INFO] - EnvName: HCV5, Steps: 64k, Episodes: 64, Episode Reward: 2826
+[2025-04-15 01:04:14,871][__main__][INFO] - Episode 64 completed with reward 2959.71 in 1000 steps
+[2025-04-15 01:04:42,956][__main__][INFO] - EnvName: HCV5, Steps: 65k, Episodes: 65, Episode Reward: 2426
+[2025-04-15 01:04:42,957][__main__][INFO] - Episode 65 completed with reward 2693.38 in 1000 steps
+[2025-04-15 01:05:08,273][__main__][INFO] - EnvName: HCV5, Steps: 66k, Episodes: 66, Episode Reward: 2981
+[2025-04-15 01:05:08,274][__main__][INFO] - Episode 66 completed with reward 2783.53 in 1000 steps
+[2025-04-15 01:05:37,225][__main__][INFO] - EnvName: HCV5, Steps: 67k, Episodes: 67, Episode Reward: 3245
+[2025-04-15 01:05:37,226][__main__][INFO] - Episode 67 completed with reward 2847.29 in 1000 steps
+[2025-04-15 01:06:04,382][__main__][INFO] - EnvName: HCV5, Steps: 68k, Episodes: 68, Episode Reward: 3042
+[2025-04-15 01:06:04,383][__main__][INFO] - Episode 68 completed with reward 2999.06 in 1000 steps
+[2025-04-15 01:06:33,245][__main__][INFO] - EnvName: HCV5, Steps: 69k, Episodes: 69, Episode Reward: 3394
+[2025-04-15 01:06:33,245][__main__][INFO] - Episode 69 completed with reward 3228.13 in 1000 steps
+[2025-04-15 01:07:01,972][__main__][INFO] - EnvName: HCV5, Steps: 70k, Episodes: 70, Episode Reward: 3171
+[2025-04-15 01:07:01,976][__main__][INFO] - Episode 70 completed with reward 3161.29 in 1000 steps
+[2025-04-15 01:07:30,596][__main__][INFO] - EnvName: HCV5, Steps: 71k, Episodes: 71, Episode Reward: 3493
+[2025-04-15 01:07:30,596][__main__][INFO] - Episode 71 completed with reward 3172.71 in 1000 steps
+[2025-04-15 01:07:58,079][__main__][INFO] - EnvName: HCV5, Steps: 72k, Episodes: 72, Episode Reward: 3427
+[2025-04-15 01:07:58,080][__main__][INFO] - Episode 72 completed with reward 3333.72 in 1000 steps
+[2025-04-15 01:08:24,235][__main__][INFO] - EnvName: HCV5, Steps: 73k, Episodes: 73, Episode Reward: 3685
+[2025-04-15 01:08:24,236][__main__][INFO] - Episode 73 completed with reward 3526.32 in 1000 steps
+[2025-04-15 01:08:51,010][__main__][INFO] - EnvName: HCV5, Steps: 74k, Episodes: 74, Episode Reward: 3430
+[2025-04-15 01:08:51,011][__main__][INFO] - Episode 74 completed with reward 3597.37 in 1000 steps
+[2025-04-15 01:09:15,497][__main__][INFO] - EnvName: HCV5, Steps: 75k, Episodes: 75, Episode Reward: 3163
+[2025-04-15 01:09:15,497][__main__][INFO] - Episode 75 completed with reward 3291.52 in 1000 steps
+[2025-04-15 01:09:41,425][__main__][INFO] - EnvName: HCV5, Steps: 76k, Episodes: 76, Episode Reward: 3556
+[2025-04-15 01:09:41,425][__main__][INFO] - Episode 76 completed with reward 3373.55 in 1000 steps
+[2025-04-15 01:10:06,827][__main__][INFO] - EnvName: HCV5, Steps: 77k, Episodes: 77, Episode Reward: 3517
+[2025-04-15 01:10:06,828][__main__][INFO] - Episode 77 completed with reward 3605.68 in 1000 steps
+[2025-04-15 01:10:34,095][__main__][INFO] - EnvName: HCV5, Steps: 78k, Episodes: 78, Episode Reward: 3612
+[2025-04-15 01:10:34,096][__main__][INFO] - Episode 78 completed with reward 3643.87 in 1000 steps
+[2025-04-15 01:11:00,434][__main__][INFO] - EnvName: HCV5, Steps: 79k, Episodes: 79, Episode Reward: 3566
+[2025-04-15 01:11:00,434][__main__][INFO] - Episode 79 completed with reward 3575.15 in 1000 steps
+[2025-04-15 01:11:27,563][__main__][INFO] - EnvName: HCV5, Steps: 80k, Episodes: 80, Episode Reward: 3703
+[2025-04-15 01:11:27,568][__main__][INFO] - Episode 80 completed with reward 3623.12 in 1000 steps
+[2025-04-15 01:11:53,627][__main__][INFO] - EnvName: HCV5, Steps: 81k, Episodes: 81, Episode Reward: 3286
+[2025-04-15 01:11:53,627][__main__][INFO] - Episode 81 completed with reward 3582.88 in 1000 steps
+[2025-04-15 01:12:18,725][__main__][INFO] - EnvName: HCV5, Steps: 82k, Episodes: 82, Episode Reward: 3727
+[2025-04-15 01:12:18,726][__main__][INFO] - Episode 82 completed with reward 3741.66 in 1000 steps
+[2025-04-15 01:12:47,933][__main__][INFO] - EnvName: HCV5, Steps: 83k, Episodes: 83, Episode Reward: 4004
+[2025-04-15 01:12:47,934][__main__][INFO] - Episode 83 completed with reward 3716.91 in 1000 steps
+[2025-04-15 01:13:14,992][__main__][INFO] - EnvName: HCV5, Steps: 84k, Episodes: 84, Episode Reward: 3358
+[2025-04-15 01:13:14,992][__main__][INFO] - Episode 84 completed with reward 3640.55 in 1000 steps
+[2025-04-15 01:13:46,030][__main__][INFO] - EnvName: HCV5, Steps: 85k, Episodes: 85, Episode Reward: 3784
+[2025-04-15 01:13:46,031][__main__][INFO] - Episode 85 completed with reward 3806.99 in 1000 steps
+[2025-04-15 01:14:14,683][__main__][INFO] - EnvName: HCV5, Steps: 86k, Episodes: 86, Episode Reward: 3855
+[2025-04-15 01:14:14,684][__main__][INFO] - Episode 86 completed with reward 1220.84 in 1000 steps
+[2025-04-15 01:14:40,842][__main__][INFO] - EnvName: HCV5, Steps: 87k, Episodes: 87, Episode Reward: 3569
+[2025-04-15 01:14:40,843][__main__][INFO] - Episode 87 completed with reward 3902.35 in 1000 steps
+[2025-04-15 01:15:07,612][__main__][INFO] - EnvName: HCV5, Steps: 88k, Episodes: 88, Episode Reward: 4135
+[2025-04-15 01:15:07,613][__main__][INFO] - Episode 88 completed with reward 3968.68 in 1000 steps
+[2025-04-15 01:15:37,707][__main__][INFO] - EnvName: HCV5, Steps: 89k, Episodes: 89, Episode Reward: 3210
+[2025-04-15 01:15:37,708][__main__][INFO] - Episode 89 completed with reward 3912.76 in 1000 steps
+[2025-04-15 01:16:05,393][__main__][INFO] - EnvName: HCV5, Steps: 90k, Episodes: 90, Episode Reward: 3310
+[2025-04-15 01:16:05,398][__main__][INFO] - Episode 90 completed with reward 3953.53 in 1000 steps
+[2025-04-15 01:16:36,150][__main__][INFO] - EnvName: HCV5, Steps: 91k, Episodes: 91, Episode Reward: 3860
+[2025-04-15 01:16:36,150][__main__][INFO] - Episode 91 completed with reward 4206.69 in 1000 steps
+[2025-04-15 01:17:05,080][__main__][INFO] - EnvName: HCV5, Steps: 92k, Episodes: 92, Episode Reward: 3714
+[2025-04-15 01:17:05,081][__main__][INFO] - Episode 92 completed with reward 4020.33 in 1000 steps
+[2025-04-15 01:17:35,838][__main__][INFO] - EnvName: HCV5, Steps: 93k, Episodes: 93, Episode Reward: 4013
+[2025-04-15 01:17:35,839][__main__][INFO] - Episode 93 completed with reward 4253.92 in 1000 steps
+[2025-04-15 01:18:04,520][__main__][INFO] - EnvName: HCV5, Steps: 94k, Episodes: 94, Episode Reward: 4118
+[2025-04-15 01:18:04,521][__main__][INFO] - Episode 94 completed with reward 4013.26 in 1000 steps
+[2025-04-15 01:18:32,834][__main__][INFO] - EnvName: HCV5, Steps: 95k, Episodes: 95, Episode Reward: 3796
+[2025-04-15 01:18:32,835][__main__][INFO] - Episode 95 completed with reward 3966.44 in 1000 steps
+[2025-04-15 01:19:00,307][__main__][INFO] - EnvName: HCV5, Steps: 96k, Episodes: 96, Episode Reward: 4363
+[2025-04-15 01:19:00,308][__main__][INFO] - Episode 96 completed with reward 4087.83 in 1000 steps
+[2025-04-15 01:19:29,786][__main__][INFO] - EnvName: HCV5, Steps: 97k, Episodes: 97, Episode Reward: 4263
+[2025-04-15 01:19:29,787][__main__][INFO] - Episode 97 completed with reward 4192.35 in 1000 steps
+[2025-04-15 01:19:57,692][__main__][INFO] - EnvName: HCV5, Steps: 98k, Episodes: 98, Episode Reward: 4174
+[2025-04-15 01:19:57,692][__main__][INFO] - Episode 98 completed with reward 4003.06 in 1000 steps
+[2025-04-15 01:20:25,978][__main__][INFO] - EnvName: HCV5, Steps: 99k, Episodes: 99, Episode Reward: 4316
+[2025-04-15 01:20:25,978][__main__][INFO] - Episode 99 completed with reward 4483.39 in 1000 steps
+[2025-04-15 01:20:53,557][__main__][INFO] - EnvName: HCV5, Steps: 100k, Episodes: 100, Episode Reward: 3952
+[2025-04-15 01:20:53,562][__main__][INFO] - Episode 100 completed with reward 4198.44 in 1000 steps
+[2025-04-15 01:21:21,600][__main__][INFO] - EnvName: HCV5, Steps: 101k, Episodes: 101, Episode Reward: 4194
+[2025-04-15 01:21:21,601][__main__][INFO] - Episode 101 completed with reward 4121.71 in 1000 steps
+[2025-04-15 01:21:50,921][__main__][INFO] - EnvName: HCV5, Steps: 102k, Episodes: 102, Episode Reward: 4116
+[2025-04-15 01:21:50,921][__main__][INFO] - Episode 102 completed with reward 4311.13 in 1000 steps
+[2025-04-15 01:22:17,736][__main__][INFO] - EnvName: HCV5, Steps: 103k, Episodes: 103, Episode Reward: 4236
+[2025-04-15 01:22:17,737][__main__][INFO] - Episode 103 completed with reward 4466.84 in 1000 steps
+[2025-04-15 01:22:47,295][__main__][INFO] - EnvName: HCV5, Steps: 104k, Episodes: 104, Episode Reward: 4128
+[2025-04-15 01:22:47,296][__main__][INFO] - Episode 104 completed with reward 4351.74 in 1000 steps
+[2025-04-15 01:23:15,656][__main__][INFO] - EnvName: HCV5, Steps: 105k, Episodes: 105, Episode Reward: 4434
+[2025-04-15 01:23:15,657][__main__][INFO] - Episode 105 completed with reward 4270.90 in 1000 steps
+[2025-04-15 01:23:45,826][__main__][INFO] - EnvName: HCV5, Steps: 106k, Episodes: 106, Episode Reward: 4338
+[2025-04-15 01:23:45,827][__main__][INFO] - Episode 106 completed with reward 4146.94 in 1000 steps
+[2025-04-15 01:24:13,265][__main__][INFO] - EnvName: HCV5, Steps: 107k, Episodes: 107, Episode Reward: 4158
+[2025-04-15 01:24:13,266][__main__][INFO] - Episode 107 completed with reward 4387.89 in 1000 steps
+[2025-04-15 01:24:41,065][__main__][INFO] - EnvName: HCV5, Steps: 108k, Episodes: 108, Episode Reward: 3580
+[2025-04-15 01:24:41,065][__main__][INFO] - Episode 108 completed with reward 4228.64 in 1000 steps
+[2025-04-15 01:25:08,930][__main__][INFO] - EnvName: HCV5, Steps: 109k, Episodes: 109, Episode Reward: 4393
+[2025-04-15 01:25:08,931][__main__][INFO] - Episode 109 completed with reward 4260.00 in 1000 steps
+[2025-04-15 01:25:38,438][__main__][INFO] - EnvName: HCV5, Steps: 110k, Episodes: 110, Episode Reward: 4296
+[2025-04-15 01:25:38,442][__main__][INFO] - Episode 110 completed with reward 4369.30 in 1000 steps
+[2025-04-15 01:26:05,940][__main__][INFO] - EnvName: HCV5, Steps: 111k, Episodes: 111, Episode Reward: 4230
+[2025-04-15 01:26:05,941][__main__][INFO] - Episode 111 completed with reward 4472.31 in 1000 steps
+[2025-04-15 01:26:32,450][__main__][INFO] - EnvName: HCV5, Steps: 112k, Episodes: 112, Episode Reward: 4675
+[2025-04-15 01:26:32,451][__main__][INFO] - Episode 112 completed with reward 4283.40 in 1000 steps
+[2025-04-15 01:26:57,382][__main__][INFO] - EnvName: HCV5, Steps: 113k, Episodes: 113, Episode Reward: 4652
+[2025-04-15 01:26:57,382][__main__][INFO] - Episode 113 completed with reward 4539.04 in 1000 steps
+[2025-04-15 01:27:20,954][__main__][INFO] - EnvName: HCV5, Steps: 114k, Episodes: 114, Episode Reward: 4390
+[2025-04-15 01:27:20,955][__main__][INFO] - Episode 114 completed with reward 4289.75 in 1000 steps
+[2025-04-15 01:27:45,912][__main__][INFO] - EnvName: HCV5, Steps: 115k, Episodes: 115, Episode Reward: 4659
+[2025-04-15 01:27:45,913][__main__][INFO] - Episode 115 completed with reward 4562.59 in 1000 steps
+[2025-04-15 01:28:10,995][__main__][INFO] - EnvName: HCV5, Steps: 116k, Episodes: 116, Episode Reward: 4334
+[2025-04-15 01:28:10,996][__main__][INFO] - Episode 116 completed with reward 4614.77 in 1000 steps
+[2025-04-15 01:28:39,557][__main__][INFO] - EnvName: HCV5, Steps: 117k, Episodes: 117, Episode Reward: 4312
+[2025-04-15 01:28:39,558][__main__][INFO] - Episode 117 completed with reward 4582.53 in 1000 steps
+[2025-04-15 01:29:07,773][__main__][INFO] - EnvName: HCV5, Steps: 118k, Episodes: 118, Episode Reward: 4820
+[2025-04-15 01:29:07,773][__main__][INFO] - Episode 118 completed with reward 4619.98 in 1000 steps
+[2025-04-15 01:29:36,719][__main__][INFO] - EnvName: HCV5, Steps: 119k, Episodes: 119, Episode Reward: 4488
+[2025-04-15 01:29:36,720][__main__][INFO] - Episode 119 completed with reward 4392.17 in 1000 steps
+[2025-04-15 01:30:03,229][__main__][INFO] - EnvName: HCV5, Steps: 120k, Episodes: 120, Episode Reward: 4609
+[2025-04-15 01:30:03,234][__main__][INFO] - Episode 120 completed with reward 4635.31 in 1000 steps
+[2025-04-15 01:30:29,563][__main__][INFO] - EnvName: HCV5, Steps: 121k, Episodes: 121, Episode Reward: 4498
+[2025-04-15 01:30:29,564][__main__][INFO] - Episode 121 completed with reward 2427.57 in 1000 steps
+[2025-04-15 01:30:54,564][__main__][INFO] - EnvName: HCV5, Steps: 122k, Episodes: 122, Episode Reward: 4741
+[2025-04-15 01:30:54,564][__main__][INFO] - Episode 122 completed with reward 4599.93 in 1000 steps
+[2025-04-15 01:31:18,215][__main__][INFO] - EnvName: HCV5, Steps: 123k, Episodes: 123, Episode Reward: 4801
+[2025-04-15 01:31:18,216][__main__][INFO] - Episode 123 completed with reward 4506.78 in 1000 steps
+[2025-04-15 01:31:44,335][__main__][INFO] - EnvName: HCV5, Steps: 124k, Episodes: 124, Episode Reward: 4467
+[2025-04-15 01:31:44,335][__main__][INFO] - Episode 124 completed with reward 2132.75 in 1000 steps
+[2025-04-15 01:32:08,835][__main__][INFO] - EnvName: HCV5, Steps: 125k, Episodes: 125, Episode Reward: 4921
+[2025-04-15 01:32:08,836][__main__][INFO] - Episode 125 completed with reward 4576.55 in 1000 steps
+[2025-04-15 01:32:33,261][__main__][INFO] - EnvName: HCV5, Steps: 126k, Episodes: 126, Episode Reward: 4932
+[2025-04-15 01:32:33,262][__main__][INFO] - Episode 126 completed with reward 4803.21 in 1000 steps
+[2025-04-15 01:32:59,600][__main__][INFO] - EnvName: HCV5, Steps: 127k, Episodes: 127, Episode Reward: 4776
+[2025-04-15 01:32:59,601][__main__][INFO] - Episode 127 completed with reward 4676.60 in 1000 steps
+[2025-04-15 01:33:25,538][__main__][INFO] - EnvName: HCV5, Steps: 128k, Episodes: 128, Episode Reward: 5082
+[2025-04-15 01:33:25,539][__main__][INFO] - Episode 128 completed with reward 4644.80 in 1000 steps
+[2025-04-15 01:33:53,244][__main__][INFO] - EnvName: HCV5, Steps: 129k, Episodes: 129, Episode Reward: 4990
+[2025-04-15 01:33:53,245][__main__][INFO] - Episode 129 completed with reward 4764.59 in 1000 steps
+[2025-04-15 01:34:19,076][__main__][INFO] - EnvName: HCV5, Steps: 130k, Episodes: 130, Episode Reward: 4666
+[2025-04-15 01:34:19,081][__main__][INFO] - Episode 130 completed with reward 4664.70 in 1000 steps
+[2025-04-15 01:34:46,645][__main__][INFO] - EnvName: HCV5, Steps: 131k, Episodes: 131, Episode Reward: 4600
+[2025-04-15 01:34:46,645][__main__][INFO] - Episode 131 completed with reward 4903.78 in 1000 steps
+[2025-04-15 01:35:15,549][__main__][INFO] - EnvName: HCV5, Steps: 132k, Episodes: 132, Episode Reward: 4901
+[2025-04-15 01:35:15,550][__main__][INFO] - Episode 132 completed with reward 4832.89 in 1000 steps
+[2025-04-15 01:35:45,955][__main__][INFO] - EnvName: HCV5, Steps: 133k, Episodes: 133, Episode Reward: 3930
+[2025-04-15 01:35:45,956][__main__][INFO] - Episode 133 completed with reward 750.38 in 1000 steps
+[2025-04-15 01:36:11,510][__main__][INFO] - EnvName: HCV5, Steps: 134k, Episodes: 134, Episode Reward: 4350
+[2025-04-15 01:36:11,511][__main__][INFO] - Episode 134 completed with reward 5023.51 in 1000 steps
+[2025-04-15 01:36:40,422][__main__][INFO] - EnvName: HCV5, Steps: 135k, Episodes: 135, Episode Reward: 4749
+[2025-04-15 01:36:40,423][__main__][INFO] - Episode 135 completed with reward 4771.88 in 1000 steps
+[2025-04-15 01:37:07,713][__main__][INFO] - EnvName: HCV5, Steps: 136k, Episodes: 136, Episode Reward: 4826
+[2025-04-15 01:37:07,714][__main__][INFO] - Episode 136 completed with reward 4823.74 in 1000 steps
+[2025-04-15 01:37:36,491][__main__][INFO] - EnvName: HCV5, Steps: 137k, Episodes: 137, Episode Reward: 4889
+[2025-04-15 01:37:36,491][__main__][INFO] - Episode 137 completed with reward 5003.79 in 1000 steps
+[2025-04-15 01:38:05,078][__main__][INFO] - EnvName: HCV5, Steps: 138k, Episodes: 138, Episode Reward: 5243
+[2025-04-15 01:38:05,078][__main__][INFO] - Episode 138 completed with reward 5118.84 in 1000 steps
+[2025-04-15 01:38:33,188][__main__][INFO] - EnvName: HCV5, Steps: 139k, Episodes: 139, Episode Reward: 4926
+[2025-04-15 01:38:33,189][__main__][INFO] - Episode 139 completed with reward 4813.11 in 1000 steps
+[2025-04-15 01:39:00,326][__main__][INFO] - EnvName: HCV5, Steps: 140k, Episodes: 140, Episode Reward: 5123
+[2025-04-15 01:39:00,331][__main__][INFO] - Episode 140 completed with reward 4880.44 in 1000 steps
+[2025-04-15 01:39:28,153][__main__][INFO] - EnvName: HCV5, Steps: 141k, Episodes: 141, Episode Reward: 5113
+[2025-04-15 01:39:28,154][__main__][INFO] - Episode 141 completed with reward 4956.23 in 1000 steps
+[2025-04-15 01:39:57,642][__main__][INFO] - EnvName: HCV5, Steps: 142k, Episodes: 142, Episode Reward: 3696
+[2025-04-15 01:39:57,643][__main__][INFO] - Episode 142 completed with reward 4918.54 in 1000 steps
+[2025-04-15 01:40:26,085][__main__][INFO] - EnvName: HCV5, Steps: 143k, Episodes: 143, Episode Reward: 5073
+[2025-04-15 01:40:26,086][__main__][INFO] - Episode 143 completed with reward 4922.76 in 1000 steps
+[2025-04-15 01:40:51,608][__main__][INFO] - EnvName: HCV5, Steps: 144k, Episodes: 144, Episode Reward: 5147
+[2025-04-15 01:40:51,609][__main__][INFO] - Episode 144 completed with reward 4713.69 in 1000 steps
+[2025-04-15 01:41:17,274][__main__][INFO] - EnvName: HCV5, Steps: 145k, Episodes: 145, Episode Reward: 5018
+[2025-04-15 01:41:17,275][__main__][INFO] - Episode 145 completed with reward 4964.32 in 1000 steps
+[2025-04-15 01:41:45,142][__main__][INFO] - EnvName: HCV5, Steps: 146k, Episodes: 146, Episode Reward: 5062
+[2025-04-15 01:41:45,143][__main__][INFO] - Episode 146 completed with reward 4945.57 in 1000 steps
+[2025-04-15 01:42:12,336][__main__][INFO] - EnvName: HCV5, Steps: 147k, Episodes: 147, Episode Reward: 5313
+[2025-04-15 01:42:12,336][__main__][INFO] - Episode 147 completed with reward 4879.29 in 1000 steps
+[2025-04-15 01:42:41,374][__main__][INFO] - EnvName: HCV5, Steps: 148k, Episodes: 148, Episode Reward: 5050
+[2025-04-15 01:42:41,375][__main__][INFO] - Episode 148 completed with reward 4861.64 in 1000 steps
+[2025-04-15 01:43:07,945][__main__][INFO] - EnvName: HCV5, Steps: 149k, Episodes: 149, Episode Reward: 5058
+[2025-04-15 01:43:07,946][__main__][INFO] - Episode 149 completed with reward 5116.43 in 1000 steps
+[2025-04-15 01:43:32,593][__main__][INFO] - EnvName: HCV5, Steps: 150k, Episodes: 150, Episode Reward: 5194
+[2025-04-15 01:43:32,598][__main__][INFO] - Episode 150 completed with reward 4930.08 in 1000 steps
+[2025-04-15 01:43:57,936][__main__][INFO] - EnvName: HCV5, Steps: 151k, Episodes: 151, Episode Reward: 4500
+[2025-04-15 01:43:57,937][__main__][INFO] - Episode 151 completed with reward 4891.49 in 1000 steps
+[2025-04-15 01:44:23,063][__main__][INFO] - EnvName: HCV5, Steps: 152k, Episodes: 152, Episode Reward: 5124
+[2025-04-15 01:44:23,063][__main__][INFO] - Episode 152 completed with reward 4941.06 in 1000 steps
+[2025-04-15 01:44:48,857][__main__][INFO] - EnvName: HCV5, Steps: 153k, Episodes: 153, Episode Reward: 5253
+[2025-04-15 01:44:48,858][__main__][INFO] - Episode 153 completed with reward 5115.48 in 1000 steps
+[2025-04-15 01:45:12,227][__main__][INFO] - EnvName: HCV5, Steps: 154k, Episodes: 154, Episode Reward: 5113
+[2025-04-15 01:45:12,228][__main__][INFO] - Episode 154 completed with reward 4968.56 in 1000 steps
+[2025-04-15 01:45:39,171][__main__][INFO] - EnvName: HCV5, Steps: 155k, Episodes: 155, Episode Reward: 4508
+[2025-04-15 01:45:39,172][__main__][INFO] - Episode 155 completed with reward 4914.81 in 1000 steps
+[2025-04-15 01:46:05,472][__main__][INFO] - EnvName: HCV5, Steps: 156k, Episodes: 156, Episode Reward: 4888
+[2025-04-15 01:46:05,472][__main__][INFO] - Episode 156 completed with reward 5026.72 in 1000 steps
+[2025-04-15 01:46:32,512][__main__][INFO] - EnvName: HCV5, Steps: 157k, Episodes: 157, Episode Reward: 5327
+[2025-04-15 01:46:32,512][__main__][INFO] - Episode 157 completed with reward 1345.89 in 1000 steps
+[2025-04-15 01:47:01,292][__main__][INFO] - EnvName: HCV5, Steps: 158k, Episodes: 158, Episode Reward: 5287
+[2025-04-15 01:47:01,292][__main__][INFO] - Episode 158 completed with reward 3024.61 in 1000 steps
+[2025-04-15 01:47:30,089][__main__][INFO] - EnvName: HCV5, Steps: 159k, Episodes: 159, Episode Reward: 4412
+[2025-04-15 01:47:30,090][__main__][INFO] - Episode 159 completed with reward 469.38 in 1000 steps
+[2025-04-15 01:47:58,484][__main__][INFO] - EnvName: HCV5, Steps: 160k, Episodes: 160, Episode Reward: 5213
+[2025-04-15 01:47:58,489][__main__][INFO] - Episode 160 completed with reward 4866.52 in 1000 steps
+[2025-04-15 01:48:23,128][__main__][INFO] - EnvName: HCV5, Steps: 161k, Episodes: 161, Episode Reward: 5244
+[2025-04-15 01:48:23,129][__main__][INFO] - Episode 161 completed with reward 5118.03 in 1000 steps
+[2025-04-15 01:48:47,787][__main__][INFO] - EnvName: HCV5, Steps: 162k, Episodes: 162, Episode Reward: 4459
+[2025-04-15 01:48:47,787][__main__][INFO] - Episode 162 completed with reward 5099.26 in 1000 steps
+[2025-04-15 01:49:09,959][__main__][INFO] - EnvName: HCV5, Steps: 163k, Episodes: 163, Episode Reward: 5326
+[2025-04-15 01:49:09,960][__main__][INFO] - Episode 163 completed with reward 5182.65 in 1000 steps
+[2025-04-15 01:49:34,796][__main__][INFO] - EnvName: HCV5, Steps: 164k, Episodes: 164, Episode Reward: 4972
+[2025-04-15 01:49:34,797][__main__][INFO] - Episode 164 completed with reward 4594.21 in 1000 steps
+[2025-04-15 01:49:58,148][__main__][INFO] - EnvName: HCV5, Steps: 165k, Episodes: 165, Episode Reward: 5443
+[2025-04-15 01:49:58,149][__main__][INFO] - Episode 165 completed with reward 5175.33 in 1000 steps
+[2025-04-15 01:50:22,021][__main__][INFO] - EnvName: HCV5, Steps: 166k, Episodes: 166, Episode Reward: 5238
+[2025-04-15 01:50:22,022][__main__][INFO] - Episode 166 completed with reward 5074.83 in 1000 steps
+[2025-04-15 01:50:46,554][__main__][INFO] - EnvName: HCV5, Steps: 167k, Episodes: 167, Episode Reward: 5184
+[2025-04-15 01:50:46,555][__main__][INFO] - Episode 167 completed with reward 5385.73 in 1000 steps
+[2025-04-15 01:51:10,351][__main__][INFO] - EnvName: HCV5, Steps: 168k, Episodes: 168, Episode Reward: 5323
+[2025-04-15 01:51:10,352][__main__][INFO] - Episode 168 completed with reward 5180.90 in 1000 steps
+[2025-04-15 01:51:35,339][__main__][INFO] - EnvName: HCV5, Steps: 169k, Episodes: 169, Episode Reward: 5208
+[2025-04-15 01:51:35,340][__main__][INFO] - Episode 169 completed with reward 4985.19 in 1000 steps
+[2025-04-15 01:52:00,913][__main__][INFO] - EnvName: HCV5, Steps: 170k, Episodes: 170, Episode Reward: 5244
+[2025-04-15 01:52:00,918][__main__][INFO] - Episode 170 completed with reward 4848.95 in 1000 steps
+[2025-04-15 01:52:25,761][__main__][INFO] - EnvName: HCV5, Steps: 171k, Episodes: 171, Episode Reward: 4991
+[2025-04-15 01:52:25,762][__main__][INFO] - Episode 171 completed with reward 4993.71 in 1000 steps
+[2025-04-15 01:52:51,247][__main__][INFO] - EnvName: HCV5, Steps: 172k, Episodes: 172, Episode Reward: 5480
+[2025-04-15 01:52:51,248][__main__][INFO] - Episode 172 completed with reward 5052.86 in 1000 steps
+[2025-04-15 01:53:14,864][__main__][INFO] - EnvName: HCV5, Steps: 173k, Episodes: 173, Episode Reward: 5448
+[2025-04-15 01:53:14,865][__main__][INFO] - Episode 173 completed with reward 4939.11 in 1000 steps
+[2025-04-15 01:53:38,900][__main__][INFO] - EnvName: HCV5, Steps: 174k, Episodes: 174, Episode Reward: 5416
+[2025-04-15 01:53:38,901][__main__][INFO] - Episode 174 completed with reward 5309.14 in 1000 steps
+[2025-04-15 01:54:01,927][__main__][INFO] - EnvName: HCV5, Steps: 175k, Episodes: 175, Episode Reward: 4863
+[2025-04-15 01:54:01,927][__main__][INFO] - Episode 175 completed with reward 5025.38 in 1000 steps
+[2025-04-15 01:54:26,659][__main__][INFO] - EnvName: HCV5, Steps: 176k, Episodes: 176, Episode Reward: 5428
+[2025-04-15 01:54:26,660][__main__][INFO] - Episode 176 completed with reward 5256.04 in 1000 steps
+[2025-04-15 01:54:51,298][__main__][INFO] - EnvName: HCV5, Steps: 177k, Episodes: 177, Episode Reward: 5398
+[2025-04-15 01:54:51,298][__main__][INFO] - Episode 177 completed with reward 5053.70 in 1000 steps
+[2025-04-15 01:55:14,021][__main__][INFO] - EnvName: HCV5, Steps: 178k, Episodes: 178, Episode Reward: 5542
+[2025-04-15 01:55:14,022][__main__][INFO] - Episode 178 completed with reward 5171.82 in 1000 steps
+[2025-04-15 01:55:38,143][__main__][INFO] - EnvName: HCV5, Steps: 179k, Episodes: 179, Episode Reward: 5139
+[2025-04-15 01:55:38,144][__main__][INFO] - Episode 179 completed with reward 5278.17 in 1000 steps
+[2025-04-15 01:56:02,172][__main__][INFO] - EnvName: HCV5, Steps: 180k, Episodes: 180, Episode Reward: 5242
+[2025-04-15 01:56:02,177][__main__][INFO] - Episode 180 completed with reward 4927.01 in 1000 steps
+[2025-04-15 01:56:26,653][__main__][INFO] - EnvName: HCV5, Steps: 181k, Episodes: 181, Episode Reward: 4775
+[2025-04-15 01:56:26,654][__main__][INFO] - Episode 181 completed with reward 5333.24 in 1000 steps
+[2025-04-15 01:56:51,544][__main__][INFO] - EnvName: HCV5, Steps: 182k, Episodes: 182, Episode Reward: 5559
+[2025-04-15 01:56:51,545][__main__][INFO] - Episode 182 completed with reward 5501.52 in 1000 steps
+[2025-04-15 01:57:14,602][__main__][INFO] - EnvName: HCV5, Steps: 183k, Episodes: 183, Episode Reward: 5415
+[2025-04-15 01:57:14,602][__main__][INFO] - Episode 183 completed with reward 5217.78 in 1000 steps
+[2025-04-15 01:57:38,767][__main__][INFO] - EnvName: HCV5, Steps: 184k, Episodes: 184, Episode Reward: 4205
+[2025-04-15 01:57:38,768][__main__][INFO] - Episode 184 completed with reward 5299.99 in 1000 steps
+[2025-04-15 01:58:01,910][__main__][INFO] - EnvName: HCV5, Steps: 185k, Episodes: 185, Episode Reward: 5531
+[2025-04-15 01:58:01,910][__main__][INFO] - Episode 185 completed with reward 940.89 in 1000 steps
+[2025-04-15 01:58:30,436][__main__][INFO] - EnvName: HCV5, Steps: 186k, Episodes: 186, Episode Reward: 5535
+[2025-04-15 01:58:30,436][__main__][INFO] - Episode 186 completed with reward 5198.52 in 1000 steps
+[2025-04-15 01:58:59,641][__main__][INFO] - EnvName: HCV5, Steps: 187k, Episodes: 187, Episode Reward: 5377
+[2025-04-15 01:58:59,641][__main__][INFO] - Episode 187 completed with reward 5287.02 in 1000 steps
+[2025-04-15 01:59:28,920][__main__][INFO] - EnvName: HCV5, Steps: 188k, Episodes: 188, Episode Reward: 5490
+[2025-04-15 01:59:28,920][__main__][INFO] - Episode 188 completed with reward 5391.94 in 1000 steps
+[2025-04-15 01:59:58,567][__main__][INFO] - EnvName: HCV5, Steps: 189k, Episodes: 189, Episode Reward: 3567
+[2025-04-15 01:59:58,568][__main__][INFO] - Episode 189 completed with reward 5419.98 in 1000 steps
+[2025-04-15 02:00:27,958][__main__][INFO] - EnvName: HCV5, Steps: 190k, Episodes: 190, Episode Reward: 5442
+[2025-04-15 02:00:27,962][__main__][INFO] - Episode 190 completed with reward 5318.30 in 1000 steps
+[2025-04-15 02:00:56,993][__main__][INFO] - EnvName: HCV5, Steps: 191k, Episodes: 191, Episode Reward: 5327
+[2025-04-15 02:00:56,993][__main__][INFO] - Episode 191 completed with reward 5361.58 in 1000 steps
+[2025-04-15 02:01:25,311][__main__][INFO] - EnvName: HCV5, Steps: 192k, Episodes: 192, Episode Reward: 5654
+[2025-04-15 02:01:25,311][__main__][INFO] - Episode 192 completed with reward 5564.07 in 1000 steps
+[2025-04-15 02:01:54,146][__main__][INFO] - EnvName: HCV5, Steps: 193k, Episodes: 193, Episode Reward: 5716
+[2025-04-15 02:01:54,146][__main__][INFO] - Episode 193 completed with reward 5170.97 in 1000 steps
+[2025-04-15 02:02:21,470][__main__][INFO] - EnvName: HCV5, Steps: 194k, Episodes: 194, Episode Reward: 4821
+[2025-04-15 02:02:21,471][__main__][INFO] - Episode 194 completed with reward 5277.21 in 1000 steps
+[2025-04-15 02:02:51,000][__main__][INFO] - EnvName: HCV5, Steps: 195k, Episodes: 195, Episode Reward: 5546
+[2025-04-15 02:02:51,000][__main__][INFO] - Episode 195 completed with reward 5640.42 in 1000 steps
+[2025-04-15 02:03:19,785][__main__][INFO] - EnvName: HCV5, Steps: 196k, Episodes: 196, Episode Reward: 5626
+[2025-04-15 02:03:19,786][__main__][INFO] - Episode 196 completed with reward 5295.40 in 1000 steps
+[2025-04-15 02:03:48,829][__main__][INFO] - EnvName: HCV5, Steps: 197k, Episodes: 197, Episode Reward: 3174
+[2025-04-15 02:03:48,829][__main__][INFO] - Episode 197 completed with reward 726.25 in 1000 steps
+[2025-04-15 02:04:15,466][__main__][INFO] - EnvName: HCV5, Steps: 198k, Episodes: 198, Episode Reward: 4924
+[2025-04-15 02:04:15,467][__main__][INFO] - Episode 198 completed with reward 5474.19 in 1000 steps
+[2025-04-15 02:04:45,206][__main__][INFO] - EnvName: HCV5, Steps: 199k, Episodes: 199, Episode Reward: 5429
+[2025-04-15 02:04:45,207][__main__][INFO] - Episode 199 completed with reward 5341.26 in 1000 steps
+[2025-04-15 02:05:11,962][__main__][INFO] - EnvName: HCV5, Steps: 200k, Episodes: 200, Episode Reward: 5454
+[2025-04-15 02:05:11,967][__main__][INFO] - Episode 200 completed with reward 5508.85 in 1000 steps
+[2025-04-15 02:05:42,372][__main__][INFO] - EnvName: HCV5, Steps: 201k, Episodes: 201, Episode Reward: 5766
+[2025-04-15 02:05:42,373][__main__][INFO] - Episode 201 completed with reward 5523.34 in 1000 steps
+[2025-04-15 02:06:09,321][__main__][INFO] - EnvName: HCV5, Steps: 202k, Episodes: 202, Episode Reward: 5614
+[2025-04-15 02:06:09,321][__main__][INFO] - Episode 202 completed with reward 5505.36 in 1000 steps
+[2025-04-15 02:06:39,168][__main__][INFO] - EnvName: HCV5, Steps: 203k, Episodes: 203, Episode Reward: 5551
+[2025-04-15 02:06:39,169][__main__][INFO] - Episode 203 completed with reward 5420.45 in 1000 steps
+[2025-04-15 02:07:06,637][__main__][INFO] - EnvName: HCV5, Steps: 204k, Episodes: 204, Episode Reward: 5747
+[2025-04-15 02:07:06,637][__main__][INFO] - Episode 204 completed with reward 5322.20 in 1000 steps
+[2025-04-15 02:07:36,137][__main__][INFO] - EnvName: HCV5, Steps: 205k, Episodes: 205, Episode Reward: 5307
+[2025-04-15 02:07:36,138][__main__][INFO] - Episode 205 completed with reward 5511.96 in 1000 steps
+[2025-04-15 02:08:05,566][__main__][INFO] - EnvName: HCV5, Steps: 206k, Episodes: 206, Episode Reward: 5778
+[2025-04-15 02:08:05,566][__main__][INFO] - Episode 206 completed with reward 5776.47 in 1000 steps
+[2025-04-15 02:08:35,897][__main__][INFO] - EnvName: HCV5, Steps: 207k, Episodes: 207, Episode Reward: 5294
+[2025-04-15 02:08:35,898][__main__][INFO] - Episode 207 completed with reward 5495.52 in 1000 steps
+[2025-04-15 02:09:04,219][__main__][INFO] - EnvName: HCV5, Steps: 208k, Episodes: 208, Episode Reward: 5656
+[2025-04-15 02:09:04,220][__main__][INFO] - Episode 208 completed with reward 5805.90 in 1000 steps
+[2025-04-15 02:09:33,863][__main__][INFO] - EnvName: HCV5, Steps: 209k, Episodes: 209, Episode Reward: 5373
+[2025-04-15 02:09:33,863][__main__][INFO] - Episode 209 completed with reward 5416.88 in 1000 steps
+[2025-04-15 02:10:03,351][__main__][INFO] - EnvName: HCV5, Steps: 210k, Episodes: 210, Episode Reward: 5471
+[2025-04-15 02:10:03,356][__main__][INFO] - Episode 210 completed with reward 5476.16 in 1000 steps
+[2025-04-15 02:10:33,610][__main__][INFO] - EnvName: HCV5, Steps: 211k, Episodes: 211, Episode Reward: 5316
+[2025-04-15 02:10:33,610][__main__][INFO] - Episode 211 completed with reward 5460.43 in 1000 steps
+[2025-04-15 02:11:02,360][__main__][INFO] - EnvName: HCV5, Steps: 212k, Episodes: 212, Episode Reward: 4898
+[2025-04-15 02:11:02,360][__main__][INFO] - Episode 212 completed with reward 5386.55 in 1000 steps
+[2025-04-15 02:11:32,087][__main__][INFO] - EnvName: HCV5, Steps: 213k, Episodes: 213, Episode Reward: 5567
+[2025-04-15 02:11:32,087][__main__][INFO] - Episode 213 completed with reward 5479.43 in 1000 steps
+[2025-04-15 02:12:00,889][__main__][INFO] - EnvName: HCV5, Steps: 214k, Episodes: 214, Episode Reward: 4801
+[2025-04-15 02:12:00,890][__main__][INFO] - Episode 214 completed with reward 5583.76 in 1000 steps
+[2025-04-15 02:12:31,569][__main__][INFO] - EnvName: HCV5, Steps: 215k, Episodes: 215, Episode Reward: 4893
+[2025-04-15 02:12:31,569][__main__][INFO] - Episode 215 completed with reward 5351.36 in 1000 steps
+[2025-04-15 02:13:01,737][__main__][INFO] - EnvName: HCV5, Steps: 216k, Episodes: 216, Episode Reward: 5014
+[2025-04-15 02:13:01,738][__main__][INFO] - Episode 216 completed with reward 5421.02 in 1000 steps
+[2025-04-15 02:13:32,423][__main__][INFO] - EnvName: HCV5, Steps: 217k, Episodes: 217, Episode Reward: 5501
+[2025-04-15 02:13:32,424][__main__][INFO] - Episode 217 completed with reward 5444.77 in 1000 steps
+[2025-04-15 02:14:01,298][__main__][INFO] - EnvName: HCV5, Steps: 218k, Episodes: 218, Episode Reward: 4503
+[2025-04-15 02:14:01,298][__main__][INFO] - Episode 218 completed with reward 4232.41 in 1000 steps
+[2025-04-15 02:14:31,096][__main__][INFO] - EnvName: HCV5, Steps: 219k, Episodes: 219, Episode Reward: 5344
+[2025-04-15 02:14:31,097][__main__][INFO] - Episode 219 completed with reward 5587.07 in 1000 steps
+[2025-04-15 02:15:01,222][__main__][INFO] - EnvName: HCV5, Steps: 220k, Episodes: 220, Episode Reward: 4293
+[2025-04-15 02:15:01,226][__main__][INFO] - Episode 220 completed with reward 3792.61 in 1000 steps
+[2025-04-15 02:15:29,700][__main__][INFO] - EnvName: HCV5, Steps: 221k, Episodes: 221, Episode Reward: 5778
+[2025-04-15 02:15:29,700][__main__][INFO] - Episode 221 completed with reward 203.95 in 1000 steps
+[2025-04-15 02:15:58,745][__main__][INFO] - EnvName: HCV5, Steps: 222k, Episodes: 222, Episode Reward: 5640
+[2025-04-15 02:15:58,745][__main__][INFO] - Episode 222 completed with reward 5420.04 in 1000 steps
+[2025-04-15 02:16:28,175][__main__][INFO] - EnvName: HCV5, Steps: 223k, Episodes: 223, Episode Reward: 5893
+[2025-04-15 02:16:28,175][__main__][INFO] - Episode 223 completed with reward 5647.27 in 1000 steps
+[2025-04-15 02:16:57,603][__main__][INFO] - EnvName: HCV5, Steps: 224k, Episodes: 224, Episode Reward: 5689
+[2025-04-15 02:16:57,603][__main__][INFO] - Episode 224 completed with reward 5655.77 in 1000 steps
+[2025-04-15 02:17:26,551][__main__][INFO] - EnvName: HCV5, Steps: 225k, Episodes: 225, Episode Reward: 5869
+[2025-04-15 02:17:26,551][__main__][INFO] - Episode 225 completed with reward 5764.44 in 1000 steps
+[2025-04-15 02:17:56,119][__main__][INFO] - EnvName: HCV5, Steps: 226k, Episodes: 226, Episode Reward: 6139
+[2025-04-15 02:17:56,120][__main__][INFO] - Episode 226 completed with reward 5461.00 in 1000 steps
+[2025-04-15 02:18:25,112][__main__][INFO] - EnvName: HCV5, Steps: 227k, Episodes: 227, Episode Reward: 4466
+[2025-04-15 02:18:25,113][__main__][INFO] - Episode 227 completed with reward 5593.15 in 1000 steps
+[2025-04-15 02:18:55,235][__main__][INFO] - EnvName: HCV5, Steps: 228k, Episodes: 228, Episode Reward: 5895
+[2025-04-15 02:18:55,236][__main__][INFO] - Episode 228 completed with reward 5676.84 in 1000 steps
+[2025-04-15 02:19:24,085][__main__][INFO] - EnvName: HCV5, Steps: 229k, Episodes: 229, Episode Reward: 5800
+[2025-04-15 02:19:24,086][__main__][INFO] - Episode 229 completed with reward 5752.11 in 1000 steps
+[2025-04-15 02:19:53,421][__main__][INFO] - EnvName: HCV5, Steps: 230k, Episodes: 230, Episode Reward: 5933
+[2025-04-15 02:19:53,426][__main__][INFO] - Episode 230 completed with reward 5722.73 in 1000 steps
+[2025-04-15 02:20:21,695][__main__][INFO] - EnvName: HCV5, Steps: 231k, Episodes: 231, Episode Reward: 5718
+[2025-04-15 02:20:21,695][__main__][INFO] - Episode 231 completed with reward 5746.74 in 1000 steps
+[2025-04-15 02:20:50,743][__main__][INFO] - EnvName: HCV5, Steps: 232k, Episodes: 232, Episode Reward: 5783
+[2025-04-15 02:20:50,743][__main__][INFO] - Episode 232 completed with reward 5544.75 in 1000 steps
+[2025-04-15 02:21:18,254][__main__][INFO] - EnvName: HCV5, Steps: 233k, Episodes: 233, Episode Reward: 5448
+[2025-04-15 02:21:18,255][__main__][INFO] - Episode 233 completed with reward 5522.89 in 1000 steps
+[2025-04-15 02:21:47,649][__main__][INFO] - EnvName: HCV5, Steps: 234k, Episodes: 234, Episode Reward: 6122
+[2025-04-15 02:21:47,650][__main__][INFO] - Episode 234 completed with reward 5433.28 in 1000 steps
+[2025-04-15 02:22:16,547][__main__][INFO] - EnvName: HCV5, Steps: 235k, Episodes: 235, Episode Reward: 6122
+[2025-04-15 02:22:16,547][__main__][INFO] - Episode 235 completed with reward 4801.90 in 1000 steps
+[2025-04-15 02:22:45,107][__main__][INFO] - EnvName: HCV5, Steps: 236k, Episodes: 236, Episode Reward: 6048
+[2025-04-15 02:22:45,108][__main__][INFO] - Episode 236 completed with reward 5541.10 in 1000 steps
+[2025-04-15 02:23:13,290][__main__][INFO] - EnvName: HCV5, Steps: 237k, Episodes: 237, Episode Reward: 5498
+[2025-04-15 02:23:13,291][__main__][INFO] - Episode 237 completed with reward 1946.60 in 1000 steps
+[2025-04-15 02:23:43,872][__main__][INFO] - EnvName: HCV5, Steps: 238k, Episodes: 238, Episode Reward: 6154
+[2025-04-15 02:23:43,872][__main__][INFO] - Episode 238 completed with reward 5791.65 in 1000 steps
+[2025-04-15 02:24:11,433][__main__][INFO] - EnvName: HCV5, Steps: 239k, Episodes: 239, Episode Reward: 5870
+[2025-04-15 02:24:11,433][__main__][INFO] - Episode 239 completed with reward 5798.37 in 1000 steps
+[2025-04-15 02:24:40,040][__main__][INFO] - EnvName: HCV5, Steps: 240k, Episodes: 240, Episode Reward: 5939
+[2025-04-15 02:24:40,045][__main__][INFO] - Episode 240 completed with reward 6148.47 in 1000 steps
+[2025-04-15 02:25:07,692][__main__][INFO] - EnvName: HCV5, Steps: 241k, Episodes: 241, Episode Reward: 5799
+[2025-04-15 02:25:07,692][__main__][INFO] - Episode 241 completed with reward 5526.45 in 1000 steps
+[2025-04-15 02:25:37,831][__main__][INFO] - EnvName: HCV5, Steps: 242k, Episodes: 242, Episode Reward: 6026
+[2025-04-15 02:25:37,831][__main__][INFO] - Episode 242 completed with reward 5786.40 in 1000 steps
+[2025-04-15 02:26:05,120][__main__][INFO] - EnvName: HCV5, Steps: 243k, Episodes: 243, Episode Reward: 6051
+[2025-04-15 02:26:05,121][__main__][INFO] - Episode 243 completed with reward 5841.55 in 1000 steps
+[2025-04-15 02:26:34,815][__main__][INFO] - EnvName: HCV5, Steps: 244k, Episodes: 244, Episode Reward: 5929
+[2025-04-15 02:26:34,816][__main__][INFO] - Episode 244 completed with reward 5687.59 in 1000 steps
+[2025-04-15 02:27:03,878][__main__][INFO] - EnvName: HCV5, Steps: 245k, Episodes: 245, Episode Reward: 5852
+[2025-04-15 02:27:03,879][__main__][INFO] - Episode 245 completed with reward 5872.01 in 1000 steps
+[2025-04-15 02:27:34,347][__main__][INFO] - EnvName: HCV5, Steps: 246k, Episodes: 246, Episode Reward: 6104
+[2025-04-15 02:27:34,348][__main__][INFO] - Episode 246 completed with reward 5789.64 in 1000 steps
+[2025-04-15 02:28:03,924][__main__][INFO] - EnvName: HCV5, Steps: 247k, Episodes: 247, Episode Reward: 6238
+[2025-04-15 02:28:03,925][__main__][INFO] - Episode 247 completed with reward 6086.55 in 1000 steps
+[2025-04-15 02:28:34,289][__main__][INFO] - EnvName: HCV5, Steps: 248k, Episodes: 248, Episode Reward: 6304
+[2025-04-15 02:28:34,289][__main__][INFO] - Episode 248 completed with reward 5796.46 in 1000 steps
+[2025-04-15 02:29:03,391][__main__][INFO] - EnvName: HCV5, Steps: 249k, Episodes: 249, Episode Reward: 6241
+[2025-04-15 02:29:03,392][__main__][INFO] - Episode 249 completed with reward 5810.36 in 1000 steps
+[2025-04-15 02:29:33,826][__main__][INFO] - EnvName: HCV5, Steps: 250k, Episodes: 250, Episode Reward: 5737
+[2025-04-15 02:29:33,831][__main__][INFO] - Episode 250 completed with reward 5905.41 in 1000 steps
+[2025-04-15 02:30:03,797][__main__][INFO] - EnvName: HCV5, Steps: 251k, Episodes: 251, Episode Reward: 6032
+[2025-04-15 02:30:03,797][__main__][INFO] - Episode 251 completed with reward 5823.68 in 1000 steps
+[2025-04-15 02:30:33,865][__main__][INFO] - EnvName: HCV5, Steps: 252k, Episodes: 252, Episode Reward: 6121
+[2025-04-15 02:30:33,866][__main__][INFO] - Episode 252 completed with reward 5758.23 in 1000 steps
+[2025-04-15 02:30:59,035][__main__][INFO] - EnvName: HCV5, Steps: 253k, Episodes: 253, Episode Reward: 5989
+[2025-04-15 02:30:59,036][__main__][INFO] - Episode 253 completed with reward 6042.83 in 1000 steps
+[2025-04-15 02:31:29,954][__main__][INFO] - EnvName: HCV5, Steps: 254k, Episodes: 254, Episode Reward: 6050
+[2025-04-15 02:31:29,955][__main__][INFO] - Episode 254 completed with reward 5909.82 in 1000 steps
+[2025-04-15 02:32:00,891][__main__][INFO] - EnvName: HCV5, Steps: 255k, Episodes: 255, Episode Reward: 6259
+[2025-04-15 02:32:00,892][__main__][INFO] - Episode 255 completed with reward 6008.32 in 1000 steps
+[2025-04-15 02:32:29,921][__main__][INFO] - EnvName: HCV5, Steps: 256k, Episodes: 256, Episode Reward: 6187
+[2025-04-15 02:32:29,922][__main__][INFO] - Episode 256 completed with reward 6241.17 in 1000 steps
+[2025-04-15 02:32:59,680][__main__][INFO] - EnvName: HCV5, Steps: 257k, Episodes: 257, Episode Reward: 6116
+[2025-04-15 02:32:59,680][__main__][INFO] - Episode 257 completed with reward 5444.81 in 1000 steps
+[2025-04-15 02:33:29,446][__main__][INFO] - EnvName: HCV5, Steps: 258k, Episodes: 258, Episode Reward: 6291
+[2025-04-15 02:33:29,446][__main__][INFO] - Episode 258 completed with reward 5834.16 in 1000 steps
+[2025-04-15 02:34:00,646][__main__][INFO] - EnvName: HCV5, Steps: 259k, Episodes: 259, Episode Reward: 6177
+[2025-04-15 02:34:00,647][__main__][INFO] - Episode 259 completed with reward 6056.14 in 1000 steps
+[2025-04-15 02:34:30,716][__main__][INFO] - EnvName: HCV5, Steps: 260k, Episodes: 260, Episode Reward: 6206
+[2025-04-15 02:34:30,721][__main__][INFO] - Episode 260 completed with reward 6031.23 in 1000 steps
+[2025-04-15 02:35:00,407][__main__][INFO] - EnvName: HCV5, Steps: 261k, Episodes: 261, Episode Reward: 6285
+[2025-04-15 02:35:00,407][__main__][INFO] - Episode 261 completed with reward 5707.27 in 1000 steps
+[2025-04-15 02:35:29,449][__main__][INFO] - EnvName: HCV5, Steps: 262k, Episodes: 262, Episode Reward: 6158
+[2025-04-15 02:35:29,450][__main__][INFO] - Episode 262 completed with reward 6147.56 in 1000 steps
+[2025-04-15 02:35:58,716][__main__][INFO] - EnvName: HCV5, Steps: 263k, Episodes: 263, Episode Reward: 6298
+[2025-04-15 02:35:58,716][__main__][INFO] - Episode 263 completed with reward 5707.81 in 1000 steps
+[2025-04-15 02:36:27,317][__main__][INFO] - EnvName: HCV5, Steps: 264k, Episodes: 264, Episode Reward: 5797
+[2025-04-15 02:36:27,318][__main__][INFO] - Episode 264 completed with reward 6073.58 in 1000 steps
+[2025-04-15 02:36:58,397][__main__][INFO] - EnvName: HCV5, Steps: 265k, Episodes: 265, Episode Reward: 6448
+[2025-04-15 02:36:58,397][__main__][INFO] - Episode 265 completed with reward 6153.61 in 1000 steps
+[2025-04-15 02:37:27,023][__main__][INFO] - EnvName: HCV5, Steps: 266k, Episodes: 266, Episode Reward: 6356
+[2025-04-15 02:37:27,023][__main__][INFO] - Episode 266 completed with reward 6131.58 in 1000 steps
+[2025-04-15 02:37:56,206][__main__][INFO] - EnvName: HCV5, Steps: 267k, Episodes: 267, Episode Reward: 6174
+[2025-04-15 02:37:56,207][__main__][INFO] - Episode 267 completed with reward 5921.86 in 1000 steps
+[2025-04-15 02:38:24,741][__main__][INFO] - EnvName: HCV5, Steps: 268k, Episodes: 268, Episode Reward: 6390
+[2025-04-15 02:38:24,742][__main__][INFO] - Episode 268 completed with reward 5764.70 in 1000 steps
+[2025-04-15 02:38:53,457][__main__][INFO] - EnvName: HCV5, Steps: 269k, Episodes: 269, Episode Reward: 6313
+[2025-04-15 02:38:53,458][__main__][INFO] - Episode 269 completed with reward 6091.26 in 1000 steps
+[2025-04-15 02:39:23,385][__main__][INFO] - EnvName: HCV5, Steps: 270k, Episodes: 270, Episode Reward: 6281
+[2025-04-15 02:39:23,390][__main__][INFO] - Episode 270 completed with reward 6017.76 in 1000 steps
+[2025-04-15 02:39:54,406][__main__][INFO] - EnvName: HCV5, Steps: 271k, Episodes: 271, Episode Reward: 6262
+[2025-04-15 02:39:54,406][__main__][INFO] - Episode 271 completed with reward 6189.68 in 1000 steps
+[2025-04-15 02:40:21,627][__main__][INFO] - EnvName: HCV5, Steps: 272k, Episodes: 272, Episode Reward: 5563
+[2025-04-15 02:40:21,628][__main__][INFO] - Episode 272 completed with reward 6421.89 in 1000 steps
+[2025-04-15 02:40:51,033][__main__][INFO] - EnvName: HCV5, Steps: 273k, Episodes: 273, Episode Reward: 6216
+[2025-04-15 02:40:51,034][__main__][INFO] - Episode 273 completed with reward 6225.36 in 1000 steps
+[2025-04-15 02:41:18,918][__main__][INFO] - EnvName: HCV5, Steps: 274k, Episodes: 274, Episode Reward: 6536
+[2025-04-15 02:41:18,919][__main__][INFO] - Episode 274 completed with reward 6361.49 in 1000 steps
+[2025-04-15 02:41:47,394][__main__][INFO] - EnvName: HCV5, Steps: 275k, Episodes: 275, Episode Reward: 6152
+[2025-04-15 02:41:47,395][__main__][INFO] - Episode 275 completed with reward 6166.49 in 1000 steps
+[2025-04-15 02:42:18,374][__main__][INFO] - EnvName: HCV5, Steps: 276k, Episodes: 276, Episode Reward: 6512
+[2025-04-15 02:42:18,375][__main__][INFO] - Episode 276 completed with reward 6156.95 in 1000 steps
+[2025-04-15 02:42:48,008][__main__][INFO] - EnvName: HCV5, Steps: 277k, Episodes: 277, Episode Reward: 5641
+[2025-04-15 02:42:48,009][__main__][INFO] - Episode 277 completed with reward 6290.94 in 1000 steps
+[2025-04-15 02:43:14,763][__main__][INFO] - EnvName: HCV5, Steps: 278k, Episodes: 278, Episode Reward: 6298
+[2025-04-15 02:43:14,763][__main__][INFO] - Episode 278 completed with reward 6200.89 in 1000 steps
+[2025-04-15 02:43:44,307][__main__][INFO] - EnvName: HCV5, Steps: 279k, Episodes: 279, Episode Reward: 6090
+[2025-04-15 02:43:44,307][__main__][INFO] - Episode 279 completed with reward 6026.58 in 1000 steps
+[2025-04-15 02:44:11,164][__main__][INFO] - EnvName: HCV5, Steps: 280k, Episodes: 280, Episode Reward: 6402
+[2025-04-15 02:44:11,169][__main__][INFO] - Episode 280 completed with reward 6235.20 in 1000 steps
+[2025-04-15 02:44:41,541][__main__][INFO] - EnvName: HCV5, Steps: 281k, Episodes: 281, Episode Reward: 6397
+[2025-04-15 02:44:41,542][__main__][INFO] - Episode 281 completed with reward 6232.73 in 1000 steps
+[2025-04-15 02:45:09,525][__main__][INFO] - EnvName: HCV5, Steps: 282k, Episodes: 282, Episode Reward: 6485
+[2025-04-15 02:45:09,526][__main__][INFO] - Episode 282 completed with reward 3467.77 in 1000 steps
+[2025-04-15 02:45:38,737][__main__][INFO] - EnvName: HCV5, Steps: 283k, Episodes: 283, Episode Reward: 5716
+[2025-04-15 02:45:38,737][__main__][INFO] - Episode 283 completed with reward 1852.99 in 1000 steps
+[2025-04-15 02:46:05,970][__main__][INFO] - EnvName: HCV5, Steps: 284k, Episodes: 284, Episode Reward: 6471
+[2025-04-15 02:46:05,970][__main__][INFO] - Episode 284 completed with reward 6060.60 in 1000 steps
+[2025-04-15 02:46:35,114][__main__][INFO] - EnvName: HCV5, Steps: 285k, Episodes: 285, Episode Reward: 5985
+[2025-04-15 02:46:35,114][__main__][INFO] - Episode 285 completed with reward 6222.64 in 1000 steps
+[2025-04-15 02:47:04,277][__main__][INFO] - EnvName: HCV5, Steps: 286k, Episodes: 286, Episode Reward: 6457
+[2025-04-15 02:47:04,278][__main__][INFO] - Episode 286 completed with reward 6142.80 in 1000 steps
+[2025-04-15 02:47:34,581][__main__][INFO] - EnvName: HCV5, Steps: 287k, Episodes: 287, Episode Reward: 6266
+[2025-04-15 02:47:34,582][__main__][INFO] - Episode 287 completed with reward 6203.25 in 1000 steps
+[2025-04-15 02:48:03,426][__main__][INFO] - EnvName: HCV5, Steps: 288k, Episodes: 288, Episode Reward: 6240
+[2025-04-15 02:48:03,427][__main__][INFO] - Episode 288 completed with reward 6348.56 in 1000 steps
+[2025-04-15 02:48:31,235][__main__][INFO] - EnvName: HCV5, Steps: 289k, Episodes: 289, Episode Reward: 6618
+[2025-04-15 02:48:31,235][__main__][INFO] - Episode 289 completed with reward 6139.81 in 1000 steps
+[2025-04-15 02:49:00,796][__main__][INFO] - EnvName: HCV5, Steps: 290k, Episodes: 290, Episode Reward: 6406
+[2025-04-15 02:49:00,800][__main__][INFO] - Episode 290 completed with reward 6466.43 in 1000 steps
+[2025-04-15 02:49:30,576][__main__][INFO] - EnvName: HCV5, Steps: 291k, Episodes: 291, Episode Reward: 6525
+[2025-04-15 02:49:30,577][__main__][INFO] - Episode 291 completed with reward 6107.04 in 1000 steps
+[2025-04-15 02:50:00,428][__main__][INFO] - EnvName: HCV5, Steps: 292k, Episodes: 292, Episode Reward: 6474
+[2025-04-15 02:50:00,429][__main__][INFO] - Episode 292 completed with reward 6665.08 in 1000 steps
+[2025-04-15 02:50:29,893][__main__][INFO] - EnvName: HCV5, Steps: 293k, Episodes: 293, Episode Reward: 6447
+[2025-04-15 02:50:29,894][__main__][INFO] - Episode 293 completed with reward 6058.79 in 1000 steps
+[2025-04-15 02:50:59,393][__main__][INFO] - EnvName: HCV5, Steps: 294k, Episodes: 294, Episode Reward: 6552
+[2025-04-15 02:50:59,394][__main__][INFO] - Episode 294 completed with reward 6464.75 in 1000 steps
+[2025-04-15 02:51:27,991][__main__][INFO] - EnvName: HCV5, Steps: 295k, Episodes: 295, Episode Reward: 6358
+[2025-04-15 02:51:27,991][__main__][INFO] - Episode 295 completed with reward 6156.42 in 1000 steps
+[2025-04-15 02:51:57,218][__main__][INFO] - EnvName: HCV5, Steps: 296k, Episodes: 296, Episode Reward: 6406
+[2025-04-15 02:51:57,218][__main__][INFO] - Episode 296 completed with reward 6563.16 in 1000 steps
+[2025-04-15 02:52:26,533][__main__][INFO] - EnvName: HCV5, Steps: 297k, Episodes: 297, Episode Reward: 6093
+[2025-04-15 02:52:26,534][__main__][INFO] - Episode 297 completed with reward 5150.69 in 1000 steps
+[2025-04-15 02:52:55,521][__main__][INFO] - EnvName: HCV5, Steps: 298k, Episodes: 298, Episode Reward: 6567
+[2025-04-15 02:52:55,522][__main__][INFO] - Episode 298 completed with reward 6388.47 in 1000 steps
+[2025-04-15 02:53:23,000][__main__][INFO] - EnvName: HCV5, Steps: 299k, Episodes: 299, Episode Reward: 6067
+[2025-04-15 02:53:23,000][__main__][INFO] - Episode 299 completed with reward 6232.09 in 1000 steps
+[2025-04-15 02:53:51,315][__main__][INFO] - EnvName: HCV5, Steps: 300k, Episodes: 300, Episode Reward: 6166
+[2025-04-15 02:53:51,320][__main__][INFO] - Episode 300 completed with reward 6384.90 in 1000 steps
+[2025-04-15 02:53:51,320][__main__][INFO] - Training completed. Evaluating across 20 episodes
+[2025-04-15 02:54:02,599][__main__][INFO] - Final evaluation - Mean: 6238.80, Std: 880.90
+[2025-04-15 02:54:02,599][__main__][INFO] - 90th percentile: 6813.90, 10th percentile: 5681.30
+[2025-04-15 02:54:02,604][__main__][INFO] - Final model saved to models/SAC_model/HCV5

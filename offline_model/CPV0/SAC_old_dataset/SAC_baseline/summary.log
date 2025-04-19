@@ -1,0 +1,26 @@
+[2025-04-18 18:56:02,752] Starting SAC training with configuration: ContinuousCartPole
+[2025-04-18 18:56:02,798] System: Linux-6.11.0-21-generic-x86_64-with-glibc2.39, PyTorch: 2.5.1, GPU: NVIDIA GeForce GTX 1080 Ti
+[2025-04-18 18:56:44,542] Starting SAC training with configuration: ContinuousCartPole
+[2025-04-18 18:56:44,590] System: Linux-6.11.0-21-generic-x86_64-with-glibc2.39, PyTorch: 2.5.1, GPU: NVIDIA GeForce GTX 1080 Ti
+[2025-04-18 18:57:11,181] Starting SAC training with configuration: ContinuousCartPole
+[2025-04-18 18:57:11,227] System: Linux-6.11.0-21-generic-x86_64-with-glibc2.39, PyTorch: 2.5.1, GPU: NVIDIA GeForce GTX 1080 Ti
+[2025-04-18 18:58:51,409] Starting SAC training with configuration: ContinuousCartPole
+[2025-04-18 18:58:51,459] System: Linux-6.11.0-21-generic-x86_64-with-glibc2.39, PyTorch: 2.5.1, GPU: NVIDIA GeForce GTX 1080 Ti
+[2025-04-18 19:06:54,650] --------------------------------------------------
+[2025-04-18 19:06:54,650] TRAINING COMPLETED
+[2025-04-18 19:06:54,650] Environment: ContinuousCartPole-v0
+[2025-04-18 19:06:54,650] Total steps: 20000
+[2025-04-18 19:06:54,650] Total episodes: 0
+[2025-04-18 19:06:54,650] Final evaluation over 20 episodes:
+[2025-04-18 19:06:54,650]   Mean reward: 500.00 ± 0.00
+[2025-04-18 19:06:54,650]   90th percentile: 500.00
+[2025-04-18 19:06:54,650]   10th percentile: 500.00
+[2025-04-18 19:06:54,650] --------------------------------------------------
+[2025-04-18 19:16:32,790] Starting SAC training with configuration: ContinuousCartPole
+[2025-04-18 19:16:32,836] System: Linux-6.11.0-21-generic-x86_64-with-glibc2.39, PyTorch: 2.5.1, GPU: NVIDIA GeForce GTX 1080 Ti
+[2025-04-18 19:17:15,474] Starting SAC training with configuration: ContinuousCartPole
+[2025-04-18 19:17:15,521] System: Linux-6.11.0-21-generic-x86_64-with-glibc2.39, PyTorch: 2.5.1, GPU: NVIDIA GeForce GTX 1080 Ti
+[2025-04-18 19:17:27,754] Starting SAC training with configuration: ContinuousCartPole
+[2025-04-18 19:17:27,803] System: Linux-6.11.0-21-generic-x86_64-with-glibc2.39, PyTorch: 2.5.1, GPU: NVIDIA GeForce GTX 1080 Ti
+[2025-04-18 19:18:17,213] Starting SAC training with configuration: ContinuousCartPole
+[2025-04-18 19:18:17,260] System: Linux-6.11.0-21-generic-x86_64-with-glibc2.39, PyTorch: 2.5.1, GPU: NVIDIA GeForce GTX 1080 Ti

@@ -1,0 +1,98 @@
+device: cuda
+mode: offline
+write: false
+debug_print: false
+render: false
+load_model: false
+load_path: None
+eval_model: false
+save_model: true
+data_path: ./dataset/CPV0/no_noise/eps0.5
+seed: 42
+eval_freq: 500
+eval_interval: 500
+save_interval: 500
+max_trn_steps: 4000
+max_vae_trn_step: 500
+data_size: 1000000
+d4rl: false
+d4rl_v2: false
+d4rl_expert: false
+mixed: false
+comment: ''
+video: false
+batch_size: 1000
+gamma: 0.99
+tau: 0.005
+lmbda: 0.75
+phi: 0.1
+adam_eps: 1.0e-06
+adam_lr: 0.0003
+actor_lr: 0.001
+critic_lr: 0.001
+n_action: 100
+n_action_execute: 100
+backup: QL
+ql_noise: 0.15
+automatic_beta: false
+beta_percentile: 2.0
+beta: -0.4
+vmin: 0
+reward_adapt: true
+robust: false
+robust_optimizer: functional
+rho: 0.5
+noise: false
+type: gaussian
+adv: false
+spread: 0.0
+scale: 1.0
+env_name: ContinuousCartPole
+env_index: 1
+env_mods:
+  use_mods: false
+  observation_noise:
+    enabled: false
+    type: gaussian
+    level: 0.1
+    frequency: 1.0
+  action_perturb:
+    enabled: false
+    type: noise
+    probability: 0.1
+    level: 0.1
+  reward_shift:
+    enabled: false
+    type: scale
+    param: 0.9
+    noise_level: 0.1
+  transition_perturb:
+    enabled: false
+    type: teleport
+    probability: 0.05
+    level: 0.1
+  param_shift:
+    enabled: false
+    train_apply: false
+    eval_apply: true
+    g_factor: 1.0
+    m_factor: 1.0
+    l_factor: 1.0
+    len_factor: 1.0
+    force_mag_factor: 1.0
+    gravity_factor: 1.0
+    wind_power: 0.0
+    turbulence_power: 0.0
+    engine_factor: 1.0
+  custom:
+    enabled: false
+    spread: 0.0
+    type: gaussian
+    adv: false
+  eval:
+    use_modified: true
+    scale_noise: false
+    noise_scale_factor: 2.0
+    include_action_perturb: true
+    include_reward_shift: true
+    include_transition_perturb: true

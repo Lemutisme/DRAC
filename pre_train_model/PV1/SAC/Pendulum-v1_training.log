@@ -1,0 +1,226 @@
+[2025-04-14 22:29:26,087][__main__][INFO] - Configuration:
+device: cuda
+mode: continual
+write: false
+debug_print: false
+render: false
+load_model: false
+load_path: None
+eval_model: false
+save_model: true
+data_path: None
+epsilon: 0.1
+seed: 42
+max_train_steps: 20000
+save_interval: 10000
+eval_interval: 1000
+update_every: 50
+explore_episode: 50
+gamma: 0.99
+tau: 0.005
+net_arch:
+- 256
+- 256
+net_layer: 1
+a_lr: 0.0005
+c_lr: 0.0005
+b_lr: 5.0e-05
+g_lr: 5.0e-05
+r_lr: 5.0e-05
+l2_reg: 0.0
+batch_size: 256
+alpha: 0.12
+adaptive_alpha: true
+reward_adapt: true
+robust: false
+robust_optimizer: functional
+noise: false
+type: gaussian
+adv: false
+spread: 0.0
+scale: 1.0
+delta: 0.0
+env_name: Pendulum-v1
+env_index: 0
+env_mods:
+  use_mods: false
+  observation_noise:
+    enabled: false
+    type: gaussian
+    level: 0.1
+    frequency: 1.0
+  action_perturb:
+    enabled: false
+    type: noise
+    probability: 0.1
+    level: 0.1
+  reward_shift:
+    enabled: false
+    type: scale
+    param: 0.9
+    noise_level: 0.1
+  transition_perturb:
+    enabled: false
+    type: teleport
+    probability: 0.05
+    level: 0.1
+  param_shift:
+    enabled: false
+    train_apply: false
+    eval_apply: true
+    g_factor: 1.0
+    m_factor: 1.0
+    l_factor: 1.0
+    len_factor: 1.0
+    force_mag_factor: 1.0
+    gravity_factor: 1.0
+    wind_power: 0.0
+    turbulence_power: 0.0
+    engine_factor: 1.0
+  custom:
+    enabled: false
+    spread: 0.0
+    type: gaussian
+    adv: false
+  eval:
+    use_modified: true
+    scale_noise: false
+    noise_scale_factor: 2.0
+    include_action_perturb: true
+    include_reward_shift: true
+    include_transition_perturb: true
+
+[2025-04-14 22:29:26,132][__main__][INFO] - System information:
+[2025-04-14 22:29:26,132][__main__][INFO] -   Platform: Linux-6.11.0-21-generic-x86_64-with-glibc2.39
+[2025-04-14 22:29:26,132][__main__][INFO] -   Python: 3.12.2
+[2025-04-14 22:29:26,132][__main__][INFO] -   PyTorch: 2.5.1
+[2025-04-14 22:29:26,132][__main__][INFO] -   CUDA Available: True
+[2025-04-14 22:29:26,132][__main__][INFO] -   CUDA Version: 12.4
+[2025-04-14 22:29:26,132][__main__][INFO] -   GPU: NVIDIA GeForce GTX 1080 Ti
+[2025-04-14 22:29:26,137][__main__][INFO] - Env: Pendulum-v1  state_dim: 3  action_dim: 1  max_a: 2.0  min_a: -2.0  max_e_steps: 200
+[2025-04-14 22:29:26,138][__main__][INFO] - Random Seed: 42
+[2025-04-14 22:29:26,139][__main__][INFO] - Models will be saved to models/SAC_model/PV1
+[2025-04-14 22:29:27,110][__main__][INFO] - Episode 1 completed with reward -1278.78 in 200 steps
+[2025-04-14 22:29:27,189][__main__][INFO] - Episode 2 completed with reward -970.40 in 200 steps
+[2025-04-14 22:29:27,268][__main__][INFO] - Episode 3 completed with reward -1375.05 in 200 steps
+[2025-04-14 22:29:27,347][__main__][INFO] - Episode 4 completed with reward -911.18 in 200 steps
+[2025-04-14 22:29:28,537][__main__][INFO] - EnvName: PV1, Steps: 1k, Episodes: 5, Episode Reward: -1325
+[2025-04-14 22:29:28,537][__main__][INFO] - Episode 5 completed with reward -1571.30 in 200 steps
+[2025-04-14 22:29:28,618][__main__][INFO] - Episode 6 completed with reward -1194.79 in 200 steps
+[2025-04-14 22:29:28,698][__main__][INFO] - Episode 7 completed with reward -967.94 in 200 steps
+[2025-04-14 22:29:28,778][__main__][INFO] - Episode 8 completed with reward -1255.74 in 200 steps
+[2025-04-14 22:29:28,859][__main__][INFO] - Episode 9 completed with reward -1277.21 in 200 steps
+[2025-04-14 22:29:29,996][__main__][INFO] - EnvName: PV1, Steps: 2k, Episodes: 10, Episode Reward: -1454
+[2025-04-14 22:29:29,997][__main__][INFO] - Episode 10 completed with reward -1701.81 in 200 steps
+[2025-04-14 22:29:30,076][__main__][INFO] - Episode 11 completed with reward -967.23 in 200 steps
+[2025-04-14 22:29:30,156][__main__][INFO] - Episode 12 completed with reward -1782.59 in 200 steps
+[2025-04-14 22:29:30,235][__main__][INFO] - Episode 13 completed with reward -1240.50 in 200 steps
+[2025-04-14 22:29:30,315][__main__][INFO] - Episode 14 completed with reward -1242.27 in 200 steps
+[2025-04-14 22:29:31,440][__main__][INFO] - EnvName: PV1, Steps: 3k, Episodes: 15, Episode Reward: -1364
+[2025-04-14 22:29:31,440][__main__][INFO] - Episode 15 completed with reward -1345.63 in 200 steps
+[2025-04-14 22:29:31,519][__main__][INFO] - Episode 16 completed with reward -1040.21 in 200 steps
+[2025-04-14 22:29:31,598][__main__][INFO] - Episode 17 completed with reward -874.04 in 200 steps
+[2025-04-14 22:29:31,677][__main__][INFO] - Episode 18 completed with reward -964.57 in 200 steps
+[2025-04-14 22:29:31,757][__main__][INFO] - Episode 19 completed with reward -896.02 in 200 steps
+[2025-04-14 22:29:32,880][__main__][INFO] - EnvName: PV1, Steps: 4k, Episodes: 20, Episode Reward: -1411
+[2025-04-14 22:29:32,881][__main__][INFO] - Episode 20 completed with reward -885.24 in 200 steps
+[2025-04-14 22:29:32,960][__main__][INFO] - Episode 21 completed with reward -976.24 in 200 steps
+[2025-04-14 22:29:33,040][__main__][INFO] - Episode 22 completed with reward -884.61 in 200 steps
+[2025-04-14 22:29:33,120][__main__][INFO] - Episode 23 completed with reward -1683.23 in 200 steps
+[2025-04-14 22:29:33,199][__main__][INFO] - Episode 24 completed with reward -1493.47 in 200 steps
+[2025-04-14 22:29:34,335][__main__][INFO] - EnvName: PV1, Steps: 5k, Episodes: 25, Episode Reward: -1374
+[2025-04-14 22:29:34,335][__main__][INFO] - Episode 25 completed with reward -1696.38 in 200 steps
+[2025-04-14 22:29:34,415][__main__][INFO] - Episode 26 completed with reward -855.11 in 200 steps
+[2025-04-14 22:29:34,495][__main__][INFO] - Episode 27 completed with reward -900.98 in 200 steps
+[2025-04-14 22:29:34,574][__main__][INFO] - Episode 28 completed with reward -1065.54 in 200 steps
+[2025-04-14 22:29:34,654][__main__][INFO] - Episode 29 completed with reward -977.40 in 200 steps
+[2025-04-14 22:29:35,801][__main__][INFO] - EnvName: PV1, Steps: 6k, Episodes: 30, Episode Reward: -1301
+[2025-04-14 22:29:35,801][__main__][INFO] - Episode 30 completed with reward -1268.36 in 200 steps
+[2025-04-14 22:29:35,882][__main__][INFO] - Episode 31 completed with reward -1402.82 in 200 steps
+[2025-04-14 22:29:35,962][__main__][INFO] - Episode 32 completed with reward -1010.36 in 200 steps
+[2025-04-14 22:29:36,042][__main__][INFO] - Episode 33 completed with reward -1435.33 in 200 steps
+[2025-04-14 22:29:36,121][__main__][INFO] - Episode 34 completed with reward -1201.93 in 200 steps
+[2025-04-14 22:29:37,238][__main__][INFO] - EnvName: PV1, Steps: 7k, Episodes: 35, Episode Reward: -1377
+[2025-04-14 22:29:37,238][__main__][INFO] - Episode 35 completed with reward -1243.81 in 200 steps
+[2025-04-14 22:29:37,317][__main__][INFO] - Episode 36 completed with reward -1150.36 in 200 steps
+[2025-04-14 22:29:37,398][__main__][INFO] - Episode 37 completed with reward -979.20 in 200 steps
+[2025-04-14 22:29:37,477][__main__][INFO] - Episode 38 completed with reward -1544.84 in 200 steps
+[2025-04-14 22:29:37,556][__main__][INFO] - Episode 39 completed with reward -1273.91 in 200 steps
+[2025-04-14 22:29:38,680][__main__][INFO] - EnvName: PV1, Steps: 8k, Episodes: 40, Episode Reward: -1341
+[2025-04-14 22:29:38,681][__main__][INFO] - Episode 40 completed with reward -916.80 in 200 steps
+[2025-04-14 22:29:38,760][__main__][INFO] - Episode 41 completed with reward -1855.31 in 200 steps
+[2025-04-14 22:29:38,841][__main__][INFO] - Episode 42 completed with reward -846.64 in 200 steps
+[2025-04-14 22:29:38,928][__main__][INFO] - Episode 43 completed with reward -1094.75 in 200 steps
+[2025-04-14 22:29:39,008][__main__][INFO] - Episode 44 completed with reward -1612.86 in 200 steps
+[2025-04-14 22:29:40,140][__main__][INFO] - EnvName: PV1, Steps: 9k, Episodes: 45, Episode Reward: -1353
+[2025-04-14 22:29:40,140][__main__][INFO] - Episode 45 completed with reward -890.00 in 200 steps
+[2025-04-14 22:29:40,220][__main__][INFO] - Episode 46 completed with reward -1138.72 in 200 steps
+[2025-04-14 22:29:40,300][__main__][INFO] - Episode 47 completed with reward -1082.24 in 200 steps
+[2025-04-14 22:29:40,379][__main__][INFO] - Episode 48 completed with reward -891.88 in 200 steps
+[2025-04-14 22:29:40,458][__main__][INFO] - Episode 49 completed with reward -1117.03 in 200 steps
+[2025-04-14 22:29:42,935][__main__][INFO] - EnvName: PV1, Steps: 10k, Episodes: 50, Episode Reward: -1524
+[2025-04-14 22:29:42,940][__main__][INFO] - Episode 50 completed with reward -866.81 in 200 steps
+[2025-04-14 22:29:47,211][__main__][INFO] - Episode 51 completed with reward -1370.34 in 200 steps
+[2025-04-14 22:29:52,030][__main__][INFO] - Episode 52 completed with reward -1760.51 in 200 steps
+[2025-04-14 22:29:56,011][__main__][INFO] - Episode 53 completed with reward -1388.45 in 200 steps
+[2025-04-14 22:29:59,909][__main__][INFO] - Episode 54 completed with reward -1147.04 in 200 steps
+[2025-04-14 22:30:06,039][__main__][INFO] - EnvName: PV1, Steps: 11k, Episodes: 55, Episode Reward: -1321
+[2025-04-14 22:30:06,039][__main__][INFO] - Episode 55 completed with reward -1473.60 in 200 steps
+[2025-04-14 22:30:10,287][__main__][INFO] - Episode 56 completed with reward -1377.50 in 200 steps
+[2025-04-14 22:30:15,153][__main__][INFO] - Episode 57 completed with reward -1352.94 in 200 steps
+[2025-04-14 22:30:20,144][__main__][INFO] - Episode 58 completed with reward -914.37 in 200 steps
+[2025-04-14 22:30:25,022][__main__][INFO] - Episode 59 completed with reward -1068.25 in 200 steps
+[2025-04-14 22:30:30,952][__main__][INFO] - EnvName: PV1, Steps: 12k, Episodes: 60, Episode Reward: -561
+[2025-04-14 22:30:30,952][__main__][INFO] - Episode 60 completed with reward -1150.45 in 200 steps
+[2025-04-14 22:30:35,280][__main__][INFO] - Episode 61 completed with reward -1025.72 in 200 steps
+[2025-04-14 22:30:39,532][__main__][INFO] - Episode 62 completed with reward -505.96 in 200 steps
+[2025-04-14 22:30:44,020][__main__][INFO] - Episode 63 completed with reward -513.95 in 200 steps
+[2025-04-14 22:30:48,450][__main__][INFO] - Episode 64 completed with reward -129.02 in 200 steps
+[2025-04-14 22:30:53,872][__main__][INFO] - EnvName: PV1, Steps: 13k, Episodes: 65, Episode Reward: -250
+[2025-04-14 22:30:53,872][__main__][INFO] - Episode 65 completed with reward -485.65 in 200 steps
+[2025-04-14 22:30:57,992][__main__][INFO] - Episode 66 completed with reward -128.17 in 200 steps
+[2025-04-14 22:31:02,673][__main__][INFO] - Episode 67 completed with reward -245.58 in 200 steps
+[2025-04-14 22:31:07,384][__main__][INFO] - Episode 68 completed with reward -128.32 in 200 steps
+[2025-04-14 22:31:12,335][__main__][INFO] - Episode 69 completed with reward -378.10 in 200 steps
+[2025-04-14 22:31:18,400][__main__][INFO] - EnvName: PV1, Steps: 14k, Episodes: 70, Episode Reward: -186
+[2025-04-14 22:31:18,401][__main__][INFO] - Episode 70 completed with reward -244.22 in 200 steps
+[2025-04-14 22:31:22,465][__main__][INFO] - Episode 71 completed with reward -247.75 in 200 steps
+[2025-04-14 22:31:27,164][__main__][INFO] - Episode 72 completed with reward -234.62 in 200 steps
+[2025-04-14 22:31:31,859][__main__][INFO] - Episode 73 completed with reward -127.45 in 200 steps
+[2025-04-14 22:31:36,666][__main__][INFO] - Episode 74 completed with reward -123.34 in 200 steps
+[2025-04-14 22:31:42,568][__main__][INFO] - EnvName: PV1, Steps: 15k, Episodes: 75, Episode Reward: -139
+[2025-04-14 22:31:42,569][__main__][INFO] - Episode 75 completed with reward -126.06 in 200 steps
+[2025-04-14 22:31:46,958][__main__][INFO] - Episode 76 completed with reward -247.42 in 200 steps
+[2025-04-14 22:31:51,536][__main__][INFO] - Episode 77 completed with reward -224.78 in 200 steps
+[2025-04-14 22:31:55,878][__main__][INFO] - Episode 78 completed with reward -235.09 in 200 steps
+[2025-04-14 22:32:00,376][__main__][INFO] - Episode 79 completed with reward -253.33 in 200 steps
+[2025-04-14 22:32:06,525][__main__][INFO] - EnvName: PV1, Steps: 16k, Episodes: 80, Episode Reward: -158
+[2025-04-14 22:32:06,525][__main__][INFO] - Episode 80 completed with reward -128.87 in 200 steps
+[2025-04-14 22:32:10,941][__main__][INFO] - Episode 81 completed with reward -123.17 in 200 steps
+[2025-04-14 22:32:15,278][__main__][INFO] - Episode 82 completed with reward -126.66 in 200 steps
+[2025-04-14 22:32:20,248][__main__][INFO] - Episode 83 completed with reward -119.10 in 200 steps
+[2025-04-14 22:32:24,969][__main__][INFO] - Episode 84 completed with reward -245.14 in 200 steps
+[2025-04-14 22:32:30,987][__main__][INFO] - EnvName: PV1, Steps: 17k, Episodes: 85, Episode Reward: -193
+[2025-04-14 22:32:30,988][__main__][INFO] - Episode 85 completed with reward -332.49 in 200 steps
+[2025-04-14 22:32:35,444][__main__][INFO] - Episode 86 completed with reward -230.03 in 200 steps
+[2025-04-14 22:32:40,393][__main__][INFO] - Episode 87 completed with reward -125.75 in 200 steps
+[2025-04-14 22:32:45,142][__main__][INFO] - Episode 88 completed with reward -127.46 in 200 steps
+[2025-04-14 22:32:49,867][__main__][INFO] - Episode 89 completed with reward -130.94 in 200 steps
+[2025-04-14 22:32:55,906][__main__][INFO] - EnvName: PV1, Steps: 18k, Episodes: 90, Episode Reward: -112
+[2025-04-14 22:32:55,906][__main__][INFO] - Episode 90 completed with reward -125.85 in 200 steps
+[2025-04-14 22:33:00,443][__main__][INFO] - Episode 91 completed with reward -249.50 in 200 steps
+[2025-04-14 22:33:05,323][__main__][INFO] - Episode 92 completed with reward -367.13 in 200 steps
+[2025-04-14 22:33:10,173][__main__][INFO] - Episode 93 completed with reward -370.68 in 200 steps
+[2025-04-14 22:33:14,903][__main__][INFO] - Episode 94 completed with reward -5.31 in 200 steps
+[2025-04-14 22:33:20,763][__main__][INFO] - EnvName: PV1, Steps: 19k, Episodes: 95, Episode Reward: -189
+[2025-04-14 22:33:20,763][__main__][INFO] - Episode 95 completed with reward -237.69 in 200 steps
+[2025-04-14 22:33:25,343][__main__][INFO] - Episode 96 completed with reward -246.59 in 200 steps
+[2025-04-14 22:33:30,107][__main__][INFO] - Episode 97 completed with reward -128.75 in 200 steps
+[2025-04-14 22:33:35,021][__main__][INFO] - Episode 98 completed with reward -129.40 in 200 steps
+[2025-04-14 22:33:39,958][__main__][INFO] - Episode 99 completed with reward -122.40 in 200 steps
+[2025-04-14 22:33:45,928][__main__][INFO] - EnvName: PV1, Steps: 20k, Episodes: 100, Episode Reward: -119
+[2025-04-14 22:33:45,933][__main__][INFO] - Episode 100 completed with reward -118.84 in 200 steps
+[2025-04-14 22:33:45,933][__main__][INFO] - Training completed. Evaluating across 20 episodes
+[2025-04-14 22:33:48,043][__main__][INFO] - Final evaluation - Mean: -147.10, Std: 106.99
+[2025-04-14 22:33:48,044][__main__][INFO] - 90th percentile: -1.90, 10th percentile: -245.80
+[2025-04-14 22:33:48,048][__main__][INFO] - Final model saved to models/SAC_model/PV1

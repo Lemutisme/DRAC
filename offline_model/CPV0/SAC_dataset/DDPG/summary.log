@@ -1,0 +1,42 @@
+[2025-04-18 14:27:08,405] Starting DDPG training with configuration: ContinuousCartPole
+[2025-04-18 14:27:08,484] System: Linux-6.11.0-21-generic-x86_64-with-glibc2.10, PyTorch: 2.4.1+cu121, GPU: NVIDIA GeForce GTX 1080 Ti
+[2025-04-18 14:34:53,788] --------------------------------------------------
+[2025-04-18 14:34:53,788] TRAINING COMPLETED
+[2025-04-18 14:34:53,788] Environment: ContinuousCartPole-v0
+[2025-04-18 14:34:53,788] Final evaluation over 20 episodes:
+[2025-04-18 14:34:53,788]   Mean reward: 320.40 ± 80.06
+[2025-04-18 14:34:53,788]   90th percentile: 426.80
+[2025-04-18 14:34:53,788]   10th percentile: 196.70
+[2025-04-18 14:34:53,788] --------------------------------------------------
+[2025-04-18 14:40:27,348] Starting DDPG training with configuration: ContinuousCartPole
+[2025-04-18 14:40:27,430] System: Linux-6.11.0-21-generic-x86_64-with-glibc2.10, PyTorch: 2.4.1+cu121, GPU: NVIDIA GeForce GTX 1080 Ti
+[2025-04-18 14:41:12,185] Starting DDPG training with configuration: ContinuousCartPole
+[2025-04-18 14:41:12,264] System: Linux-6.11.0-21-generic-x86_64-with-glibc2.10, PyTorch: 2.4.1+cu121, GPU: NVIDIA GeForce GTX 1080 Ti
+[2025-04-18 14:53:18,499] --------------------------------------------------
+[2025-04-18 14:53:18,499] TRAINING COMPLETED
+[2025-04-18 14:53:18,499] Environment: ContinuousCartPole-v0
+[2025-04-18 14:53:18,499] Final evaluation over 20 episodes:
+[2025-04-18 14:53:18,499]   Mean reward: 5.70 ± 0.46
+[2025-04-18 14:53:18,499]   90th percentile: 6.00
+[2025-04-18 14:53:18,499]   10th percentile: 5.00
+[2025-04-18 14:53:18,499] --------------------------------------------------
+[2025-04-18 15:00:00,134] Starting DDPG training with configuration: ContinuousCartPole
+[2025-04-18 15:00:00,222] System: Linux-6.11.0-21-generic-x86_64-with-glibc2.10, PyTorch: 2.4.1+cu121, GPU: NVIDIA GeForce GTX 1080 Ti
+[2025-04-18 15:10:31,287] --------------------------------------------------
+[2025-04-18 15:10:31,287] TRAINING COMPLETED
+[2025-04-18 15:10:31,287] Environment: ContinuousCartPole-v0
+[2025-04-18 15:10:31,287] Final evaluation over 20 episodes:
+[2025-04-18 15:10:31,287]   Mean reward: 246.25 ± 37.91
+[2025-04-18 15:10:31,287]   90th percentile: 290.30
+[2025-04-18 15:10:31,287]   10th percentile: 185.60
+[2025-04-18 15:10:31,287] --------------------------------------------------
+[2025-04-18 15:11:07,759] Starting DDPG training with configuration: ContinuousCartPole
+[2025-04-18 15:11:07,830] System: Linux-6.11.0-21-generic-x86_64-with-glibc2.10, PyTorch: 2.4.1+cu121, GPU: NVIDIA GeForce GTX 1080 Ti
+[2025-04-18 15:16:55,185] --------------------------------------------------
+[2025-04-18 15:16:55,185] TRAINING COMPLETED
+[2025-04-18 15:16:55,185] Environment: ContinuousCartPole-v0
+[2025-04-18 15:16:55,185] Final evaluation over 20 episodes:
+[2025-04-18 15:16:55,185]   Mean reward: 500.00 ± 0.00
+[2025-04-18 15:16:55,186]   90th percentile: 500.00
+[2025-04-18 15:16:55,186]   10th percentile: 500.00
+[2025-04-18 15:16:55,186] --------------------------------------------------

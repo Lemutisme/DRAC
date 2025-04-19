@@ -1,0 +1,17 @@
+[2025-04-16 11:30:57,473][__main__][INFO] - System information:
+[2025-04-16 11:30:57,473][__main__][INFO] -   Platform: Linux-6.11.0-21-generic-x86_64-with-glibc2.39
+[2025-04-16 11:30:57,473][__main__][INFO] -   Python: 3.12.2
+[2025-04-16 11:30:57,473][__main__][INFO] -   PyTorch: 2.5.1
+[2025-04-16 11:30:57,473][__main__][INFO] -   CUDA Available: True
+[2025-04-16 11:30:57,474][__main__][INFO] -   CUDA Version: 12.4
+[2025-04-16 11:30:57,474][__main__][INFO] -   GPU: NVIDIA GeForce GTX 1080 Ti
+[2025-04-16 11:30:57,479][__main__][INFO] - Env: LunarLanderContinuous-v3  state_dim: 8  action_dim: 2  max_a: 1.0  min_a: -1.0  max_e_steps: 1000
+[2025-04-16 11:30:57,480][__main__][INFO] - Random Seed: 42
+[2025-04-16 11:30:57,480][__main__][INFO] - Models will be saved to models/SAC_model/LLdV3
+[2025-04-16 11:30:58,399][__main__][INFO] - Loading pre-trained model
+[2025-04-16 11:35:48,887][__main__][INFO] - Data collected: 446477 in 1000 episodes.
+[2025-04-16 11:40:58,162][__main__][INFO] - Data collected: 923232 in 2000 episodes.
+[2025-04-16 11:41:48,539][__main__][INFO] - Training completed. Evaluating across 20 episodes
+[2025-04-16 11:41:58,519][__main__][INFO] - Final evaluation - Mean: 107.10, Std: 105.84
+[2025-04-16 11:41:58,519][__main__][INFO] - 90th percentile: 241.60, 10th percentile: -14.30
+[2025-04-16 11:41:58,524][__main__][INFO] - Final model saved to models/SAC_model/LLdV3

@@ -1,0 +1,24 @@
+[2025-04-16 12:23:21,184][__main__][INFO] - System information:
+[2025-04-16 12:23:21,184][__main__][INFO] -   Platform: Linux-6.11.0-21-generic-x86_64-with-glibc2.39
+[2025-04-16 12:23:21,184][__main__][INFO] -   Python: 3.12.2
+[2025-04-16 12:23:21,184][__main__][INFO] -   PyTorch: 2.5.1
+[2025-04-16 12:23:21,184][__main__][INFO] -   CUDA Available: True
+[2025-04-16 12:23:21,184][__main__][INFO] -   CUDA Version: 12.4
+[2025-04-16 12:23:21,184][__main__][INFO] -   GPU: NVIDIA GeForce GTX 1080 Ti
+[2025-04-16 12:23:21,247][__main__][INFO] - Env: LunarLanderContinuous-v3  state_dim: 8  action_dim: 2  max_a: 1.0  min_a: -1.0  max_e_steps: 1000
+[2025-04-16 12:23:21,248][__main__][INFO] - Random Seed: 42
+[2025-04-16 12:23:21,248][__main__][INFO] - Models will be saved to models/FQI_model/LLdV3
+[2025-04-16 12:23:36,787][__main__][INFO] - Training iterations: 0. State VAE loss: 0.070.
+[2025-04-16 12:25:34,198][__main__][INFO] - EnvName: LLdV3, Steps: 2k, Episode Reward: -103.49453011909733
+[2025-04-16 12:27:31,723][__main__][INFO] - EnvName: LLdV3, Steps: 3k, Episode Reward: -60.581188525443835
+[2025-04-16 12:29:30,555][__main__][INFO] - EnvName: LLdV3, Steps: 4k, Episode Reward: -23.052910591081258
+[2025-04-16 12:31:27,244][__main__][INFO] - EnvName: LLdV3, Steps: 5k, Episode Reward: 136.4238252136629
+[2025-04-16 12:33:20,450][__main__][INFO] - EnvName: LLdV3, Steps: 6k, Episode Reward: 216.91546839583754
+[2025-04-16 12:35:13,088][__main__][INFO] - EnvName: LLdV3, Steps: 7k, Episode Reward: 225.29087979937862
+[2025-04-16 12:37:06,177][__main__][INFO] - EnvName: LLdV3, Steps: 8k, Episode Reward: 236.9359633767051
+[2025-04-16 12:38:56,274][__main__][INFO] - EnvName: LLdV3, Steps: 9k, Episode Reward: 251.0772626091591
+[2025-04-16 12:40:46,882][__main__][INFO] - EnvName: LLdV3, Steps: 10k, Episode Reward: 264.8823758259383
+[2025-04-16 12:40:46,919][__main__][INFO] - Training completed. Evaluating across 20 episodes
+[2025-04-16 12:40:53,745][__main__][INFO] - Final evaluation - Mean: 237.39, Std: 58.37
+[2025-04-16 12:40:53,745][__main__][INFO] - 90th percentile: 274.49, 10th percentile: 199.63
+[2025-04-16 12:40:53,777][__main__][INFO] - Final model saved to models/SAC_model/LLdV3

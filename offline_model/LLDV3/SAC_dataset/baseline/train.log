@@ -1,0 +1,229 @@
+[2025-04-16 16:22:40,400][__main__][INFO] - System information:
+[2025-04-16 16:22:40,400][__main__][INFO] -   Platform: Linux-6.11.0-21-generic-x86_64-with-glibc2.39
+[2025-04-16 16:22:40,400][__main__][INFO] -   Python: 3.12.2
+[2025-04-16 16:22:40,400][__main__][INFO] -   PyTorch: 2.5.1
+[2025-04-16 16:22:40,400][__main__][INFO] -   CUDA Available: True
+[2025-04-16 16:22:40,400][__main__][INFO] -   CUDA Version: 12.4
+[2025-04-16 16:22:40,400][__main__][INFO] -   GPU: NVIDIA GeForce GTX 1080 Ti
+[2025-04-16 16:22:40,407][__main__][INFO] - Env: LunarLanderContinuous-v3  state_dim: 8  action_dim: 2  max_a: 1.0  min_a: -1.0  max_e_steps: 1000
+[2025-04-16 16:22:40,408][__main__][INFO] - Random Seed: 42
+[2025-04-16 16:22:40,408][__main__][INFO] - Models will be saved to models/SAC_model/LLdV3
+[2025-04-16 16:23:03,173][__main__][INFO] - EnvName: LLdV3, Steps: 1k, Episode Reward: -936
+[2025-04-16 16:23:24,615][__main__][INFO] - EnvName: LLdV3, Steps: 2k, Episode Reward: -528
+[2025-04-16 16:23:46,277][__main__][INFO] - EnvName: LLdV3, Steps: 3k, Episode Reward: -572
+[2025-04-16 16:24:06,745][__main__][INFO] - EnvName: LLdV3, Steps: 4k, Episode Reward: -384
+[2025-04-16 16:24:27,903][__main__][INFO] - EnvName: LLdV3, Steps: 5k, Episode Reward: -329
+[2025-04-16 16:24:47,351][__main__][INFO] - EnvName: LLdV3, Steps: 6k, Episode Reward: -338
+[2025-04-16 16:25:08,150][__main__][INFO] - EnvName: LLdV3, Steps: 7k, Episode Reward: -358
+[2025-04-16 16:25:30,381][__main__][INFO] - EnvName: LLdV3, Steps: 8k, Episode Reward: -275
+[2025-04-16 16:25:51,864][__main__][INFO] - EnvName: LLdV3, Steps: 9k, Episode Reward: -170
+[2025-04-16 16:26:09,932][__main__][INFO] - EnvName: LLdV3, Steps: 10k, Episode Reward: -236
+[2025-04-16 16:26:34,480][__main__][INFO] - EnvName: LLdV3, Steps: 11k, Episode Reward: 63
+[2025-04-16 16:26:56,851][__main__][INFO] - EnvName: LLdV3, Steps: 12k, Episode Reward: -54
+[2025-04-16 16:27:18,374][__main__][INFO] - EnvName: LLdV3, Steps: 13k, Episode Reward: 33
+[2025-04-16 16:27:43,439][__main__][INFO] - EnvName: LLdV3, Steps: 14k, Episode Reward: 77
+[2025-04-16 16:28:05,121][__main__][INFO] - EnvName: LLdV3, Steps: 15k, Episode Reward: 5
+[2025-04-16 16:28:27,487][__main__][INFO] - EnvName: LLdV3, Steps: 16k, Episode Reward: 141
+[2025-04-16 16:28:51,324][__main__][INFO] - EnvName: LLdV3, Steps: 17k, Episode Reward: 12
+[2025-04-16 16:29:15,565][__main__][INFO] - EnvName: LLdV3, Steps: 18k, Episode Reward: 29
+[2025-04-16 16:29:40,795][__main__][INFO] - EnvName: LLdV3, Steps: 19k, Episode Reward: -60
+[2025-04-16 16:30:05,088][__main__][INFO] - EnvName: LLdV3, Steps: 20k, Episode Reward: -26
+[2025-04-16 16:30:31,610][__main__][INFO] - EnvName: LLdV3, Steps: 21k, Episode Reward: -19
+[2025-04-16 16:30:56,917][__main__][INFO] - EnvName: LLdV3, Steps: 22k, Episode Reward: -79
+[2025-04-16 16:31:23,506][__main__][INFO] - EnvName: LLdV3, Steps: 23k, Episode Reward: -42
+[2025-04-16 16:31:49,004][__main__][INFO] - EnvName: LLdV3, Steps: 24k, Episode Reward: -34
+[2025-04-16 16:32:13,986][__main__][INFO] - EnvName: LLdV3, Steps: 25k, Episode Reward: -28
+[2025-04-16 16:32:40,117][__main__][INFO] - EnvName: LLdV3, Steps: 26k, Episode Reward: -45
+[2025-04-16 16:33:04,901][__main__][INFO] - EnvName: LLdV3, Steps: 27k, Episode Reward: -17
+[2025-04-16 16:33:29,497][__main__][INFO] - EnvName: LLdV3, Steps: 28k, Episode Reward: -95
+[2025-04-16 16:33:55,364][__main__][INFO] - EnvName: LLdV3, Steps: 29k, Episode Reward: -67
+[2025-04-16 16:34:20,930][__main__][INFO] - EnvName: LLdV3, Steps: 30k, Episode Reward: -36
+[2025-04-16 16:34:44,624][__main__][INFO] - EnvName: LLdV3, Steps: 31k, Episode Reward: -5
+[2025-04-16 16:35:09,966][__main__][INFO] - EnvName: LLdV3, Steps: 32k, Episode Reward: -7
+[2025-04-16 16:35:33,875][__main__][INFO] - EnvName: LLdV3, Steps: 33k, Episode Reward: 9
+[2025-04-16 16:35:57,986][__main__][INFO] - EnvName: LLdV3, Steps: 34k, Episode Reward: 95
+[2025-04-16 16:36:22,363][__main__][INFO] - EnvName: LLdV3, Steps: 35k, Episode Reward: 6
+[2025-04-16 16:36:48,110][__main__][INFO] - EnvName: LLdV3, Steps: 36k, Episode Reward: 22
+[2025-04-16 16:37:11,450][__main__][INFO] - EnvName: LLdV3, Steps: 37k, Episode Reward: 7
+[2025-04-16 16:37:34,800][__main__][INFO] - EnvName: LLdV3, Steps: 38k, Episode Reward: 26
+[2025-04-16 16:37:56,650][__main__][INFO] - EnvName: LLdV3, Steps: 39k, Episode Reward: 37
+[2025-04-16 16:38:19,097][__main__][INFO] - EnvName: LLdV3, Steps: 40k, Episode Reward: 25
+[2025-04-16 16:38:41,498][__main__][INFO] - EnvName: LLdV3, Steps: 41k, Episode Reward: 36
+[2025-04-16 16:39:01,424][__main__][INFO] - EnvName: LLdV3, Steps: 42k, Episode Reward: 40
+[2025-04-16 16:39:22,934][__main__][INFO] - EnvName: LLdV3, Steps: 43k, Episode Reward: 23
+[2025-04-16 16:39:44,280][__main__][INFO] - EnvName: LLdV3, Steps: 44k, Episode Reward: 16
+[2025-04-16 16:40:06,714][__main__][INFO] - EnvName: LLdV3, Steps: 45k, Episode Reward: -19
+[2025-04-16 16:40:28,137][__main__][INFO] - EnvName: LLdV3, Steps: 46k, Episode Reward: 75
+[2025-04-16 16:40:48,407][__main__][INFO] - EnvName: LLdV3, Steps: 47k, Episode Reward: 57
+[2025-04-16 16:41:08,907][__main__][INFO] - EnvName: LLdV3, Steps: 48k, Episode Reward: -59
+[2025-04-16 16:41:30,320][__main__][INFO] - EnvName: LLdV3, Steps: 49k, Episode Reward: 49
+[2025-04-16 16:41:51,294][__main__][INFO] - EnvName: LLdV3, Steps: 50k, Episode Reward: 103
+[2025-04-16 16:42:11,471][__main__][INFO] - EnvName: LLdV3, Steps: 51k, Episode Reward: 12
+[2025-04-16 16:42:33,684][__main__][INFO] - EnvName: LLdV3, Steps: 52k, Episode Reward: 64
+[2025-04-16 16:42:53,498][__main__][INFO] - EnvName: LLdV3, Steps: 53k, Episode Reward: 76
+[2025-04-16 16:43:15,098][__main__][INFO] - EnvName: LLdV3, Steps: 54k, Episode Reward: 74
+[2025-04-16 16:43:37,474][__main__][INFO] - EnvName: LLdV3, Steps: 55k, Episode Reward: 56
+[2025-04-16 16:44:02,326][__main__][INFO] - EnvName: LLdV3, Steps: 56k, Episode Reward: 121
+[2025-04-16 16:44:24,506][__main__][INFO] - EnvName: LLdV3, Steps: 57k, Episode Reward: 86
+[2025-04-16 16:44:45,933][__main__][INFO] - EnvName: LLdV3, Steps: 58k, Episode Reward: -8
+[2025-04-16 16:45:11,792][__main__][INFO] - EnvName: LLdV3, Steps: 59k, Episode Reward: 106
+[2025-04-16 16:45:36,526][__main__][INFO] - EnvName: LLdV3, Steps: 60k, Episode Reward: 136
+[2025-04-16 16:45:59,705][__main__][INFO] - EnvName: LLdV3, Steps: 61k, Episode Reward: 84
+[2025-04-16 16:46:22,807][__main__][INFO] - EnvName: LLdV3, Steps: 62k, Episode Reward: 135
+[2025-04-16 16:46:43,077][__main__][INFO] - EnvName: LLdV3, Steps: 63k, Episode Reward: 97
+[2025-04-16 16:47:04,889][__main__][INFO] - EnvName: LLdV3, Steps: 64k, Episode Reward: 177
+[2025-04-16 16:47:28,128][__main__][INFO] - EnvName: LLdV3, Steps: 65k, Episode Reward: 88
+[2025-04-16 16:47:52,570][__main__][INFO] - EnvName: LLdV3, Steps: 66k, Episode Reward: 84
+[2025-04-16 16:48:14,348][__main__][INFO] - EnvName: LLdV3, Steps: 67k, Episode Reward: 105
+[2025-04-16 16:48:38,484][__main__][INFO] - EnvName: LLdV3, Steps: 68k, Episode Reward: 120
+[2025-04-16 16:49:01,804][__main__][INFO] - EnvName: LLdV3, Steps: 69k, Episode Reward: 39
+[2025-04-16 16:49:24,753][__main__][INFO] - EnvName: LLdV3, Steps: 70k, Episode Reward: 10
+[2025-04-16 16:49:47,565][__main__][INFO] - EnvName: LLdV3, Steps: 71k, Episode Reward: 46
+[2025-04-16 16:50:08,999][__main__][INFO] - EnvName: LLdV3, Steps: 72k, Episode Reward: 84
+[2025-04-16 16:50:31,487][__main__][INFO] - EnvName: LLdV3, Steps: 73k, Episode Reward: 97
+[2025-04-16 16:50:53,604][__main__][INFO] - EnvName: LLdV3, Steps: 74k, Episode Reward: 77
+[2025-04-16 16:51:13,964][__main__][INFO] - EnvName: LLdV3, Steps: 75k, Episode Reward: 100
+[2025-04-16 16:51:38,593][__main__][INFO] - EnvName: LLdV3, Steps: 76k, Episode Reward: 93
+[2025-04-16 16:51:59,328][__main__][INFO] - EnvName: LLdV3, Steps: 77k, Episode Reward: 74
+[2025-04-16 16:52:22,860][__main__][INFO] - EnvName: LLdV3, Steps: 78k, Episode Reward: 71
+[2025-04-16 16:52:46,091][__main__][INFO] - EnvName: LLdV3, Steps: 79k, Episode Reward: 82
+[2025-04-16 16:53:08,637][__main__][INFO] - EnvName: LLdV3, Steps: 80k, Episode Reward: 90
+[2025-04-16 16:53:33,442][__main__][INFO] - EnvName: LLdV3, Steps: 81k, Episode Reward: 58
+[2025-04-16 16:53:55,363][__main__][INFO] - EnvName: LLdV3, Steps: 82k, Episode Reward: 79
+[2025-04-16 16:54:16,442][__main__][INFO] - EnvName: LLdV3, Steps: 83k, Episode Reward: 69
+[2025-04-16 16:54:36,969][__main__][INFO] - EnvName: LLdV3, Steps: 84k, Episode Reward: 128
+[2025-04-16 16:55:00,636][__main__][INFO] - EnvName: LLdV3, Steps: 85k, Episode Reward: 140
+[2025-04-16 16:55:24,272][__main__][INFO] - EnvName: LLdV3, Steps: 86k, Episode Reward: 47
+[2025-04-16 16:55:46,118][__main__][INFO] - EnvName: LLdV3, Steps: 87k, Episode Reward: 118
+[2025-04-16 16:56:06,223][__main__][INFO] - EnvName: LLdV3, Steps: 88k, Episode Reward: 72
+[2025-04-16 16:56:30,556][__main__][INFO] - EnvName: LLdV3, Steps: 89k, Episode Reward: 107
+[2025-04-16 16:56:52,533][__main__][INFO] - EnvName: LLdV3, Steps: 90k, Episode Reward: 48
+[2025-04-16 16:57:10,974][__main__][INFO] - EnvName: LLdV3, Steps: 91k, Episode Reward: 116
+[2025-04-16 16:57:33,858][__main__][INFO] - EnvName: LLdV3, Steps: 92k, Episode Reward: 112
+[2025-04-16 16:57:55,878][__main__][INFO] - EnvName: LLdV3, Steps: 93k, Episode Reward: 119
+[2025-04-16 16:58:17,558][__main__][INFO] - EnvName: LLdV3, Steps: 94k, Episode Reward: 46
+[2025-04-16 16:58:35,552][__main__][INFO] - EnvName: LLdV3, Steps: 95k, Episode Reward: 157
+[2025-04-16 16:58:55,951][__main__][INFO] - EnvName: LLdV3, Steps: 96k, Episode Reward: 151
+[2025-04-16 16:59:17,827][__main__][INFO] - EnvName: LLdV3, Steps: 97k, Episode Reward: 118
+[2025-04-16 16:59:39,448][__main__][INFO] - EnvName: LLdV3, Steps: 98k, Episode Reward: 197
+[2025-04-16 17:00:00,708][__main__][INFO] - EnvName: LLdV3, Steps: 99k, Episode Reward: 107
+[2025-04-16 17:00:24,341][__main__][INFO] - EnvName: LLdV3, Steps: 100k, Episode Reward: 188
+[2025-04-16 17:00:44,797][__main__][INFO] - EnvName: LLdV3, Steps: 101k, Episode Reward: 168
+[2025-04-16 17:01:05,984][__main__][INFO] - EnvName: LLdV3, Steps: 102k, Episode Reward: 149
+[2025-04-16 17:01:27,319][__main__][INFO] - EnvName: LLdV3, Steps: 103k, Episode Reward: 203
+[2025-04-16 17:01:48,828][__main__][INFO] - EnvName: LLdV3, Steps: 104k, Episode Reward: 168
+[2025-04-16 17:02:06,402][__main__][INFO] - EnvName: LLdV3, Steps: 105k, Episode Reward: 125
+[2025-04-16 17:02:26,245][__main__][INFO] - EnvName: LLdV3, Steps: 106k, Episode Reward: 131
+[2025-04-16 17:02:49,548][__main__][INFO] - EnvName: LLdV3, Steps: 107k, Episode Reward: 181
+[2025-04-16 17:03:14,141][__main__][INFO] - EnvName: LLdV3, Steps: 108k, Episode Reward: 152
+[2025-04-16 17:03:41,433][__main__][INFO] - EnvName: LLdV3, Steps: 109k, Episode Reward: 196
+[2025-04-16 17:04:05,709][__main__][INFO] - EnvName: LLdV3, Steps: 110k, Episode Reward: 164
+[2025-04-16 17:04:34,028][__main__][INFO] - EnvName: LLdV3, Steps: 111k, Episode Reward: 143
+[2025-04-16 17:05:01,387][__main__][INFO] - EnvName: LLdV3, Steps: 112k, Episode Reward: 142
+[2025-04-16 17:05:29,158][__main__][INFO] - EnvName: LLdV3, Steps: 113k, Episode Reward: 212
+[2025-04-16 17:05:55,955][__main__][INFO] - EnvName: LLdV3, Steps: 114k, Episode Reward: 140
+[2025-04-16 17:06:19,506][__main__][INFO] - EnvName: LLdV3, Steps: 115k, Episode Reward: 160
+[2025-04-16 17:06:45,953][__main__][INFO] - EnvName: LLdV3, Steps: 116k, Episode Reward: 164
+[2025-04-16 17:07:08,050][__main__][INFO] - EnvName: LLdV3, Steps: 117k, Episode Reward: 150
+[2025-04-16 17:07:35,130][__main__][INFO] - EnvName: LLdV3, Steps: 118k, Episode Reward: 185
+[2025-04-16 17:08:01,599][__main__][INFO] - EnvName: LLdV3, Steps: 119k, Episode Reward: 174
+[2025-04-16 17:08:27,981][__main__][INFO] - EnvName: LLdV3, Steps: 120k, Episode Reward: 189
+[2025-04-16 17:08:55,718][__main__][INFO] - EnvName: LLdV3, Steps: 121k, Episode Reward: 161
+[2025-04-16 17:09:24,394][__main__][INFO] - EnvName: LLdV3, Steps: 122k, Episode Reward: 111
+[2025-04-16 17:09:52,734][__main__][INFO] - EnvName: LLdV3, Steps: 123k, Episode Reward: 211
+[2025-04-16 17:10:20,202][__main__][INFO] - EnvName: LLdV3, Steps: 124k, Episode Reward: 200
+[2025-04-16 17:10:46,796][__main__][INFO] - EnvName: LLdV3, Steps: 125k, Episode Reward: 90
+[2025-04-16 17:11:13,216][__main__][INFO] - EnvName: LLdV3, Steps: 126k, Episode Reward: 142
+[2025-04-16 17:11:38,392][__main__][INFO] - EnvName: LLdV3, Steps: 127k, Episode Reward: 231
+[2025-04-16 17:12:05,559][__main__][INFO] - EnvName: LLdV3, Steps: 128k, Episode Reward: 123
+[2025-04-16 17:12:34,439][__main__][INFO] - EnvName: LLdV3, Steps: 129k, Episode Reward: 162
+[2025-04-16 17:13:00,167][__main__][INFO] - EnvName: LLdV3, Steps: 130k, Episode Reward: 166
+[2025-04-16 17:13:21,819][__main__][INFO] - EnvName: LLdV3, Steps: 131k, Episode Reward: 160
+[2025-04-16 17:13:46,329][__main__][INFO] - EnvName: LLdV3, Steps: 132k, Episode Reward: 29
+[2025-04-16 17:14:08,364][__main__][INFO] - EnvName: LLdV3, Steps: 133k, Episode Reward: 185
+[2025-04-16 17:14:32,151][__main__][INFO] - EnvName: LLdV3, Steps: 134k, Episode Reward: 205
+[2025-04-16 17:14:58,326][__main__][INFO] - EnvName: LLdV3, Steps: 135k, Episode Reward: 113
+[2025-04-16 17:15:21,677][__main__][INFO] - EnvName: LLdV3, Steps: 136k, Episode Reward: 192
+[2025-04-16 17:15:47,289][__main__][INFO] - EnvName: LLdV3, Steps: 137k, Episode Reward: 111
+[2025-04-16 17:16:08,568][__main__][INFO] - EnvName: LLdV3, Steps: 138k, Episode Reward: 163
+[2025-04-16 17:16:32,659][__main__][INFO] - EnvName: LLdV3, Steps: 139k, Episode Reward: 144
+[2025-04-16 17:16:58,153][__main__][INFO] - EnvName: LLdV3, Steps: 140k, Episode Reward: 73
+[2025-04-16 17:17:25,412][__main__][INFO] - EnvName: LLdV3, Steps: 141k, Episode Reward: 113
+[2025-04-16 17:17:53,854][__main__][INFO] - EnvName: LLdV3, Steps: 142k, Episode Reward: 159
+[2025-04-16 17:18:18,640][__main__][INFO] - EnvName: LLdV3, Steps: 143k, Episode Reward: 171
+[2025-04-16 17:18:48,385][__main__][INFO] - EnvName: LLdV3, Steps: 144k, Episode Reward: 154
+[2025-04-16 17:19:13,521][__main__][INFO] - EnvName: LLdV3, Steps: 145k, Episode Reward: 153
+[2025-04-16 17:19:39,379][__main__][INFO] - EnvName: LLdV3, Steps: 146k, Episode Reward: 227
+[2025-04-16 17:20:03,693][__main__][INFO] - EnvName: LLdV3, Steps: 147k, Episode Reward: 210
+[2025-04-16 17:20:32,030][__main__][INFO] - EnvName: LLdV3, Steps: 148k, Episode Reward: 160
+[2025-04-16 17:20:58,584][__main__][INFO] - EnvName: LLdV3, Steps: 149k, Episode Reward: 174
+[2025-04-16 17:21:24,138][__main__][INFO] - EnvName: LLdV3, Steps: 150k, Episode Reward: 196
+[2025-04-16 17:21:24,143][__main__][INFO] - Training completed. Evaluating across 20 episodes
+[2025-04-16 17:21:30,427][__main__][INFO] - Final evaluation - Mean: 205.30, Std: 82.25
+[2025-04-16 17:21:30,427][__main__][INFO] - 90th percentile: 259.50, 10th percentile: 162.20
+[2025-04-16 17:21:30,432][__main__][INFO] - Final model saved to models/SAC_model/LLdV3
+[2025-04-16 17:36:29,098][__main__][INFO] - System information:
+[2025-04-16 17:36:29,098][__main__][INFO] -   Platform: Linux-6.11.0-21-generic-x86_64-with-glibc2.39
+[2025-04-16 17:36:29,098][__main__][INFO] -   Python: 3.12.2
+[2025-04-16 17:36:29,098][__main__][INFO] -   PyTorch: 2.5.1
+[2025-04-16 17:36:29,098][__main__][INFO] -   CUDA Available: True
+[2025-04-16 17:36:29,098][__main__][INFO] -   CUDA Version: 12.4
+[2025-04-16 17:36:29,098][__main__][INFO] -   GPU: NVIDIA GeForce GTX 1080 Ti
+[2025-04-16 17:36:29,105][__main__][INFO] - Env: LunarLanderContinuous-v3  state_dim: 8  action_dim: 2  max_a: 1.0  min_a: -1.0  max_e_steps: 1000
+[2025-04-16 17:36:29,106][__main__][INFO] - Random Seed: 42
+[2025-04-16 17:36:29,107][__main__][INFO] - Models will be saved to models/SAC_model/LLdV3
+[2025-04-16 17:36:29,998][__main__][INFO] - Loading pre-trained model
+[2025-04-16 17:36:52,534][__main__][INFO] - EnvName: LLdV3, Steps: 1k, Episode Reward: -245
+[2025-04-16 17:37:14,443][__main__][INFO] - EnvName: LLdV3, Steps: 2k, Episode Reward: -295
+[2025-04-16 17:37:40,230][__main__][INFO] - EnvName: LLdV3, Steps: 3k, Episode Reward: 97
+[2025-04-16 17:38:05,051][__main__][INFO] - EnvName: LLdV3, Steps: 4k, Episode Reward: 45
+[2025-04-16 17:38:29,568][__main__][INFO] - EnvName: LLdV3, Steps: 5k, Episode Reward: 129
+[2025-04-16 17:38:53,266][__main__][INFO] - EnvName: LLdV3, Steps: 6k, Episode Reward: 100
+[2025-04-16 17:39:14,465][__main__][INFO] - EnvName: LLdV3, Steps: 7k, Episode Reward: 169
+[2025-04-16 17:39:38,129][__main__][INFO] - EnvName: LLdV3, Steps: 8k, Episode Reward: 215
+[2025-04-16 17:40:00,872][__main__][INFO] - EnvName: LLdV3, Steps: 9k, Episode Reward: 194
+[2025-04-16 17:40:25,038][__main__][INFO] - EnvName: LLdV3, Steps: 10k, Episode Reward: 229
+[2025-04-16 17:40:48,340][__main__][INFO] - EnvName: LLdV3, Steps: 11k, Episode Reward: 190
+[2025-04-16 17:41:10,499][__main__][INFO] - EnvName: LLdV3, Steps: 12k, Episode Reward: 196
+[2025-04-16 17:41:34,250][__main__][INFO] - EnvName: LLdV3, Steps: 13k, Episode Reward: 230
+[2025-04-16 17:41:57,925][__main__][INFO] - EnvName: LLdV3, Steps: 14k, Episode Reward: 234
+[2025-04-16 17:42:21,911][__main__][INFO] - EnvName: LLdV3, Steps: 15k, Episode Reward: 223
+[2025-04-16 17:42:45,728][__main__][INFO] - EnvName: LLdV3, Steps: 16k, Episode Reward: 190
+[2025-04-16 17:43:06,953][__main__][INFO] - EnvName: LLdV3, Steps: 17k, Episode Reward: 210
+[2025-04-16 17:43:31,214][__main__][INFO] - EnvName: LLdV3, Steps: 18k, Episode Reward: 227
+[2025-04-16 17:43:55,697][__main__][INFO] - EnvName: LLdV3, Steps: 19k, Episode Reward: 218
+[2025-04-16 17:44:20,523][__main__][INFO] - EnvName: LLdV3, Steps: 20k, Episode Reward: 231
+[2025-04-16 17:44:44,249][__main__][INFO] - EnvName: LLdV3, Steps: 21k, Episode Reward: 216
+[2025-04-16 17:45:05,784][__main__][INFO] - EnvName: LLdV3, Steps: 22k, Episode Reward: 223
+[2025-04-16 17:45:30,678][__main__][INFO] - EnvName: LLdV3, Steps: 23k, Episode Reward: 183
+[2025-04-16 17:45:56,336][__main__][INFO] - EnvName: LLdV3, Steps: 24k, Episode Reward: 140
+[2025-04-16 17:46:17,631][__main__][INFO] - EnvName: LLdV3, Steps: 25k, Episode Reward: 178
+[2025-04-16 17:46:40,797][__main__][INFO] - EnvName: LLdV3, Steps: 26k, Episode Reward: 252
+[2025-04-16 17:47:04,625][__main__][INFO] - EnvName: LLdV3, Steps: 27k, Episode Reward: 209
+[2025-04-16 17:47:29,295][__main__][INFO] - EnvName: LLdV3, Steps: 28k, Episode Reward: 235
+[2025-04-16 17:47:54,261][__main__][INFO] - EnvName: LLdV3, Steps: 29k, Episode Reward: 221
+[2025-04-16 17:48:18,225][__main__][INFO] - EnvName: LLdV3, Steps: 30k, Episode Reward: 193
+[2025-04-16 17:48:41,940][__main__][INFO] - EnvName: LLdV3, Steps: 31k, Episode Reward: 248
+[2025-04-16 17:49:04,083][__main__][INFO] - EnvName: LLdV3, Steps: 32k, Episode Reward: 197
+[2025-04-16 17:49:27,917][__main__][INFO] - EnvName: LLdV3, Steps: 33k, Episode Reward: 225
+[2025-04-16 17:49:53,298][__main__][INFO] - EnvName: LLdV3, Steps: 34k, Episode Reward: 185
+[2025-04-16 17:50:16,569][__main__][INFO] - EnvName: LLdV3, Steps: 35k, Episode Reward: 170
+[2025-04-16 17:50:41,796][__main__][INFO] - EnvName: LLdV3, Steps: 36k, Episode Reward: 172
+[2025-04-16 17:51:04,057][__main__][INFO] - EnvName: LLdV3, Steps: 37k, Episode Reward: 169
+[2025-04-16 17:51:28,414][__main__][INFO] - EnvName: LLdV3, Steps: 38k, Episode Reward: 168
+[2025-04-16 17:51:50,748][__main__][INFO] - EnvName: LLdV3, Steps: 39k, Episode Reward: 165
+[2025-04-16 17:52:15,034][__main__][INFO] - EnvName: LLdV3, Steps: 40k, Episode Reward: 185
+[2025-04-16 17:52:40,438][__main__][INFO] - EnvName: LLdV3, Steps: 41k, Episode Reward: 194
+[2025-04-16 17:53:02,578][__main__][INFO] - EnvName: LLdV3, Steps: 42k, Episode Reward: 153
+[2025-04-16 17:53:29,425][__main__][INFO] - EnvName: LLdV3, Steps: 43k, Episode Reward: 163
+[2025-04-16 17:53:55,948][__main__][INFO] - EnvName: LLdV3, Steps: 44k, Episode Reward: 204
+[2025-04-16 17:54:24,704][__main__][INFO] - EnvName: LLdV3, Steps: 45k, Episode Reward: 190
+[2025-04-16 17:54:52,008][__main__][INFO] - EnvName: LLdV3, Steps: 46k, Episode Reward: 130
+[2025-04-16 17:55:18,059][__main__][INFO] - EnvName: LLdV3, Steps: 47k, Episode Reward: 239
+[2025-04-16 17:55:45,856][__main__][INFO] - EnvName: LLdV3, Steps: 48k, Episode Reward: 191
+[2025-04-16 17:56:11,293][__main__][INFO] - EnvName: LLdV3, Steps: 49k, Episode Reward: 168
+[2025-04-16 17:56:38,766][__main__][INFO] - EnvName: LLdV3, Steps: 50k, Episode Reward: 199
+[2025-04-16 17:56:38,773][__main__][INFO] - Training completed. Evaluating across 20 episodes
+[2025-04-16 17:56:46,600][__main__][INFO] - Final evaluation - Mean: 174.95, Std: 102.15
+[2025-04-16 17:56:46,600][__main__][INFO] - 90th percentile: 259.50, 10th percentile: -1.70
+[2025-04-16 17:56:46,606][__main__][INFO] - Final model saved to models/SAC_model/LLdV3

@@ -1,0 +1,12 @@
+[2025-04-16 11:31:36,356] Starting SAC training with configuration: ContinuousCartPole
+[2025-04-16 11:31:36,400] System: Linux-6.11.0-21-generic-x86_64-with-glibc2.39, PyTorch: 2.5.1, GPU: NVIDIA GeForce GTX 1080 Ti
+[2025-04-16 11:41:10,784] --------------------------------------------------
+[2025-04-16 11:41:10,784] TRAINING COMPLETED
+[2025-04-16 11:41:10,784] Environment: ContinuousCartPole-v0
+[2025-04-16 11:41:10,784] Total steps: 1000309
+[2025-04-16 11:41:10,784] Total episodes: 7020
+[2025-04-16 11:41:10,785] Final evaluation over 20 episodes:
+[2025-04-16 11:41:10,785]   Mean reward: 500.00 ± 0.00
+[2025-04-16 11:41:10,785]   90th percentile: 500.00
+[2025-04-16 11:41:10,785]   10th percentile: 500.00
+[2025-04-16 11:41:10,785] --------------------------------------------------
