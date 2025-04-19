@@ -1,0 +1,5 @@
+- env/sac=lunarlander
+- max_train_steps=50000
+- load_model=true
+- load_path=./offline_model/LLDV3/baseline
+- data_path=./dataset/LLDV3/no_noise/eps0.5

@@ -1,0 +1,4 @@
+- env/sac=cartpole
+- robust=true
+- delta=0.75
+- data_path=/home/mx/DRAC/dataset/CPV0/SAC/no_noise/eps0.5

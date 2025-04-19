@@ -1,0 +1,18 @@
+# @package _global_
+
+# Humanoid environment config
+# Benchmark Reward: 6000, std: 150
+env_name: HalfCheetah-v5
+env_index: 4
+eval_freq: 1000
+eval_interval: 1000
+save_interval: 1000
+max_trn_steps: 50000
+max_vae_trn_step: 10000
+batch_size: 500
+
+# Adam stepsize*
+adam_lr: 3e-4
+# learning rate of actor
+actor_lr: 8e-4
+critic_lr: 8e-4

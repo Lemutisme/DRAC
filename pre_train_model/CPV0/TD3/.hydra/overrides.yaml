@@ -1,0 +1,4 @@
+- env/sac=cartpole
+- mode=continual
+- model=TD3
+- max_train_steps=100000

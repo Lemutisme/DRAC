@@ -1,0 +1,153 @@
+[2025-04-17 01:44:34,232][__main__][INFO] - Configuration:
+device: cuda
+mode: generate
+model: TD3
+write: false
+debug_print: false
+render: false
+load_model: true
+load_path: /home/mx/DRAC/outputs/TD3/2025-04-17/01-31-24/model.d3
+eval_model: false
+save_model: true
+data_path: None
+epsilon: 0.5
+seed: 42
+max_train_steps: 1000000
+save_interval: 10000
+eval_interval: 1000
+update_every: 50
+explore_episode: 50
+gamma: 0.99
+tau: 0.005
+net_arch:
+- 256
+- 256
+net_layer: 1
+a_lr: 0.0005
+c_lr: 0.0005
+l2_reg: 0.0
+batch_size: 256
+reward_adapt: true
+noise: false
+type: gaussian
+adv: false
+spread: 0.0
+scale: 1.0
+delta: 0.0
+env_name: Pendulum-v1
+env_index: 0
+b_lr: 5.0e-05
+g_lr: 5.0e-05
+r_lr: 5.0e-05
+env_mods:
+  use_mods: false
+  observation_noise:
+    enabled: false
+    type: gaussian
+    level: 0.1
+    frequency: 1.0
+  action_perturb:
+    enabled: false
+    type: noise
+    probability: 0.1
+    level: 0.1
+  reward_shift:
+    enabled: false
+    type: scale
+    param: 0.9
+    noise_level: 0.1
+  transition_perturb:
+    enabled: false
+    type: teleport
+    probability: 0.05
+    level: 0.1
+  param_shift:
+    enabled: false
+    train_apply: false
+    eval_apply: true
+    g_factor: 1.0
+    m_factor: 1.0
+    l_factor: 1.0
+    len_factor: 1.0
+    force_mag_factor: 1.0
+    gravity_factor: 1.0
+    wind_power: 0.0
+    turbulence_power: 0.0
+    engine_factor: 1.0
+  custom:
+    enabled: false
+    spread: 0.0
+    type: gaussian
+    adv: false
+  eval:
+    use_modified: true
+    scale_noise: false
+    noise_scale_factor: 2.0
+    include_action_perturb: true
+    include_reward_shift: true
+    include_transition_perturb: true
+
+[2025-04-17 01:44:34,308][__main__][INFO] - System information:
+[2025-04-17 01:44:34,308][__main__][INFO] -   Platform: Linux-6.11.0-21-generic-x86_64-with-glibc2.10
+[2025-04-17 01:44:34,308][__main__][INFO] -   Python: 3.8.19
+[2025-04-17 01:44:34,308][__main__][INFO] -   PyTorch: 2.4.1+cu121
+[2025-04-17 01:44:34,308][__main__][INFO] -   CUDA Available: True
+[2025-04-17 01:44:34,308][__main__][INFO] -   CUDA Version: 12.1
+[2025-04-17 01:44:34,308][__main__][INFO] -   GPU: NVIDIA GeForce GTX 1080 Ti
+[2025-04-17 01:44:34,317][__main__][INFO] - Env: Pendulum-v1  state_dim: 3  action_dim: 1  max_a: 2.0  min_a: -2.0  max_e_steps: 200
+[2025-04-17 01:44:34,318][__main__][INFO] - Random Seed: 42
+[2025-04-17 01:44:34,319][__main__][INFO] - Models will be saved to models/d3rl_model/PV1
+[2025-04-17 01:44:34,319][__main__][INFO] - Loading pre-trained model
+[2025-04-17 01:44:48,606][__main__][INFO] - Data collected: 20000 in 100 episodes.
+[2025-04-17 01:45:00,558][__main__][INFO] - Data collected: 40000 in 200 episodes.
+[2025-04-17 01:45:12,458][__main__][INFO] - Data collected: 60000 in 300 episodes.
+[2025-04-17 01:45:24,297][__main__][INFO] - Data collected: 80000 in 400 episodes.
+[2025-04-17 01:45:36,240][__main__][INFO] - Data collected: 100000 in 500 episodes.
+[2025-04-17 01:45:48,138][__main__][INFO] - Data collected: 120000 in 600 episodes.
+[2025-04-17 01:46:01,303][__main__][INFO] - Data collected: 140000 in 700 episodes.
+[2025-04-17 01:46:13,442][__main__][INFO] - Data collected: 160000 in 800 episodes.
+[2025-04-17 01:46:25,752][__main__][INFO] - Data collected: 180000 in 900 episodes.
+[2025-04-17 01:46:38,065][__main__][INFO] - Data collected: 200000 in 1000 episodes.
+[2025-04-17 01:46:49,813][__main__][INFO] - Data collected: 220000 in 1100 episodes.
+[2025-04-17 01:47:02,060][__main__][INFO] - Data collected: 240000 in 1200 episodes.
+[2025-04-17 01:47:14,449][__main__][INFO] - Data collected: 260000 in 1300 episodes.
+[2025-04-17 01:47:26,619][__main__][INFO] - Data collected: 280000 in 1400 episodes.
+[2025-04-17 01:47:38,554][__main__][INFO] - Data collected: 300000 in 1500 episodes.
+[2025-04-17 01:47:50,320][__main__][INFO] - Data collected: 320000 in 1600 episodes.
+[2025-04-17 01:48:03,132][__main__][INFO] - Data collected: 340000 in 1700 episodes.
+[2025-04-17 01:48:14,912][__main__][INFO] - Data collected: 360000 in 1800 episodes.
+[2025-04-17 01:48:26,969][__main__][INFO] - Data collected: 380000 in 1900 episodes.
+[2025-04-17 01:48:39,312][__main__][INFO] - Data collected: 400000 in 2000 episodes.
+[2025-04-17 01:48:51,272][__main__][INFO] - Data collected: 420000 in 2100 episodes.
+[2025-04-17 01:49:03,263][__main__][INFO] - Data collected: 440000 in 2200 episodes.
+[2025-04-17 01:49:15,277][__main__][INFO] - Data collected: 460000 in 2300 episodes.
+[2025-04-17 01:49:27,304][__main__][INFO] - Data collected: 480000 in 2400 episodes.
+[2025-04-17 01:49:38,985][__main__][INFO] - Data collected: 500000 in 2500 episodes.
+[2025-04-17 01:49:50,807][__main__][INFO] - Data collected: 520000 in 2600 episodes.
+[2025-04-17 01:50:03,601][__main__][INFO] - Data collected: 540000 in 2700 episodes.
+[2025-04-17 01:50:15,414][__main__][INFO] - Data collected: 560000 in 2800 episodes.
+[2025-04-17 01:50:27,492][__main__][INFO] - Data collected: 580000 in 2900 episodes.
+[2025-04-17 01:50:40,843][__main__][INFO] - Data collected: 600000 in 3000 episodes.
+[2025-04-17 01:50:52,839][__main__][INFO] - Data collected: 620000 in 3100 episodes.
+[2025-04-17 01:51:04,845][__main__][INFO] - Data collected: 640000 in 3200 episodes.
+[2025-04-17 01:51:16,791][__main__][INFO] - Data collected: 660000 in 3300 episodes.
+[2025-04-17 01:51:28,610][__main__][INFO] - Data collected: 680000 in 3400 episodes.
+[2025-04-17 01:51:40,484][__main__][INFO] - Data collected: 700000 in 3500 episodes.
+[2025-04-17 01:51:52,119][__main__][INFO] - Data collected: 720000 in 3600 episodes.
+[2025-04-17 01:52:05,146][__main__][INFO] - Data collected: 740000 in 3700 episodes.
+[2025-04-17 01:52:16,944][__main__][INFO] - Data collected: 760000 in 3800 episodes.
+[2025-04-17 01:52:28,686][__main__][INFO] - Data collected: 780000 in 3900 episodes.
+[2025-04-17 01:52:40,769][__main__][INFO] - Data collected: 800000 in 4000 episodes.
+[2025-04-17 01:52:53,106][__main__][INFO] - Data collected: 820000 in 4100 episodes.
+[2025-04-17 01:53:05,173][__main__][INFO] - Data collected: 840000 in 4200 episodes.
+[2025-04-17 01:53:16,972][__main__][INFO] - Data collected: 860000 in 4300 episodes.
+[2025-04-17 01:53:28,923][__main__][INFO] - Data collected: 880000 in 4400 episodes.
+[2025-04-17 01:53:41,263][__main__][INFO] - Data collected: 900000 in 4500 episodes.
+[2025-04-17 01:53:53,426][__main__][INFO] - Data collected: 920000 in 4600 episodes.
+[2025-04-17 01:54:06,049][__main__][INFO] - Data collected: 940000 in 4700 episodes.
+[2025-04-17 01:54:17,789][__main__][INFO] - Data collected: 960000 in 4800 episodes.
+[2025-04-17 01:54:29,589][__main__][INFO] - Data collected: 980000 in 4900 episodes.
+[2025-04-17 01:54:41,425][__main__][INFO] - Data collected: 1000000 in 5000 episodes.
+[2025-04-17 01:54:41,458][__main__][INFO] - Training completed. Evaluating across 20 episodes
+[2025-04-17 01:54:43,220][__main__][INFO] - Final evaluation - Mean: -270.40, Std: 151.50
+[2025-04-17 01:54:43,220][__main__][INFO] - 90th percentile: -121.90, 10th percentile: -480.70

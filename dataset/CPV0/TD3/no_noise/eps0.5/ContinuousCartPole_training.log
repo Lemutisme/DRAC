@@ -1,0 +1,282 @@
+[2025-04-17 21:46:45,095][__main__][INFO] - Configuration:
+device: cuda
+mode: generate
+model: TD3
+write: false
+debug_print: false
+render: false
+load_model: true
+load_path: /home/mx/DRAC/pre_train_model/CPV0/TD3/model.d3
+eval_model: false
+save_model: true
+data_path: None
+epsilon: 0.5
+seed: 42
+max_train_steps: 1000000
+save_interval: 10000
+eval_interval: 1000
+update_every: 10
+explore_episode: 50
+gamma: 0.99
+tau: 0.005
+net_arch:
+- 256
+- 256
+net_layer: 1
+a_lr: 0.005
+c_lr: 5.0e-05
+l2_reg: 0
+batch_size: 256
+reward_adapt: true
+noise: false
+type: gaussian
+adv: false
+spread: 0.0
+scale: 1.0
+delta: 0.0
+env_name: ContinuousCartPole
+env_index: 1
+env_mods:
+  use_mods: false
+  observation_noise:
+    enabled: false
+    type: gaussian
+    level: 0.1
+    frequency: 1.0
+  action_perturb:
+    enabled: false
+    type: noise
+    probability: 0.1
+    level: 0.1
+  reward_shift:
+    enabled: false
+    type: scale
+    param: 0.9
+    noise_level: 0.1
+  transition_perturb:
+    enabled: false
+    type: teleport
+    probability: 0.05
+    level: 0.1
+  param_shift:
+    enabled: false
+    train_apply: false
+    eval_apply: true
+    g_factor: 1.0
+    m_factor: 1.0
+    l_factor: 1.0
+    len_factor: 1.0
+    force_mag_factor: 1.0
+    gravity_factor: 1.0
+    wind_power: 0.0
+    turbulence_power: 0.0
+    engine_factor: 1.0
+  custom:
+    enabled: false
+    spread: 0.0
+    type: gaussian
+    adv: false
+  eval:
+    use_modified: true
+    scale_noise: false
+    noise_scale_factor: 2.0
+    include_action_perturb: true
+    include_reward_shift: true
+    include_transition_perturb: true
+
+[2025-04-17 21:46:45,174][__main__][INFO] - System information:
+[2025-04-17 21:46:45,174][__main__][INFO] -   Platform: Linux-6.11.0-21-generic-x86_64-with-glibc2.10
+[2025-04-17 21:46:45,174][__main__][INFO] -   Python: 3.8.19
+[2025-04-17 21:46:45,174][__main__][INFO] -   PyTorch: 2.4.1+cu121
+[2025-04-17 21:46:45,174][__main__][INFO] -   CUDA Available: True
+[2025-04-17 21:46:45,174][__main__][INFO] -   CUDA Version: 12.1
+[2025-04-17 21:46:45,174][__main__][INFO] -   GPU: NVIDIA GeForce GTX 1080 Ti
+[2025-04-17 21:46:45,181][__main__][INFO] - Env: ContinuousCartPole-v0  state_dim: 4  action_dim: 1  max_a: 1.0  min_a: -1.0  max_e_steps: 500
+[2025-04-17 21:46:45,183][__main__][INFO] - Random Seed: 42
+[2025-04-17 21:46:45,183][__main__][INFO] - Models will be saved to models/d3rl_model/CPV0
+[2025-04-17 21:46:45,183][__main__][INFO] - Loading pre-trained model
+[2025-04-17 21:46:53,188][__main__][INFO] - Data collected: 5136 in 100 episodes.
+[2025-04-17 21:46:56,191][__main__][INFO] - Data collected: 9604 in 200 episodes.
+[2025-04-17 21:46:59,532][__main__][INFO] - Data collected: 14671 in 300 episodes.
+[2025-04-17 21:47:02,434][__main__][INFO] - Data collected: 19693 in 400 episodes.
+[2025-04-17 21:47:05,364][__main__][INFO] - Data collected: 25202 in 500 episodes.
+[2025-04-17 21:47:07,953][__main__][INFO] - Data collected: 30067 in 600 episodes.
+[2025-04-17 21:47:10,737][__main__][INFO] - Data collected: 34902 in 700 episodes.
+[2025-04-17 21:47:13,836][__main__][INFO] - Data collected: 40539 in 800 episodes.
+[2025-04-17 21:47:16,913][__main__][INFO] - Data collected: 46248 in 900 episodes.
+[2025-04-17 21:47:19,591][__main__][INFO] - Data collected: 51221 in 1000 episodes.
+[2025-04-17 21:47:22,629][__main__][INFO] - Data collected: 56952 in 1100 episodes.
+[2025-04-17 21:47:25,964][__main__][INFO] - Data collected: 62756 in 1200 episodes.
+[2025-04-17 21:47:28,921][__main__][INFO] - Data collected: 68234 in 1300 episodes.
+[2025-04-17 21:47:31,862][__main__][INFO] - Data collected: 73838 in 1400 episodes.
+[2025-04-17 21:47:34,671][__main__][INFO] - Data collected: 78999 in 1500 episodes.
+[2025-04-17 21:47:37,962][__main__][INFO] - Data collected: 84841 in 1600 episodes.
+[2025-04-17 21:47:41,255][__main__][INFO] - Data collected: 90766 in 1700 episodes.
+[2025-04-17 21:47:44,109][__main__][INFO] - Data collected: 96140 in 1800 episodes.
+[2025-04-17 21:47:47,163][__main__][INFO] - Data collected: 101772 in 1900 episodes.
+[2025-04-17 21:47:50,129][__main__][INFO] - Data collected: 107144 in 2000 episodes.
+[2025-04-17 21:47:53,377][__main__][INFO] - Data collected: 112872 in 2100 episodes.
+[2025-04-17 21:47:56,083][__main__][INFO] - Data collected: 117804 in 2200 episodes.
+[2025-04-17 21:47:58,730][__main__][INFO] - Data collected: 122803 in 2300 episodes.
+[2025-04-17 21:48:01,715][__main__][INFO] - Data collected: 128100 in 2400 episodes.
+[2025-04-17 21:48:04,705][__main__][INFO] - Data collected: 133739 in 2500 episodes.
+[2025-04-17 21:48:08,243][__main__][INFO] - Data collected: 139986 in 2600 episodes.
+[2025-04-17 21:48:11,526][__main__][INFO] - Data collected: 146081 in 2700 episodes.
+[2025-04-17 21:48:14,573][__main__][INFO] - Data collected: 151902 in 2800 episodes.
+[2025-04-17 21:48:17,372][__main__][INFO] - Data collected: 157097 in 2900 episodes.
+[2025-04-17 21:48:20,577][__main__][INFO] - Data collected: 162748 in 3000 episodes.
+[2025-04-17 21:48:23,923][__main__][INFO] - Data collected: 168912 in 3100 episodes.
+[2025-04-17 21:48:26,801][__main__][INFO] - Data collected: 174434 in 3200 episodes.
+[2025-04-17 21:48:29,683][__main__][INFO] - Data collected: 179847 in 3300 episodes.
+[2025-04-17 21:48:32,724][__main__][INFO] - Data collected: 185208 in 3400 episodes.
+[2025-04-17 21:48:35,788][__main__][INFO] - Data collected: 190810 in 3500 episodes.
+[2025-04-17 21:48:39,061][__main__][INFO] - Data collected: 196925 in 3600 episodes.
+[2025-04-17 21:48:42,068][__main__][INFO] - Data collected: 202391 in 3700 episodes.
+[2025-04-17 21:48:44,749][__main__][INFO] - Data collected: 207118 in 3800 episodes.
+[2025-04-17 21:48:48,357][__main__][INFO] - Data collected: 213698 in 3900 episodes.
+[2025-04-17 21:48:51,714][__main__][INFO] - Data collected: 219821 in 4000 episodes.
+[2025-04-17 21:48:55,110][__main__][INFO] - Data collected: 226039 in 4100 episodes.
+[2025-04-17 21:48:58,351][__main__][INFO] - Data collected: 231897 in 4200 episodes.
+[2025-04-17 21:49:01,334][__main__][INFO] - Data collected: 236954 in 4300 episodes.
+[2025-04-17 21:49:04,362][__main__][INFO] - Data collected: 242748 in 4400 episodes.
+[2025-04-17 21:49:07,318][__main__][INFO] - Data collected: 248164 in 4500 episodes.
+[2025-04-17 21:49:10,464][__main__][INFO] - Data collected: 253945 in 4600 episodes.
+[2025-04-17 21:49:13,955][__main__][INFO] - Data collected: 260071 in 4700 episodes.
+[2025-04-17 21:49:16,962][__main__][INFO] - Data collected: 265550 in 4800 episodes.
+[2025-04-17 21:49:20,359][__main__][INFO] - Data collected: 271845 in 4900 episodes.
+[2025-04-17 21:49:23,412][__main__][INFO] - Data collected: 277614 in 5000 episodes.
+[2025-04-17 21:49:26,385][__main__][INFO] - Data collected: 282968 in 5100 episodes.
+[2025-04-17 21:49:29,268][__main__][INFO] - Data collected: 288061 in 5200 episodes.
+[2025-04-17 21:49:32,434][__main__][INFO] - Data collected: 293959 in 5300 episodes.
+[2025-04-17 21:49:35,398][__main__][INFO] - Data collected: 299088 in 5400 episodes.
+[2025-04-17 21:49:38,472][__main__][INFO] - Data collected: 304638 in 5500 episodes.
+[2025-04-17 21:49:41,189][__main__][INFO] - Data collected: 309459 in 5600 episodes.
+[2025-04-17 21:49:43,910][__main__][INFO] - Data collected: 314684 in 5700 episodes.
+[2025-04-17 21:49:46,717][__main__][INFO] - Data collected: 319991 in 5800 episodes.
+[2025-04-17 21:49:49,406][__main__][INFO] - Data collected: 325160 in 5900 episodes.
+[2025-04-17 21:49:52,260][__main__][INFO] - Data collected: 330538 in 6000 episodes.
+[2025-04-17 21:49:55,367][__main__][INFO] - Data collected: 335926 in 6100 episodes.
+[2025-04-17 21:49:59,020][__main__][INFO] - Data collected: 341605 in 6200 episodes.
+[2025-04-17 21:50:02,581][__main__][INFO] - Data collected: 347803 in 6300 episodes.
+[2025-04-17 21:50:05,703][__main__][INFO] - Data collected: 353644 in 6400 episodes.
+[2025-04-17 21:50:09,051][__main__][INFO] - Data collected: 359420 in 6500 episodes.
+[2025-04-17 21:50:12,010][__main__][INFO] - Data collected: 364755 in 6600 episodes.
+[2025-04-17 21:50:14,541][__main__][INFO] - Data collected: 369463 in 6700 episodes.
+[2025-04-17 21:50:17,289][__main__][INFO] - Data collected: 374493 in 6800 episodes.
+[2025-04-17 21:50:20,400][__main__][INFO] - Data collected: 380020 in 6900 episodes.
+[2025-04-17 21:50:23,428][__main__][INFO] - Data collected: 385546 in 7000 episodes.
+[2025-04-17 21:50:26,300][__main__][INFO] - Data collected: 390773 in 7100 episodes.
+[2025-04-17 21:50:28,964][__main__][INFO] - Data collected: 395815 in 7200 episodes.
+[2025-04-17 21:50:31,855][__main__][INFO] - Data collected: 401298 in 7300 episodes.
+[2025-04-17 21:50:34,570][__main__][INFO] - Data collected: 406238 in 7400 episodes.
+[2025-04-17 21:50:37,609][__main__][INFO] - Data collected: 411701 in 7500 episodes.
+[2025-04-17 21:50:40,450][__main__][INFO] - Data collected: 417031 in 7600 episodes.
+[2025-04-17 21:50:43,316][__main__][INFO] - Data collected: 422381 in 7700 episodes.
+[2025-04-17 21:50:46,289][__main__][INFO] - Data collected: 427895 in 7800 episodes.
+[2025-04-17 21:50:49,244][__main__][INFO] - Data collected: 433052 in 7900 episodes.
+[2025-04-17 21:50:52,502][__main__][INFO] - Data collected: 439074 in 8000 episodes.
+[2025-04-17 21:50:55,435][__main__][INFO] - Data collected: 444441 in 8100 episodes.
+[2025-04-17 21:50:58,000][__main__][INFO] - Data collected: 449181 in 8200 episodes.
+[2025-04-17 21:51:01,131][__main__][INFO] - Data collected: 454490 in 8300 episodes.
+[2025-04-17 21:51:04,067][__main__][INFO] - Data collected: 459718 in 8400 episodes.
+[2025-04-17 21:51:07,175][__main__][INFO] - Data collected: 465267 in 8500 episodes.
+[2025-04-17 21:51:10,391][__main__][INFO] - Data collected: 471069 in 8600 episodes.
+[2025-04-17 21:51:13,288][__main__][INFO] - Data collected: 476587 in 8700 episodes.
+[2025-04-17 21:51:16,627][__main__][INFO] - Data collected: 482428 in 8800 episodes.
+[2025-04-17 21:51:19,364][__main__][INFO] - Data collected: 487733 in 8900 episodes.
+[2025-04-17 21:51:22,599][__main__][INFO] - Data collected: 493630 in 9000 episodes.
+[2025-04-17 21:51:25,541][__main__][INFO] - Data collected: 499300 in 9100 episodes.
+[2025-04-17 21:51:28,867][__main__][INFO] - Data collected: 505272 in 9200 episodes.
+[2025-04-17 21:51:31,563][__main__][INFO] - Data collected: 510474 in 9300 episodes.
+[2025-04-17 21:51:34,520][__main__][INFO] - Data collected: 516045 in 9400 episodes.
+[2025-04-17 21:51:37,345][__main__][INFO] - Data collected: 521418 in 9500 episodes.
+[2025-04-17 21:51:40,218][__main__][INFO] - Data collected: 526855 in 9600 episodes.
+[2025-04-17 21:51:43,762][__main__][INFO] - Data collected: 533056 in 9700 episodes.
+[2025-04-17 21:51:47,327][__main__][INFO] - Data collected: 539557 in 9800 episodes.
+[2025-04-17 21:51:50,263][__main__][INFO] - Data collected: 545225 in 9900 episodes.
+[2025-04-17 21:51:53,090][__main__][INFO] - Data collected: 550431 in 10000 episodes.
+[2025-04-17 21:51:56,261][__main__][INFO] - Data collected: 555656 in 10100 episodes.
+[2025-04-17 21:51:59,630][__main__][INFO] - Data collected: 561129 in 10200 episodes.
+[2025-04-17 21:52:02,437][__main__][INFO] - Data collected: 566186 in 10300 episodes.
+[2025-04-17 21:52:05,518][__main__][INFO] - Data collected: 571614 in 10400 episodes.
+[2025-04-17 21:52:08,528][__main__][INFO] - Data collected: 577329 in 10500 episodes.
+[2025-04-17 21:52:12,204][__main__][INFO] - Data collected: 583402 in 10600 episodes.
+[2025-04-17 21:52:14,740][__main__][INFO] - Data collected: 588111 in 10700 episodes.
+[2025-04-17 21:52:17,468][__main__][INFO] - Data collected: 593214 in 10800 episodes.
+[2025-04-17 21:52:20,205][__main__][INFO] - Data collected: 598368 in 10900 episodes.
+[2025-04-17 21:52:23,091][__main__][INFO] - Data collected: 603665 in 11000 episodes.
+[2025-04-17 21:52:26,077][__main__][INFO] - Data collected: 609069 in 11100 episodes.
+[2025-04-17 21:52:28,980][__main__][INFO] - Data collected: 614517 in 11200 episodes.
+[2025-04-17 21:52:31,732][__main__][INFO] - Data collected: 619813 in 11300 episodes.
+[2025-04-17 21:52:35,411][__main__][INFO] - Data collected: 625811 in 11400 episodes.
+[2025-04-17 21:52:39,039][__main__][INFO] - Data collected: 631916 in 11500 episodes.
+[2025-04-17 21:52:41,977][__main__][INFO] - Data collected: 637375 in 11600 episodes.
+[2025-04-17 21:52:45,279][__main__][INFO] - Data collected: 643562 in 11700 episodes.
+[2025-04-17 21:52:48,076][__main__][INFO] - Data collected: 648686 in 11800 episodes.
+[2025-04-17 21:52:51,414][__main__][INFO] - Data collected: 654243 in 11900 episodes.
+[2025-04-17 21:52:54,673][__main__][INFO] - Data collected: 660300 in 12000 episodes.
+[2025-04-17 21:52:57,672][__main__][INFO] - Data collected: 665905 in 12100 episodes.
+[2025-04-17 21:53:00,367][__main__][INFO] - Data collected: 670908 in 12200 episodes.
+[2025-04-17 21:53:03,265][__main__][INFO] - Data collected: 676113 in 12300 episodes.
+[2025-04-17 21:53:06,185][__main__][INFO] - Data collected: 681421 in 12400 episodes.
+[2025-04-17 21:53:08,651][__main__][INFO] - Data collected: 685933 in 12500 episodes.
+[2025-04-17 21:53:11,645][__main__][INFO] - Data collected: 691554 in 12600 episodes.
+[2025-04-17 21:53:14,601][__main__][INFO] - Data collected: 696983 in 12700 episodes.
+[2025-04-17 21:53:17,595][__main__][INFO] - Data collected: 702320 in 12800 episodes.
+[2025-04-17 21:53:21,006][__main__][INFO] - Data collected: 708442 in 12900 episodes.
+[2025-04-17 21:53:23,947][__main__][INFO] - Data collected: 713959 in 13000 episodes.
+[2025-04-17 21:53:26,788][__main__][INFO] - Data collected: 719164 in 13100 episodes.
+[2025-04-17 21:53:29,501][__main__][INFO] - Data collected: 724163 in 13200 episodes.
+[2025-04-17 21:53:32,477][__main__][INFO] - Data collected: 729384 in 13300 episodes.
+[2025-04-17 21:53:34,807][__main__][INFO] - Data collected: 733600 in 13400 episodes.
+[2025-04-17 21:53:37,547][__main__][INFO] - Data collected: 738633 in 13500 episodes.
+[2025-04-17 21:53:40,572][__main__][INFO] - Data collected: 744384 in 13600 episodes.
+[2025-04-17 21:53:43,503][__main__][INFO] - Data collected: 749954 in 13700 episodes.
+[2025-04-17 21:53:46,568][__main__][INFO] - Data collected: 755327 in 13800 episodes.
+[2025-04-17 21:53:49,504][__main__][INFO] - Data collected: 760750 in 13900 episodes.
+[2025-04-17 21:53:52,150][__main__][INFO] - Data collected: 765776 in 14000 episodes.
+[2025-04-17 21:53:55,024][__main__][INFO] - Data collected: 771009 in 14100 episodes.
+[2025-04-17 21:53:58,679][__main__][INFO] - Data collected: 776739 in 14200 episodes.
+[2025-04-17 21:54:02,540][__main__][INFO] - Data collected: 783498 in 14300 episodes.
+[2025-04-17 21:54:05,843][__main__][INFO] - Data collected: 789682 in 14400 episodes.
+[2025-04-17 21:54:09,001][__main__][INFO] - Data collected: 795550 in 14500 episodes.
+[2025-04-17 21:54:12,266][__main__][INFO] - Data collected: 801328 in 14600 episodes.
+[2025-04-17 21:54:14,936][__main__][INFO] - Data collected: 806283 in 14700 episodes.
+[2025-04-17 21:54:17,957][__main__][INFO] - Data collected: 811652 in 14800 episodes.
+[2025-04-17 21:54:20,583][__main__][INFO] - Data collected: 816902 in 14900 episodes.
+[2025-04-17 21:54:23,447][__main__][INFO] - Data collected: 822517 in 15000 episodes.
+[2025-04-17 21:54:26,687][__main__][INFO] - Data collected: 828283 in 15100 episodes.
+[2025-04-17 21:54:29,792][__main__][INFO] - Data collected: 833996 in 15200 episodes.
+[2025-04-17 21:54:32,940][__main__][INFO] - Data collected: 840005 in 15300 episodes.
+[2025-04-17 21:54:35,875][__main__][INFO] - Data collected: 845541 in 15400 episodes.
+[2025-04-17 21:54:38,571][__main__][INFO] - Data collected: 850580 in 15500 episodes.
+[2025-04-17 21:54:41,790][__main__][INFO] - Data collected: 856401 in 15600 episodes.
+[2025-04-17 21:54:45,012][__main__][INFO] - Data collected: 862179 in 15700 episodes.
+[2025-04-17 21:54:47,529][__main__][INFO] - Data collected: 866897 in 15800 episodes.
+[2025-04-17 21:54:50,450][__main__][INFO] - Data collected: 872270 in 15900 episodes.
+[2025-04-17 21:54:53,175][__main__][INFO] - Data collected: 877206 in 16000 episodes.
+[2025-04-17 21:54:56,083][__main__][INFO] - Data collected: 882383 in 16100 episodes.
+[2025-04-17 21:54:59,196][__main__][INFO] - Data collected: 888380 in 16200 episodes.
+[2025-04-17 21:55:02,065][__main__][INFO] - Data collected: 893727 in 16300 episodes.
+[2025-04-17 21:55:05,344][__main__][INFO] - Data collected: 899768 in 16400 episodes.
+[2025-04-17 21:55:08,262][__main__][INFO] - Data collected: 904906 in 16500 episodes.
+[2025-04-17 21:55:11,364][__main__][INFO] - Data collected: 910561 in 16600 episodes.
+[2025-04-17 21:55:14,281][__main__][INFO] - Data collected: 915911 in 16700 episodes.
+[2025-04-17 21:55:17,164][__main__][INFO] - Data collected: 921370 in 16800 episodes.
+[2025-04-17 21:55:20,328][__main__][INFO] - Data collected: 927180 in 16900 episodes.
+[2025-04-17 21:55:23,183][__main__][INFO] - Data collected: 932180 in 17000 episodes.
+[2025-04-17 21:55:25,753][__main__][INFO] - Data collected: 936819 in 17100 episodes.
+[2025-04-17 21:55:28,659][__main__][INFO] - Data collected: 942193 in 17200 episodes.
+[2025-04-17 21:55:31,313][__main__][INFO] - Data collected: 947049 in 17300 episodes.
+[2025-04-17 21:55:34,147][__main__][INFO] - Data collected: 952178 in 17400 episodes.
+[2025-04-17 21:55:37,073][__main__][INFO] - Data collected: 957487 in 17500 episodes.
+[2025-04-17 21:55:40,423][__main__][INFO] - Data collected: 963380 in 17600 episodes.
+[2025-04-17 21:55:43,756][__main__][INFO] - Data collected: 969452 in 17700 episodes.
+[2025-04-17 21:55:46,652][__main__][INFO] - Data collected: 974979 in 17800 episodes.
+[2025-04-17 21:55:50,012][__main__][INFO] - Data collected: 980850 in 17900 episodes.
+[2025-04-17 21:55:53,436][__main__][INFO] - Data collected: 986160 in 18000 episodes.
+[2025-04-17 21:55:57,360][__main__][INFO] - Data collected: 992302 in 18100 episodes.
+[2025-04-17 21:56:01,731][__main__][INFO] - Data collected: 996839 in 18200 episodes.
+[2025-04-17 21:56:04,446][__main__][INFO] - Training completed. Evaluating across 20 episodes
+[2025-04-17 21:56:08,469][__main__][INFO] - Final evaluation - Mean: 500.00, Std: 0.00
+[2025-04-17 21:56:08,469][__main__][INFO] - 90th percentile: 500.00, 10th percentile: 500.00

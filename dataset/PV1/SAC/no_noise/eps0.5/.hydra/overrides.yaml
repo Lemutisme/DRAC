@@ -1,0 +1,5 @@
+- mode=generate
+- max_train_steps=1000000
+- epsilon=0.5
+- load_model=true
+- load_path=./pre_train_model/PV1/baseline

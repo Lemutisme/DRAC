@@ -1,0 +1,34 @@
+[2025-04-18 13:47:58,898][__main__][INFO] - System information:
+[2025-04-18 13:47:58,898][__main__][INFO] -   Platform: Linux-6.11.0-21-generic-x86_64-with-glibc2.39
+[2025-04-18 13:47:58,898][__main__][INFO] -   Python: 3.12.2
+[2025-04-18 13:47:58,898][__main__][INFO] -   PyTorch: 2.5.1
+[2025-04-18 13:47:58,898][__main__][INFO] -   CUDA Available: True
+[2025-04-18 13:47:58,898][__main__][INFO] -   CUDA Version: 12.4
+[2025-04-18 13:47:58,898][__main__][INFO] -   GPU: NVIDIA GeForce GTX 1080 Ti
+[2025-04-18 13:47:58,904][__main__][INFO] - Env: ContinuousCartPole-v0  state_dim: 4  action_dim: 1  max_a: 1.0  min_a: -1.0  max_e_steps: 500
+[2025-04-18 13:47:58,905][__main__][INFO] - Random Seed: 42
+[2025-04-18 13:47:58,905][__main__][INFO] - Models will be saved to models/SAC_model/CPV0
+[2025-04-18 13:48:20,237][__main__][INFO] - EnvName: CPV0, Steps: 1k, Episode Reward: 13
+[2025-04-18 13:48:41,947][__main__][INFO] - EnvName: CPV0, Steps: 2k, Episode Reward: 140
+[2025-04-18 13:49:01,006][__main__][INFO] - EnvName: CPV0, Steps: 3k, Episode Reward: 297
+[2025-04-18 13:49:22,879][__main__][INFO] - EnvName: CPV0, Steps: 4k, Episode Reward: 382
+[2025-04-18 13:49:45,498][__main__][INFO] - EnvName: CPV0, Steps: 5k, Episode Reward: 287
+[2025-04-18 13:50:05,248][__main__][INFO] - EnvName: CPV0, Steps: 6k, Episode Reward: 398
+[2025-04-18 13:50:27,090][__main__][INFO] - EnvName: CPV0, Steps: 7k, Episode Reward: 500
+[2025-04-18 13:50:50,110][__main__][INFO] - EnvName: CPV0, Steps: 8k, Episode Reward: 500
+[2025-04-18 13:51:10,778][__main__][INFO] - EnvName: CPV0, Steps: 9k, Episode Reward: 500
+[2025-04-18 13:51:33,251][__main__][INFO] - EnvName: CPV0, Steps: 10k, Episode Reward: 500
+[2025-04-18 13:51:56,395][__main__][INFO] - EnvName: CPV0, Steps: 11k, Episode Reward: 500
+[2025-04-18 13:52:19,029][__main__][INFO] - EnvName: CPV0, Steps: 12k, Episode Reward: 500
+[2025-04-18 13:52:43,333][__main__][INFO] - EnvName: CPV0, Steps: 13k, Episode Reward: 500
+[2025-04-18 13:53:04,428][__main__][INFO] - EnvName: CPV0, Steps: 14k, Episode Reward: 500
+[2025-04-18 13:53:26,596][__main__][INFO] - EnvName: CPV0, Steps: 15k, Episode Reward: 500
+[2025-04-18 13:53:47,367][__main__][INFO] - EnvName: CPV0, Steps: 16k, Episode Reward: 500
+[2025-04-18 13:54:09,384][__main__][INFO] - EnvName: CPV0, Steps: 17k, Episode Reward: 500
+[2025-04-18 13:54:32,007][__main__][INFO] - EnvName: CPV0, Steps: 18k, Episode Reward: 500
+[2025-04-18 13:54:54,033][__main__][INFO] - EnvName: CPV0, Steps: 19k, Episode Reward: 500
+[2025-04-18 13:55:17,452][__main__][INFO] - EnvName: CPV0, Steps: 20k, Episode Reward: 500
+[2025-04-18 13:55:17,457][__main__][INFO] - Training completed. Evaluating across 20 episodes
+[2025-04-18 13:55:23,069][__main__][INFO] - Final evaluation - Mean: 500.00, Std: 0.00
+[2025-04-18 13:55:23,069][__main__][INFO] - 90th percentile: 500.00, 10th percentile: 500.00
+[2025-04-18 13:55:23,075][__main__][INFO] - Final model saved to models/SAC_model/CPV0

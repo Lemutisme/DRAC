@@ -1,0 +1,10 @@
+[2025-04-18 00:12:41,545] Starting TD3 training with configuration: LunarLanderContinuous-v3
+[2025-04-18 00:12:41,621] System: Linux-6.11.0-21-generic-x86_64-with-glibc2.10, PyTorch: 2.4.1+cu121, GPU: NVIDIA GeForce GTX 1080 Ti
+[2025-04-18 01:29:49,532] --------------------------------------------------
+[2025-04-18 01:29:49,532] TRAINING COMPLETED
+[2025-04-18 01:29:49,532] Environment: LunarLanderContinuous-v3
+[2025-04-18 01:29:49,532] Final evaluation over 20 episodes:
+[2025-04-18 01:29:49,532]   Mean reward: 203.90 ± 82.91
+[2025-04-18 01:29:49,532]   90th percentile: 257.10
+[2025-04-18 01:29:49,532]   10th percentile: 171.10
+[2025-04-18 01:29:49,532] --------------------------------------------------

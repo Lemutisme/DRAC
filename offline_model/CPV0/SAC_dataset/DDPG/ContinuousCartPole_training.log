@@ -1,0 +1,493 @@
+[2025-04-18 14:27:08,404][__main__][INFO] - Configuration:
+device: cuda
+mode: offline
+model: DDPG
+write: false
+debug_print: false
+render: false
+load_model: false
+load_path: None
+eval_model: false
+save_model: true
+data_path: /home/mx/DRAC/dataset/CPV0/SAC/no_noise/eps0.5
+epsilon: 0.1
+seed: 42
+max_train_steps: 30000
+save_interval: 10000
+eval_interval: 1000
+update_every: 10
+learning_starts: 10000
+gamma: 0.98
+tau: 0.005
+net_arch:
+- 256
+- 256
+net_layer: 1
+a_lr: 0.005
+c_lr: 5.0e-05
+l2_reg: 0
+batch_size: 256
+reward_adapt: true
+noise: false
+type: gaussian
+adv: false
+spread: 0.0
+scale: 1.0
+delta: 0.0
+env_name: ContinuousCartPole
+env_index: 1
+explore_episode: 50
+env_mods:
+  use_mods: false
+  observation_noise:
+    enabled: false
+    type: gaussian
+    level: 0.1
+    frequency: 1.0
+  action_perturb:
+    enabled: false
+    type: noise
+    probability: 0.1
+    level: 0.1
+  reward_shift:
+    enabled: false
+    type: scale
+    param: 0.9
+    noise_level: 0.1
+  transition_perturb:
+    enabled: false
+    type: teleport
+    probability: 0.05
+    level: 0.1
+  param_shift:
+    enabled: false
+    train_apply: false
+    eval_apply: true
+    g_factor: 1.0
+    m_factor: 1.0
+    l_factor: 1.0
+    len_factor: 1.0
+    force_mag_factor: 1.0
+    gravity_factor: 1.0
+    wind_power: 0.0
+    turbulence_power: 0.0
+    engine_factor: 1.0
+  custom:
+    enabled: false
+    spread: 0.0
+    type: gaussian
+    adv: false
+  eval:
+    use_modified: true
+    scale_noise: false
+    noise_scale_factor: 2.0
+    include_action_perturb: true
+    include_reward_shift: true
+    include_transition_perturb: true
+
+[2025-04-18 14:27:08,484][__main__][INFO] - System information:
+[2025-04-18 14:27:08,484][__main__][INFO] -   Platform: Linux-6.11.0-21-generic-x86_64-with-glibc2.10
+[2025-04-18 14:27:08,484][__main__][INFO] -   Python: 3.8.19
+[2025-04-18 14:27:08,484][__main__][INFO] -   PyTorch: 2.4.1+cu121
+[2025-04-18 14:27:08,484][__main__][INFO] -   CUDA Available: True
+[2025-04-18 14:27:08,484][__main__][INFO] -   CUDA Version: 12.1
+[2025-04-18 14:27:08,484][__main__][INFO] -   GPU: NVIDIA GeForce GTX 1080 Ti
+[2025-04-18 14:27:08,491][__main__][INFO] - Env: ContinuousCartPole-v0  state_dim: 4  action_dim: 1  max_a: 1.0  min_a: -1.0  max_e_steps: 500
+[2025-04-18 14:27:08,493][__main__][INFO] - Random Seed: 42
+[2025-04-18 14:27:08,493][__main__][INFO] - Models will be saved to models/d3rl_model/CPV0
+[2025-04-18 14:34:48,191][__main__][INFO] - Training completed. Evaluating across 20 episodes
+[2025-04-18 14:34:53,787][__main__][INFO] - Final evaluation - Mean: 320.40, Std: 80.06
+[2025-04-18 14:34:53,788][__main__][INFO] - 90th percentile: 426.80, 10th percentile: 196.70
+[2025-04-18 14:40:27,347][__main__][INFO] - Configuration:
+device: cuda
+mode: offline
+model: DDPG
+write: false
+debug_print: false
+render: false
+load_model: false
+load_path: None
+eval_model: false
+save_model: true
+data_path: /home/mx/DRAC/dataset/CPV0/SAC/no_noise/eps0.5
+epsilon: 0.1
+seed: 42
+max_train_steps: ''
+save_interval: 10000
+eval_interval: 1000
+update_every: 50
+learning_starts: 10000
+gamma: 0.98
+tau: 0.005
+net_arch:
+- 256
+- 256
+net_layer: 1
+a_lr: 0.005
+c_lr: 5.0e-05
+l2_reg: 0
+batch_size: 256
+reward_adapt: true
+noise: false
+type: gaussian
+adv: false
+spread: 0.0
+scale: 1.0
+delta: 0.0
+env_name: ContinuousCartPole
+env_index: 1
+env_mods:
+  use_mods: false
+  observation_noise:
+    enabled: false
+    type: gaussian
+    level: 0.1
+    frequency: 1.0
+  action_perturb:
+    enabled: false
+    type: noise
+    probability: 0.1
+    level: 0.1
+  reward_shift:
+    enabled: false
+    type: scale
+    param: 0.9
+    noise_level: 0.1
+  transition_perturb:
+    enabled: false
+    type: teleport
+    probability: 0.05
+    level: 0.1
+  param_shift:
+    enabled: false
+    train_apply: false
+    eval_apply: true
+    g_factor: 1.0
+    m_factor: 1.0
+    l_factor: 1.0
+    len_factor: 1.0
+    force_mag_factor: 1.0
+    gravity_factor: 1.0
+    wind_power: 0.0
+    turbulence_power: 0.0
+    engine_factor: 1.0
+  custom:
+    enabled: false
+    spread: 0.0
+    type: gaussian
+    adv: false
+  eval:
+    use_modified: true
+    scale_noise: false
+    noise_scale_factor: 2.0
+    include_action_perturb: true
+    include_reward_shift: true
+    include_transition_perturb: true
+
+[2025-04-18 14:40:27,429][__main__][INFO] - System information:
+[2025-04-18 14:40:27,429][__main__][INFO] -   Platform: Linux-6.11.0-21-generic-x86_64-with-glibc2.10
+[2025-04-18 14:40:27,429][__main__][INFO] -   Python: 3.8.19
+[2025-04-18 14:40:27,429][__main__][INFO] -   PyTorch: 2.4.1+cu121
+[2025-04-18 14:40:27,429][__main__][INFO] -   CUDA Available: True
+[2025-04-18 14:40:27,430][__main__][INFO] -   CUDA Version: 12.1
+[2025-04-18 14:40:27,430][__main__][INFO] -   GPU: NVIDIA GeForce GTX 1080 Ti
+[2025-04-18 14:40:27,437][__main__][INFO] - Env: ContinuousCartPole-v0  state_dim: 4  action_dim: 1  max_a: 1.0  min_a: -1.0  max_e_steps: 500
+[2025-04-18 14:40:27,438][__main__][INFO] - Random Seed: 42
+[2025-04-18 14:40:27,438][__main__][INFO] - Models will be saved to models/d3rl_model/CPV0
+[2025-04-18 14:41:12,184][__main__][INFO] - Configuration:
+device: cuda
+mode: offline
+model: DDPG
+write: false
+debug_print: false
+render: false
+load_model: false
+load_path: None
+eval_model: false
+save_model: true
+data_path: /home/mx/DRAC/dataset/CPV0/SAC/no_noise/eps0.5
+epsilon: 0.1
+seed: 42
+max_train_steps: 50000
+save_interval: 10000
+eval_interval: 1000
+update_every: 50
+learning_starts: 10000
+gamma: 0.98
+tau: 0.005
+net_arch:
+- 256
+- 256
+net_layer: 1
+a_lr: 0.005
+c_lr: 0.0001
+l2_reg: 0
+batch_size: 256
+reward_adapt: true
+noise: false
+type: gaussian
+adv: false
+spread: 0.0
+scale: 1.0
+delta: 0.0
+env_name: ContinuousCartPole
+env_index: 1
+env_mods:
+  use_mods: false
+  observation_noise:
+    enabled: false
+    type: gaussian
+    level: 0.1
+    frequency: 1.0
+  action_perturb:
+    enabled: false
+    type: noise
+    probability: 0.1
+    level: 0.1
+  reward_shift:
+    enabled: false
+    type: scale
+    param: 0.9
+    noise_level: 0.1
+  transition_perturb:
+    enabled: false
+    type: teleport
+    probability: 0.05
+    level: 0.1
+  param_shift:
+    enabled: false
+    train_apply: false
+    eval_apply: true
+    g_factor: 1.0
+    m_factor: 1.0
+    l_factor: 1.0
+    len_factor: 1.0
+    force_mag_factor: 1.0
+    gravity_factor: 1.0
+    wind_power: 0.0
+    turbulence_power: 0.0
+    engine_factor: 1.0
+  custom:
+    enabled: false
+    spread: 0.0
+    type: gaussian
+    adv: false
+  eval:
+    use_modified: true
+    scale_noise: false
+    noise_scale_factor: 2.0
+    include_action_perturb: true
+    include_reward_shift: true
+    include_transition_perturb: true
+
+[2025-04-18 14:41:12,263][__main__][INFO] - System information:
+[2025-04-18 14:41:12,264][__main__][INFO] -   Platform: Linux-6.11.0-21-generic-x86_64-with-glibc2.10
+[2025-04-18 14:41:12,264][__main__][INFO] -   Python: 3.8.19
+[2025-04-18 14:41:12,264][__main__][INFO] -   PyTorch: 2.4.1+cu121
+[2025-04-18 14:41:12,264][__main__][INFO] -   CUDA Available: True
+[2025-04-18 14:41:12,264][__main__][INFO] -   CUDA Version: 12.1
+[2025-04-18 14:41:12,264][__main__][INFO] -   GPU: NVIDIA GeForce GTX 1080 Ti
+[2025-04-18 14:41:12,271][__main__][INFO] - Env: ContinuousCartPole-v0  state_dim: 4  action_dim: 1  max_a: 1.0  min_a: -1.0  max_e_steps: 500
+[2025-04-18 14:41:12,272][__main__][INFO] - Random Seed: 42
+[2025-04-18 14:41:12,272][__main__][INFO] - Models will be saved to models/d3rl_model/CPV0
+[2025-04-18 14:53:18,387][__main__][INFO] - Training completed. Evaluating across 20 episodes
+[2025-04-18 14:53:18,498][__main__][INFO] - Final evaluation - Mean: 5.70, Std: 0.46
+[2025-04-18 14:53:18,499][__main__][INFO] - 90th percentile: 6.00, 10th percentile: 5.00
+[2025-04-18 15:00:00,133][__main__][INFO] - Configuration:
+device: cuda
+mode: offline
+model: DDPG
+write: false
+debug_print: false
+render: false
+load_model: false
+load_path: None
+eval_model: false
+save_model: true
+data_path: /home/mx/DRAC/dataset/CPV0/SAC/no_noise/eps0.5
+epsilon: 0.1
+seed: 42
+max_train_steps: 50000
+save_interval: 10000
+eval_interval: 1000
+update_every: 50
+learning_starts: 10000
+gamma: 0.98
+tau: 0.005
+net_arch:
+- 256
+- 256
+net_layer: 1
+a_lr: 0.0001
+c_lr: 0.0001
+l2_reg: 0
+batch_size: 256
+reward_adapt: true
+noise: false
+type: gaussian
+adv: false
+spread: 0.0
+scale: 1.0
+delta: 0.0
+env_name: ContinuousCartPole
+env_index: 1
+env_mods:
+  use_mods: false
+  observation_noise:
+    enabled: false
+    type: gaussian
+    level: 0.1
+    frequency: 1.0
+  action_perturb:
+    enabled: false
+    type: noise
+    probability: 0.1
+    level: 0.1
+  reward_shift:
+    enabled: false
+    type: scale
+    param: 0.9
+    noise_level: 0.1
+  transition_perturb:
+    enabled: false
+    type: teleport
+    probability: 0.05
+    level: 0.1
+  param_shift:
+    enabled: false
+    train_apply: false
+    eval_apply: true
+    g_factor: 1.0
+    m_factor: 1.0
+    l_factor: 1.0
+    len_factor: 1.0
+    force_mag_factor: 1.0
+    gravity_factor: 1.0
+    wind_power: 0.0
+    turbulence_power: 0.0
+    engine_factor: 1.0
+  custom:
+    enabled: false
+    spread: 0.0
+    type: gaussian
+    adv: false
+  eval:
+    use_modified: true
+    scale_noise: false
+    noise_scale_factor: 2.0
+    include_action_perturb: true
+    include_reward_shift: true
+    include_transition_perturb: true
+
+[2025-04-18 15:00:00,221][__main__][INFO] - System information:
+[2025-04-18 15:00:00,221][__main__][INFO] -   Platform: Linux-6.11.0-21-generic-x86_64-with-glibc2.10
+[2025-04-18 15:00:00,221][__main__][INFO] -   Python: 3.8.19
+[2025-04-18 15:00:00,221][__main__][INFO] -   PyTorch: 2.4.1+cu121
+[2025-04-18 15:00:00,221][__main__][INFO] -   CUDA Available: True
+[2025-04-18 15:00:00,221][__main__][INFO] -   CUDA Version: 12.1
+[2025-04-18 15:00:00,221][__main__][INFO] -   GPU: NVIDIA GeForce GTX 1080 Ti
+[2025-04-18 15:00:00,231][__main__][INFO] - Env: ContinuousCartPole-v0  state_dim: 4  action_dim: 1  max_a: 1.0  min_a: -1.0  max_e_steps: 500
+[2025-04-18 15:00:00,233][__main__][INFO] - Random Seed: 42
+[2025-04-18 15:00:00,233][__main__][INFO] - Models will be saved to models/d3rl_model/CPV0
+[2025-04-18 15:10:29,155][__main__][INFO] - Training completed. Evaluating across 20 episodes
+[2025-04-18 15:10:31,287][__main__][INFO] - Final evaluation - Mean: 246.25, Std: 37.91
+[2025-04-18 15:10:31,287][__main__][INFO] - 90th percentile: 290.30, 10th percentile: 185.60
+[2025-04-18 15:11:07,758][__main__][INFO] - Configuration:
+device: cuda
+mode: offline
+model: DDPG
+write: false
+debug_print: false
+render: false
+load_model: false
+load_path: None
+eval_model: false
+save_model: true
+data_path: /home/mx/DRAC/dataset/CPV0/SAC/no_noise/eps0.5
+epsilon: 0.1
+seed: 42
+max_train_steps: 30000
+save_interval: 10000
+eval_interval: 1000
+update_every: 50
+learning_starts: 10000
+gamma: 0.98
+tau: 0.005
+net_arch:
+- 256
+- 256
+net_layer: 1
+a_lr: 0.0001
+c_lr: 0.0001
+l2_reg: 0
+batch_size: 256
+reward_adapt: true
+noise: false
+type: gaussian
+adv: false
+spread: 0.0
+scale: 1.0
+delta: 0.0
+env_name: ContinuousCartPole
+env_index: 1
+env_mods:
+  use_mods: false
+  observation_noise:
+    enabled: false
+    type: gaussian
+    level: 0.1
+    frequency: 1.0
+  action_perturb:
+    enabled: false
+    type: noise
+    probability: 0.1
+    level: 0.1
+  reward_shift:
+    enabled: false
+    type: scale
+    param: 0.9
+    noise_level: 0.1
+  transition_perturb:
+    enabled: false
+    type: teleport
+    probability: 0.05
+    level: 0.1
+  param_shift:
+    enabled: false
+    train_apply: false
+    eval_apply: true
+    g_factor: 1.0
+    m_factor: 1.0
+    l_factor: 1.0
+    len_factor: 1.0
+    force_mag_factor: 1.0
+    gravity_factor: 1.0
+    wind_power: 0.0
+    turbulence_power: 0.0
+    engine_factor: 1.0
+  custom:
+    enabled: false
+    spread: 0.0
+    type: gaussian
+    adv: false
+  eval:
+    use_modified: true
+    scale_noise: false
+    noise_scale_factor: 2.0
+    include_action_perturb: true
+    include_reward_shift: true
+    include_transition_perturb: true
+
+[2025-04-18 15:11:07,830][__main__][INFO] - System information:
+[2025-04-18 15:11:07,830][__main__][INFO] -   Platform: Linux-6.11.0-21-generic-x86_64-with-glibc2.10
+[2025-04-18 15:11:07,830][__main__][INFO] -   Python: 3.8.19
+[2025-04-18 15:11:07,830][__main__][INFO] -   PyTorch: 2.4.1+cu121
+[2025-04-18 15:11:07,830][__main__][INFO] -   CUDA Available: True
+[2025-04-18 15:11:07,830][__main__][INFO] -   CUDA Version: 12.1
+[2025-04-18 15:11:07,830][__main__][INFO] -   GPU: NVIDIA GeForce GTX 1080 Ti
+[2025-04-18 15:11:07,837][__main__][INFO] - Env: ContinuousCartPole-v0  state_dim: 4  action_dim: 1  max_a: 1.0  min_a: -1.0  max_e_steps: 500
+[2025-04-18 15:11:07,838][__main__][INFO] - Random Seed: 42
+[2025-04-18 15:11:07,838][__main__][INFO] - Models will be saved to models/d3rl_model/CPV0
+[2025-04-18 15:16:50,791][__main__][INFO] - Training completed. Evaluating across 20 episodes
+[2025-04-18 15:16:55,185][__main__][INFO] - Final evaluation - Mean: 500.00, Std: 0.00
+[2025-04-18 15:16:55,185][__main__][INFO] - 90th percentile: 500.00, 10th percentile: 500.00

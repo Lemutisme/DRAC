@@ -3,14 +3,14 @@
 # Default configuration for SAC algorithm
 defaults:
   - _self_
-  - env: pendulum
+  - env/sac: pendulum
   - env_mods  # New include for environment modifications
   - override hydra/job_logging: default
   - override hydra/hydra_logging: default
 
 # General settings
 device: cuda
-mode: 'offline' # offline, continuous, generate
+mode: offline # offline, continual, generate
 write: false
 debug_print: false
 render: false
@@ -21,7 +21,6 @@ save_model: true
 data_path: None
 
 # Generating settings(epsilon-greedy)
-d4rl: false
 epsilon: 0.1
 
 # Training settings
@@ -37,6 +36,8 @@ gamma: 0.99
 tau: 0.005
 net_arch: [256,256]
 net_layer: 1
+critic_ensemble: true
+n_critic: 2
 a_lr: 0.005  # 5e-3
 c_lr: 0.00005 # 5e-5
 b_lr: 0.00005 # 5e-5
