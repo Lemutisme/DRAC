@@ -17,5 +17,6 @@ offline_model
 old_offline_model
 dataset
 old_dataset
+folder
 plot
 read_data.py

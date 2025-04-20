@@ -251,8 +251,6 @@ class SAC_continuous():
     def train(self, writer, step):
         s, a, r, s_next, dw = self.replay_buffer.sample(self.batch_size)
         debug_print = self.debug_print and (step % 1000 == 0)
-        if debug_print:
-            print(s[:5])
 
         #----------------------------- ↓↓↓↓↓ Update R Net ↓↓↓↓↓ ------------------------------#
         if self.robust:
