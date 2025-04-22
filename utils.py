@@ -18,11 +18,11 @@ def Reward_adapter(r, EnvIdex):
     elif EnvIdex == 2:
         if r <= -100: r = -10
     # For Halfcheetah
-    elif EnvIdex == 4:
-        r = (r + 10) / 20
+    # elif EnvIdex == 4:
+    #     r = (r + 10) / 20
     # For Hooper
-    elif EnvIdex == 5:
-        r = (r + 1) / 5
+    # elif EnvIdex == 5:
+    #     r = (r + 1) / 5
     return r
 
 # def Action_adapter_symm(act, max_action):
