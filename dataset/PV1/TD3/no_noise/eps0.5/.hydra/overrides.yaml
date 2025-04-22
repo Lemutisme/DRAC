@@ -1,5 +1,0 @@
-- mode=generate
-- load_model=true
-- load_path=/home/mx/DRAC/outputs/TD3/2025-04-17/01-31-24/model.d3
-- max_train_steps=1000000
-- epsilon=0.5

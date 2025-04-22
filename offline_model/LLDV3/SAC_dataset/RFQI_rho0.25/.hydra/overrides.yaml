@@ -1,4 +1,0 @@
-- env/fqi=lunarlander
-- robust=true
-- rho=0.25
-- data_path=./dataset/LLDV3/no_noise/eps0.5

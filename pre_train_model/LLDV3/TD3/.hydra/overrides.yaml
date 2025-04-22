@@ -1,4 +1,0 @@
-- env/sac=lunarlander
-- mode=continual
-- model=TD3
-- max_train_steps=300000

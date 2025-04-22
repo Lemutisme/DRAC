@@ -1,6 +1,0 @@
-- env/sac=cartpole
-- mode=generate
-- epsilon=0.5
-- max_train_steps=1000000
-- load_model=true
-- load_path=./pre_train_model/CPV0/SAC

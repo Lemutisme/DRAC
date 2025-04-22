@@ -1,5 +1,0 @@
-- env/d3rl=cartpole
-- model=DDPG
-- data_path=/home/mx/DRAC/dataset/CPV0/SAC/no_noise/eps0.5
-- a_lr=0.0001
-- max_train_steps=30000

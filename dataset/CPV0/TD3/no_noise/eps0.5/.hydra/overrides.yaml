@@ -1,7 +1,0 @@
-- env/sac=cartpole
-- mode=generate
-- model=TD3
-- max_train_steps=1000000
-- load_model=true
-- load_path=/home/mx/DRAC/pre_train_model/CPV0/TD3/model.d3
-- epsilon=0.5
