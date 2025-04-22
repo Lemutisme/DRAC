@@ -19,4 +19,5 @@ dataset
 old_dataset
 folder
 plot
+sac_n.py
 read_data.py
