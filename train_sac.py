@@ -71,7 +71,8 @@ def main(cfg: DictConfig):
         'LunarLanderContinuous-v3',
         'Humanoid-v5',
         'HalfCheetah-v5',
-        "Hopper-v5"
+        "Hopper-v5",
+        "Reacher-v5"
     ]
     BrifEnvName = [
         'PV1',
@@ -79,7 +80,8 @@ def main(cfg: DictConfig):
         'LLdV3',
         'HumanV5',
         'HCV5',
-        'HPV5'
+        'HPV5',
+        'RV5'
     ]
 
     # Create a config object from Hydra for compatibility with rest of code
@@ -219,13 +221,16 @@ def main(cfg: DictConfig):
     else:
         total_steps = 0
         total_episode = 0
+        robust_update=False
         
         # Offline learning doesn't have exploration stage
         if opt.mode == 'offline':
             agent.replay_buffer.load(opt.data_path, opt.reward_adapt, opt.env_index)
             with tqdm(total=opt.max_train_steps, desc="Training Progress", ncols=100) as pbar:
                 while total_steps < opt.max_train_steps:
-                    agent.train(writer, total_steps)
+                    if opt.robust and total_steps > opt.robust_update_after:
+                        robust_update=True
+                    agent.train(writer, total_steps, robust_update)
                     total_steps += 1
                     pbar.update(1)
                     

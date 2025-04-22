@@ -215,7 +215,8 @@ def main(cfg: DictConfig):
                            gamma=opt.gamma,
                            tau=opt.tau,
                            actor_learning_rate=opt.a_lr,
-                           critic_learning_rate=opt.c_lr)
+                           critic_learning_rate=opt.c_lr,
+                           n_critics=opt.n_critic)
         agent = DDPG(config, opt.device, False)
     else:
         raise NotImplementedError
@@ -229,7 +230,7 @@ def main(cfg: DictConfig):
         for _ in range(20):
             score = eval_policy(eval_env, agent)
             scores.append(score)
-        print(f"Performance of loaded model: mean={np.mean(scores)}, std={np.std(scores)}")
+        log.info(f"Performance of loaded model: mean={np.mean(scores)}, std={np.std(scores)}")
 
     # 10. If rendering mode is on, run an infinite evaluation loop
     if opt.render:
