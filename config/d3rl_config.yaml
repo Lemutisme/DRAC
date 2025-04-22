@@ -33,12 +33,13 @@ update_every: 50
 learning_starts: 10000
 
 # Algorithm hyperparameters
-gamma: 0.98
+gamma: 0.99
 tau: 0.005
 net_arch: [256,256]
 net_layer: 1
-a_lr: 0.005  # 5e-3
-c_lr: 0.0001 # 1e-4
+n_critic: 2
+a_lr: 0.0003 
+c_lr: 0.0003 
 l2_reg: 0 # 1e-3
 batch_size: 256 #256
 

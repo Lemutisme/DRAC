@@ -2,7 +2,7 @@ import numpy as np
 import torch
 from pathlib import Path
 from utils import Reward_adapter
-from hydra.utils import get_original_cwd
+#from hydra.utils import get_original_cwd
 
 class ReplayBuffer(object):
     def __init__(self, state_dim, action_dim, max_size, device):
@@ -46,7 +46,7 @@ class ReplayBuffer(object):
         np.save(f"{path}/dw.npy", self.dw[:self.size].cpu().numpy())
             
     def load(self, path, reward_adapt, EnvIdex):
-        path =  Path(get_original_cwd()) / path / "dataset"
+        path =  Path(path) / "dataset"
         
         self.size = int(np.load(f"{path}/size.npy")[0])
         print(f"{self.size} data loaded.")
