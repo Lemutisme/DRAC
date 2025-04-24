@@ -1,5 +1,0 @@
-- env=cartpole
-- mode=continuous
-- load_model=true
-- load_path=/home/mx/DRAC/outputs/SAC/2025-03-30/16-02-58
-- max_train_steps=50000

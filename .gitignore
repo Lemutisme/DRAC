@@ -1,6 +1,8 @@
 __pycache__
 *.pyc
+*.zip
 outputs
+data
 multirun/SAC
 multirun/PPO
 SAC_model

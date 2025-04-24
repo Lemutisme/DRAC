@@ -1,4 +1,0 @@
-- robust=true
-- env=cartpole
-- data_path=/home/mx/DRAC/dataset/CPV0/no_noise_eps0.5
-- rho=0.75

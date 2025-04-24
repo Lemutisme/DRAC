@@ -5,6 +5,7 @@ This repository contains a Distributionally Robust Soft Actor-Critic (SAC) imple
 ## Setup
 
 Install required dependencies:
+
 ```
 conda env create -f requirement.yaml -n DRAC
 conda activate DRAC
@@ -91,6 +92,19 @@ Environment-specific configurations are stored in the `config/env/` directory. T
 
 * Environment name and index
 * Recommended training steps
+
+## Dataset and Selected Models
+
+```
+
+wget -O ./models/models.zip "https://uofi.box.com/s/9bfnbhexghgv6xbfmu4rj946ng9sv9oa"
+echo "Unzipping models..."
+unzip ./models/models.zip -d ./models/selected_models
+
+wget -O ./data/datasets.zip "https://uofi.box.com/s/3qzfdtm5wx2lwckam9es0aptep58tc6d"
+echo "Unzipping datasets..."
+unzip ./datasets/datasets.zip -d ./datasets
+```
 
 ## Output Structure
 
