@@ -54,7 +54,7 @@ phi: 0.1
 # epsilon in Adam*
 adam_eps: 1e-6
 # Adam stepsize*
-adam_lr: 3e-4
+adam_lr: 1e-3
 # learning rate of actor
 actor_lr: 1e-3
 critic_lr: 1e-3
@@ -81,7 +81,6 @@ vmin: 0
 # Environment configurations
 reward_adapt: true
 robust: false
-robust_optimizer: functional # beta, functional, separate
 rho: 0.5
 noise: false  # Legacy noise setting - consider using env_mods instead
 type: gaussian

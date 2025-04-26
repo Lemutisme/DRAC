@@ -1,12 +1,13 @@
 # @package _global_
 
-env_name: HalfCheetah-v5
-env_index: 4
+env_name: Reacher-v5
+env_index: 6
 eval_freq: 1000
 eval_interval: 1000
 save_interval: 1000
-max_trn_steps: 50000
+max_trn_steps: 25000
 max_vae_trn_step: 10000
+
 
 # Adam stepsize*
 adam_lr: 1e-3

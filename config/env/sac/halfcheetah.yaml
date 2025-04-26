@@ -6,6 +6,7 @@ env_name: HalfCheetah-v5
 env_index: 4
 max_train_steps: 250000 
 n_critic: 10
+net_layer: 2
 latent_dim: 10
 robust_update_after: 50000
 a_lr: 0.0003  
