@@ -101,7 +101,8 @@ def main(cfg: DictConfig):
         'LunarLanderContinuous-v3',
         'Humanoid-v5',
         'HalfCheetah-v5',
-        'Hopper-v5'
+        'Hopper-v5',
+        'Reacher-v5'
     ]
     BrifEnvName = [
         'PV1',
@@ -109,7 +110,8 @@ def main(cfg: DictConfig):
         'LLdV3',
         'HumanV5',
         'HCV5',
-        'HPV5'
+        'HPV5',
+        'RV5'
     ]
 
     # Create a config object from Hydra for compatibility with rest of code
@@ -198,7 +200,8 @@ def main(cfg: DictConfig):
     # 10. If rendering mode is on, run an infinite evaluation loop
     if opt.render:
         while True:
-            ep_r = eval_policy(env, agent, opt.max_action, turns=1)
+            env = gym.make(EnvName[opt.env_index], render_mode='human')
+            ep_r = eval_policy(agent, env, eval_episodes=1)
             log.info(f"Env: {EnvName[opt.env_index]}, Episode Reward: {ep_r}")
 
     # 11. If evaluating only, print result
@@ -256,7 +259,7 @@ def main(cfg: DictConfig):
                 automatic_beta = False
                 
              # load data
-            data = DATA(opt.state_dim, opt.action_dim, opt.max_action, opt.device)
+            data = DATA(opt.state_dim, opt.action_dim, opt.max_action, opt.device, opt.data_size)
             data.load(opt.data_path, opt.reward_adapt, opt.env_index)
 
             # train VAE

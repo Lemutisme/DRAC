@@ -113,7 +113,8 @@ def main(cfg: DictConfig):
         'LunarLanderContinuous-v3',
         'Humanoid-v5',
         'HalfCheetah-v5',
-        'Hopper-v5'
+        'Hopper-v5',
+        'Reacher-v5'
     ]
     BrifEnvName = [
         'PV1',
@@ -121,7 +122,8 @@ def main(cfg: DictConfig):
         'LLdV3',
         'HumanV5',
         'HCV5',
-        'HPV5'
+        'HPV5',
+        'RV5'
     ]
 
     # Create a config object from Hydra for compatibility with rest of code

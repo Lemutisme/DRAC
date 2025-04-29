@@ -162,7 +162,8 @@ def main(cfg: DictConfig):
     # 10. If rendering mode is on, run an infinite evaluation loop
     if opt.render:
         while True:
-            ep_r = evaluate_policy(env, agent, opt.max_action, turns=1)
+            env =  gym.make(EnvName[opt.env_index], render_mode='human')
+            ep_r = evaluate_policy(env, agent, turns=1)
             log.info(f"Env: {EnvName[opt.env_index]}, Episode Reward: {ep_r}")
 
     # 11. If evaluating only, print result
