@@ -45,7 +45,7 @@ class ReplayBuffer(object):
         np.save(f"{path}/s_next.npy", self.s_next[:self.size].cpu().numpy())
         np.save(f"{path}/dw.npy", self.dw[:self.size].cpu().numpy())
             
-    def load(self, path, reward_adapt, EnvIdex):
+    def load(self, path, reward_adapt, reward_normalize, EnvIdex):
         path =  Path(path) / "dataset"
         
         self.size = int(np.load(f"{path}/size.npy")[0])
@@ -57,6 +57,10 @@ class ReplayBuffer(object):
             print(f"Before adaptation: Max: {r_cpu.max():.4f}, Min: {r_cpu.min():.4f}, Mean: {r_cpu.mean():.4f}.")
             r_cpu.apply_(lambda r: Reward_adapter(r, EnvIdex))
             print(f"After adaptation: Max: {r_cpu.max():.4f}, Min: {r_cpu.min():.4f}, Mean: {r_cpu.mean():.4f}.")
+        elif reward_normalize:
+            print("Normalize reward to [0,1]")
+            r_max, r_min = np.max(r_cpu), np.min(r_cpu)
+            r_cpu = (r_cpu - r_min) / (r_max - r_min)
         self.r[:self.size,] = r_cpu.to(self.device)
         self.s_next[:self.size,] = torch.from_numpy(np.load(f"{path}/s_next.npy")).to(self.device)
         self.dw[:self.size,] = torch.from_numpy(np.load(f"{path}/dw.npy")).to(self.device)
