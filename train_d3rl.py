@@ -5,7 +5,8 @@ import hydra
 import logging
 
 from d3rlpy import load_learnable
-from d3rlpy.algos import TD3, TD3Config, SAC, SACConfig, DDPG, DDPGConfig
+from d3rlpy.algos import TD3, TD3Config, SAC, SACConfig, DDPG, DDPGConfig, CQL, CQLConfig
+from d3rlpy.preprocessing import ConstantShiftRewardScaler
 from d3rlpy.logging import FileAdapterFactory
 from d3rlpy.dataset import MDPDataset
 from d3rlpy.metrics import EnvironmentEvaluator
@@ -19,7 +20,7 @@ from ReplayBuffer import ReplayBuffer
 from continuous_cartpole import register
 from environment_modifiers import register
 
-def eval_policy(env, agent, turns = 1, seeds_list = []):
+def eval_policy(env, agent, turns = 1, seeds_list = [], random_action_prob=0.0):
     total_scores = 0
     for j in range(turns):
         if len(seeds_list) > 0:
@@ -29,8 +30,11 @@ def eval_policy(env, agent, turns = 1, seeds_list = []):
         done = False
         while not done:
             s_batch = s[np.newaxis, :]
-            # Take deterministic actions at test time
-            a = agent.predict(s_batch)[0]
+            if random.random() < random_action_prob:
+                a = env.action_space.sample()
+            else:
+                # Take deterministic actions at test time
+                a = agent.predict(s_batch)[0]
             s_next, r, dw, tr, _ = env.step(a)
             done = (dw or tr)
 
@@ -55,6 +59,7 @@ def load_dataset(path, reward_adapt, EnvIdex):
     dw =np.load(f"{path}/dw.npy")
     
     return s, a, r, s_next, dw
+
 
 @hydra.main(version_base=None, config_path="config", config_name="d3rl_config")
 def main(cfg: DictConfig):
@@ -199,6 +204,10 @@ def main(cfg: DictConfig):
 
     # 8. Initialize the SAC agent
     if opt.model == 'TD3':
+        # if opt.mode == 'continual' and opt.env_index == 0:
+        #     reward_scaler = ConstantShiftRewardScaler(shift=8, multiplier=0.125)
+        # else:
+        #     reward_scaler = 'default'
         config = TD3Config(batch_size=opt.batch_size,
                            gamma=opt.gamma,
                            tau=opt.tau,
@@ -210,7 +219,8 @@ def main(cfg: DictConfig):
                            gamma=opt.gamma,
                            tau=opt.tau,
                            actor_learning_rate=opt.a_lr,
-                           critic_learning_rate=opt.c_lr)
+                           critic_learning_rate=opt.c_lr,
+                           n_critics=opt.n_critic)
         agent = SAC(config, opt.device, False)
     elif opt.model == 'DDPG':
         config = DDPGConfig(batch_size=opt.batch_size,
@@ -220,6 +230,15 @@ def main(cfg: DictConfig):
                            critic_learning_rate=opt.c_lr,
                            n_critics=opt.n_critic)
         agent = DDPG(config, opt.device, False)
+    
+    elif opt.model == 'CQL':
+        config = CQLConfig(batch_size=opt.batch_size,
+                           gamma=opt.gamma,
+                           tau=opt.tau,
+                           actor_learning_rate=opt.a_lr,
+                           critic_learning_rate=opt.c_lr,
+                           n_critics=opt.n_critic)
+        agent = CQL(config, opt.device, False)
     else:
         raise NotImplementedError
 
@@ -227,12 +246,6 @@ def main(cfg: DictConfig):
     if opt.load_model:
         log.info("Loading pre-trained model")
         agent = load_learnable(opt.load_path)
-        
-        scores = []
-        for _ in range(20):
-            score = eval_policy(eval_env, agent)
-            scores.append(score)
-        log.info(f"Performance of loaded model: mean={np.mean(scores)}, std={np.std(scores)}")
 
     # 10. If rendering mode is on, run an infinite evaluation loop
     if opt.render:
@@ -244,12 +257,14 @@ def main(cfg: DictConfig):
     elif opt.eval_model:
         eval_num = 50
         log.info(f"Evaluating agent across {eval_num} episodes")
+        if opt.random_action_prob != 0:
+            log.info(f"Action perturbation: random action probability={opt.random_action_prob}.")
         seeds_list = [random.randint(0, 100000) for _ in range(eval_num)] if not hasattr(opt, 'seeds_list') else opt.seeds_list
 
         scores = []
         # Use tqdm for evaluation progress
         for i in tqdm(range(eval_num), desc="Evaluation Progress", ncols=100):
-            score = eval_policy(eval_env, agent, turns=1, seeds_list=[seeds_list[i]])
+            score = eval_policy(eval_env, agent, turns=1, seeds_list=[seeds_list[i]], random_action_prob=opt.random_action_prob)
             scores.append(score)
             # Update progress bar with current mean score
             if i > 0 and i % 5 == 4:
