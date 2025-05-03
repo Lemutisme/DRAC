@@ -114,6 +114,7 @@ def main(cfg: DictConfig):
     opt.state_dim = env.observation_space.shape[0]
     opt.action_dim = env.action_space.shape[0]  # Continuous action dimensionprint
     opt.max_action = float(env.action_space.high[0])  # Action range [-max_action, max_action]
+    opt.min_action = float(env.action_space.low[0])  # Action range [-max_action, max_action]
     opt.max_e_steps = env._max_episode_steps    
 
     # 4. Print environment info
@@ -122,7 +123,7 @@ def main(cfg: DictConfig):
         f"state_dim: {opt.state_dim}  "
         f"action_dim: {opt.action_dim}  "
         f"max_a: {opt.max_action}  "
-        f"min_a: {env.action_space.low[0]}  "
+        f"min_a: {opt.min_action}  "
         f"max_e_steps: {opt.max_e_steps}"
     )
 
@@ -170,8 +171,9 @@ def main(cfg: DictConfig):
     elif opt.eval_model:
         eval_num = 50
         log.info(f"Evaluating agent across {eval_num} episodes")
+        if opt.random_action_prob != 0:
+            log.info(f"Action perturbation: random action probability={opt.random_action_prob}.")
         seeds_list = [random.randint(0, 100000) for _ in range(eval_num)] if not hasattr(opt, 'seeds_list') else opt.seeds_list
-
         scores = []
         # Use tqdm for evaluation progress
         # type_lst = ['gaussian','laplace', 't', 'uniform', 'uniform']
@@ -183,8 +185,8 @@ def main(cfg: DictConfig):
             #          summary_logger.info(f"Mean score of last env: {np.mean(scores[i-eval_num//5:i]):.2f}")
             #     type = type_lst[i // (eval_num//5)]
             #     scale = scale_lst[i // (eval_num//5)]
-            #     eval_env = gym.make("CustomPendulum-v1", spread=scale*opt.spread, type=type, adv=opt.adv) # Add noise when updating angle
-            score = evaluate_policy(eval_env, agent, turns=1, seeds_list=[seeds_list[i]])
+            # eval_env = gym.make("CustomPendulum-v1", spread=opt.spread, type=type, adv=opt.adv) # Add noise when updating angle
+            score = evaluate_policy(eval_env, agent, turns=1, seeds_list=[seeds_list[i]], random_action_prob=opt.random_action_prob)
             scores.append(score)
             # Update progress bar with current mean score
             if i > 0 and i % 5 == 4:
@@ -222,16 +224,26 @@ def main(cfg: DictConfig):
     else:
         total_steps = 0
         total_episode = 0
-        robust_update=False
         
         # Offline learning doesn't have exploration stage
         if opt.mode == 'offline':
-            agent.replay_buffer.load(opt.data_path, opt.reward_adapt, opt.env_index)
+            agent.replay_buffer.load(opt.data_path, opt.reward_adapt, opt.reward_normalize, opt.env_index)
             with tqdm(total=opt.max_train_steps, desc="Training Progress", ncols=100) as pbar:
+                while total_steps < opt.vae_steps:
+                    vae_loss = agent.tran_vae_train(opt.debug_print, writer, total_steps, iterations=opt.eval_interval)
+                    total_steps += opt.eval_interval
+                    pbar.update(opt.eval_interval)
+                    
+                    if total_steps % opt.eval_interval == 0:
+                        if writer is not None:
+                            writer.add_scalar('ep_r', ep_r, global_step=total_steps)
+
+                        log.info(f"EnvName: {BrifEnvName[opt.env_index]}, "
+                                 f"Steps: {int(total_steps/1000)}k, "
+                                 f"VAE Loss: {vae_loss}")
+                                            
                 while total_steps < opt.max_train_steps:
-                    if opt.robust and total_steps > opt.robust_update_after:
-                        robust_update=True
-                    agent.train(writer, total_steps, robust_update)
+                    agent.train(writer, total_steps)
                     total_steps += 1
                     pbar.update(1)
                     
@@ -247,11 +259,9 @@ def main(cfg: DictConfig):
                         if writer is not None:
                             writer.add_scalar('ep_r', ep_r, global_step=total_steps)
 
-                        log.info(
-                            f"EnvName: {BrifEnvName[opt.env_index]}, "
-                            f"Steps: {int(total_steps/1000)}k, "
-                            f"Episode Reward: {ep_r}"
-                        )
+                        log.info(f"EnvName: {BrifEnvName[opt.env_index]}, "
+                                 f"Steps: {int(total_steps/1000)}k, "
+                                 f"Episode Reward: {ep_r}")
                         
                     # (e) Save model at fixed intervals
                     if opt.save_model and total_steps % opt.save_interval == 0:

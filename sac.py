@@ -36,7 +36,7 @@ class Actor(nn.Module):
         self.log_std_layer = nn.Linear(layers[-1], action_dim)
 
         self.LOG_STD_MAX = 2
-        self.LOG_STD_MIN = -20
+        self.LOG_STD_MIN = -5
         self.max_action = max_action
         
         # init as in the EDAC paper
@@ -155,52 +155,6 @@ class Double_Q_Critic(nn.Module):
         q2 = self.Q_2(sa)            
         return q1, q2
 
-# class Q_Ensemble_Critic(nn.Module):
-#     def __init__(self, state_dim, action_dim, hid_shape, hid_layers, num_critics=2):
-#         super(Q_Ensemble_Critic, self).__init__() 
-#         layers = [state_dim + action_dim] + hid_shape * hid_layers + [1]
-
-#         self.Q_list = nn.ModuleList([build_net(layers, nn.ReLU, nn.Identity) for _ in range(num_critics) ])
-
-#     def forward(self, state, action):
-#         sa = torch.cat([state, action], dim=1)          
-#         return [Q(sa) for Q in self.Q_list]
-    
-#     def min_forward(self, state, action):
-#         Q_list = self.forward(state, action)
-#         Q_min = torch.min(torch.stack(Q_list, dim=0), dim=0)[0] 
-#         return Q_min     
-
-# class StateVAE(nn.Module):
-#     def __init__(self, state_dim, hidden_dim, hidden_layers, latent_dim):
-#         super(StateVAE, self).__init__()
-        
-#         # Encoder layers
-#         e_layers = [state_dim] + [hidden_dim, hidden_dim] * hidden_layers
-#         self.encoder = build_net(e_layers, nn.ReLU, nn.ReLU)
-#         self.e_mu = nn.Linear(e_layers[-1], latent_dim)
-#         self.e_logstd = nn.Linear(e_layers[-1], latent_dim)
-        
-#         # Decoder layers
-#         d_layers = [latent_dim] + [hidden_dim, hidden_dim] * hidden_layers + [state_dim]
-#         self.decoder = build_net(d_layers, nn.ReLU, nn.Identity)
-        
-#     def encode(self, s):
-#         h = self.encoder(s)
-#         mu = self.e_mu(h)
-#         std = self.e_logstd(h).clamp(-4, 15).exp()
-#         return mu, std
-
-#     def reparameterize(self, mu, std):
-#         eps = torch.randn_like(std)
-#         return mu + eps * std
-
-#     def forward(self, s):
-#         mu, std = self.encode(s)
-#         z = self.reparameterize(mu, std)
-#         s_recon = self.decoder(z)
-#         return s_recon, mu, std  
-
 class TransitionVAE(nn.Module):
     def __init__(self, state_dim, action_dim, hidden_dim, hidden_layers, latent_dim):
         super(TransitionVAE, self).__init__()
@@ -210,7 +164,7 @@ class TransitionVAE(nn.Module):
         self.e_mu = nn.Linear(e_layers[-1], latent_dim)
         self.e_logvar = nn.Linear(e_layers[-1], latent_dim)
 
-        # Decoder layers
+        # Decoder layers: out_dim = state_dim
         d_layers = [state_dim + action_dim + latent_dim] + [hidden_dim, hidden_dim] * hidden_layers + [state_dim]
         self.decoder = build_net(d_layers, nn.ReLU, nn.Identity)
         
@@ -274,9 +228,9 @@ class SAC_continuous():
         self.actor = Actor(self.state_dim, self.action_dim, self.max_action, self.hid_dim, self.net_layer).to(self.device)
         self.actor_optimizer = torch.optim.AdamW(self.actor.parameters(), lr=self.a_lr)
 
-        if self.use_v:
-            self.v_critic = V_Critic(self.state_dim, self.hid_dim, self.net_layer).to(self.device)
-            self.v_critic_optimizer = torch.optim.AdamW(self.v_critic.parameters(), lr=self.c_lr)
+        self.v_critic = V_Critic(self.state_dim, self.hid_dim, self.net_layer).to(self.device)
+        self.v_critic_optimizer = torch.optim.AdamW(self.v_critic.parameters(), lr=self.c_lr)
+        if self.soft_update_v:
             self.v_critic_target = copy.deepcopy(self.v_critic)
             # Freeze target networks with respect to optimizers (only update via polyak averaging)
             for p in self.v_critic_target.parameters():
@@ -288,18 +242,9 @@ class SAC_continuous():
             self.q_critic = Double_Q_Critic(self.state_dim, self.action_dim, hid_dim=self.hid_dim, hid_layers=self.net_layer).to(self.device)
         self.q_critic_optimizer = torch.optim.AdamW(self.q_critic.parameters(), lr=self.c_lr)    
          
-        if not self.use_v:
-            self.soft_update_q = True
-        if self.soft_update_q:
-            self.q_critic_target = copy.deepcopy(self.q_critic)
-            for p in self.q_critic_target.parameters():
-                p.requires_grad = False     
-        
-        # if self.use_cql:
-        #     self.temp = 1.0
-        #     self.target_action_gap = 5.0
-        #     self.cql_log_alpha = torch.zeros(1, requires_grad=True, device=self.device)
-        #     self.cql_alpha_optim = torch.optim.Adam([self.cql_log_alpha], lr=self.c_lr)
+        self.q_critic_target = copy.deepcopy(self.q_critic)
+        for p in self.q_critic_target.parameters():
+            p.requires_grad = False     
             
         if self.robust:    
             print('This is a robust policy.')
@@ -320,7 +265,7 @@ class SAC_continuous():
             self.target_entropy = torch.tensor(-self.action_dim, dtype=float, requires_grad=True, device=self.device)
             # We learn log_alpha instead of alpha to ensure alpha>0
             self.log_alpha = torch.tensor(math.log(self.alpha), dtype=float, requires_grad=True, device=self.device)
-            self.alpha_optim = torch.optim.AdamW([self.log_alpha], lr=self.c_lr)
+            self.alpha_optim = torch.optim.AdamW([self.log_alpha], lr=self.c_lr)      
 
     def select_action(self, state, deterministic):
         # only used when interact with the env
@@ -329,9 +274,9 @@ class SAC_continuous():
             a, _ = self.actor(state, deterministic, with_logprob=False)
         return a.cpu().numpy()[0]
 
-    def vae_loss(self, s_next, s_next_recon, mu, std, beta=1):
-        recon_loss = F.mse_loss(s_next_recon, s_next)
-        kl_div = -0.5 * (1 + torch.log(std.pow(2)) - mu.pow(2) - std.pow(2)).mean()
+    def vae_loss(self, s_next, s_next_recon, mu, logvar, beta=1):
+        recon_loss = F.mse_loss(s_next_recon, s_next, reduction='sum')
+        kl_div = -0.5 * (1 + logvar - mu.pow(2) - logvar.exp()).sum()
         return recon_loss, beta * kl_div
 
     def dual_func_g(self, s, a, s_next):
@@ -351,75 +296,10 @@ class SAC_continuous():
         v_next = v_next.cpu().numpy()
         return - beta * (logsumexp(-v_next/beta) - math.log(size)) - beta * self.delta     
     
-    # def bc_train(self, writer, step, iterations):
-    #     scores = []
-    #     for _ in range(iterations):
-    #         s, a, r, s_next, dw = self.replay_buffer.sample(self.batch_size)
-    #         debug_print = self.debug_print and (step % 1000 == 0)
-            
-    #         policy_a , _ = self.actor(s, deterministic=True, with_logprob=False)
-    #         bc_loss = F.mse_loss(policy_a, a)
-            
-    #         self.actor_optimizer.zero_grad()
-    #         bc_loss.backward()
-    #         self.actor_optimizer.step()
-    #         if debug_print:
-    #             print(f"bc_loss: {bc_loss.item()}")
-    #     if writer:
-    #         writer.add_scalar('bc_loss', bc_loss, global_step=step)
-    #     return bc_loss.item()
-
-            
-    # def state_vae_train(self, writer, step, iterations):
-    #     scores = []
-    #     for _ in range(iterations):
-    #         s, a, r, s_next, dw = self.replay_buffer.sample(100)
-    #         debug_print = self.debug_print and (step % 1000 == 0)
-            
-    #         s_recon, mu, std = self.state_vae(s)
-    #         recon_loss, kl_div = self.vae_loss(s, s_recon, mu, std, beta=0.5)
-    #         vae_loss = recon_loss + kl_div
-    #         scores.append(vae_loss.item())
-            
-    #         self.state_vae_optimizer.zero_grad()
-    #         vae_loss.backward()
-    #         self.state_vae_optimizer.step()
-            
-    #         s_next_recon, mu, std = self.state_vae(s_next)
-    #         recon_loss, kl_div = self.vae_loss(s_next, s_next_recon, mu, std, beta=0.5)
-    #         vae_loss = recon_loss + kl_div
-    #         scores.append(vae_loss.item())
-
-    #         self.state_vae_optimizer.zero_grad()
-    #         vae_loss.backward()
-    #         self.state_vae_optimizer.step()
-    #     if debug_print:
-    #         print(f"recon_loss: {recon_loss.item()}, kl_div = {kl_div}.")
-    #     if writer:
-    #         writer.add_scalar('vae_loss', vae_loss, global_step=step)  
-    #     return np.mean(scores)
-    
-    # def tran_vae_train(self, debug_print, writer, step, iterations):
-    #     for _ in range(iterations):
-    #         s, a, r, s_next, dw = self.replay_buffer.sample(self.batch_size)
-    #         s_next_recon, mu, std = self.transition(s, a, s_next)
-    #         recon_loss, kl_div = self.vae_loss(s_next, s_next_recon, mu, std)
-    #         tr_loss = recon_loss + kl_div
-    #         self.trans_optimizer.zero_grad()
-    #         tr_loss.backward()
-    #         self.trans_optimizer.step()
-    #         if debug_print:
-    #             print(f"recon_loss: {recon_loss.item()}, kl_div = {kl_div}.")
-    #     if writer:
-    #         writer.add_scalar('tr_loss', tr_loss, global_step=step)
-    #     return tr_loss.item()
-
-    def train(self, writer, step, robust_update=False):
-        s, a, r, s_next, dw = self.replay_buffer.sample(self.batch_size)
-        debug_print = self.debug_print and (step % 1000 == 0)
-
-        #----------------------------- ↓↓↓↓↓ Update R Net ↓↓↓↓↓ ------------------------------#        
-        if self.robust:    
+    def tran_vae_train(self, debug_print, writer, step, iterations, s=None, a=None, s_next=None):
+        for _ in range(iterations):
+            if s is None:
+                s, a, r, s_next, dw = self.replay_buffer.sample(self.batch_size)
             s_next_recon, mu, std = self.transition(s, a, s_next)
             recon_loss, kl_div = self.vae_loss(s_next, s_next_recon, mu, std)
             tr_loss = recon_loss + kl_div
@@ -428,10 +308,47 @@ class SAC_continuous():
             self.trans_optimizer.step()
             if debug_print:
                 print(f"recon_loss: {recon_loss.item()}, kl_div = {kl_div}.")
-            if writer:
-                writer.add_scalar('tr_loss', tr_loss, global_step=step)
+        if writer:
+            writer.add_scalar('tr_loss', tr_loss, global_step=step)
+        return tr_loss.item()
+        
+    def train(self, writer, step):
+        s, a, r, s_next, dw = self.replay_buffer.sample(self.batch_size)
+        debug_print = self.debug_print and (step % 1000 == 0)
                 
-         #----------------------------- ↓↓↓↓↓ Robust Update ↓↓↓↓↓ ------------------------------#     
+        #----------------------------- ↓↓↓↓↓ Update V Net ↓↓↓↓↓ ------------------------------#
+        for params in self.v_critic.parameters():
+            params.requires_grad = True
+            
+        policy_a , log_pi_a = self.actor(s, deterministic=False, with_logprob=True)
+        if self.critic_ensemble:
+            Q_list = self.q_critic_target(s, policy_a)
+            assert Q_list.shape[0] == self.n_critic
+            Q_min = Q_list.min(0).values.unsqueeze(-1)
+        else:
+            current_Q1, current_Q2 = self.q_critic(s, policy_a)
+        ### V(s) = E_pi(Q(s,a) - α * logπ(a|s)) ###
+        target_V = (Q_min - self.alpha * log_pi_a).detach()
+
+        current_V = self.v_critic(s)
+        v_loss = F.mse_loss(current_V, target_V)
+
+        self.v_critic_optimizer.zero_grad()
+        v_loss.backward()
+        self.v_critic_optimizer.step()
+        if debug_print:
+            print(f"v_loss: {v_loss.item()}")
+        if writer:
+            writer.add_scalar('v_loss', v_loss, global_step=step)        
+                
+        for params in self.v_critic.parameters():
+            params.requires_grad = False     
+        
+        #----------------------------- ↓↓↓↓↓ Update R Net ↓↓↓↓↓ ------------------------------#        
+        if self.robust:    
+            self.tran_vae_train(debug_print, writer, step, 1, s, a, s_next)
+            
+        #----------------------------- ↓↓↓↓↓ Robust Update ↓↓↓↓↓ ------------------------------#         
             with torch.no_grad():
                 s_next_sample = self.transition.sample(s, a, 200)
 
@@ -455,12 +372,13 @@ class SAC_continuous():
             #############################################################		
             ### option2: optimize w.r.t functional g ###
             elif self.robust_optimizer == 'functional':
-                for _ in range(5):
+                for _ in range(10):
                     opt_loss = -self.dual_func_g(s, a, s_next_sample)
                     
                     self.g_optimizer.zero_grad()
                     opt_loss.mean().backward()
                     self.g_optimizer.step() 
+        
                     if debug_print:
                         print(opt_loss.mean().item())
 
@@ -480,35 +398,23 @@ class SAC_continuous():
             ############################################################		
 
             else:
-                raise NotImplementedError
+                raise NotImplementedError  
 
         #----------------------------- ↓↓↓↓↓ Update Q Net ↓↓↓↓↓ ------------------------------#
         for params in self.q_critic.parameters():
             params.requires_grad = True
 
         with torch.no_grad():
-           if self.use_v:
-                V_next = self.v_critic_target(s_next)
-                #############################################################		
-                ### Q(s, a) = r + γ * (1 - done) * V(s') ###
-                if self.robust:
-                    target_Q = r + (~dw) * self.gamma * V_next_opt
-                    if debug_print:
-                        print(((V_next_opt - V_next) / V_next).norm().item()) # difference of robust update
-                else:
-                    target_Q = r + (~dw) * self.gamma * V_next
-                #############################################################
-           else:
-                a_next ,log_pi_a_next = self.actor(s_next, deterministic=False, with_logprob=True)
-                if self.critic_ensemble:
-                    Q_next_list = self.q_critic_target(s_next, a_next) if self.soft_update_q else self.q_critic(s_next, a_next)
-                    assert Q_next_list.shape[0] == self.n_critic
-                    Q_next_min = Q_next_list.min(0).values.unsqueeze(-1)
-                else:
-                    current_Q1, current_Q2 = self.q_critic(s, policy_a)
-                    Q_next_min = torch.min(current_Q1, current_Q2)    
-                    
-                target_Q = r + (~dw)  * self.gamma * (Q_next_min - self.alpha * log_pi_a_next)
+            V_next = self.v_critic_target(s_next) if self.soft_update_v else self.v_critic(s_next)
+            #############################################################		
+            ### Q(s, a) = r + γ * (1 - done) * V(s') ###
+            if self.robust:
+                target_Q = r + (~dw) * self.gamma * V_next_opt
+                if debug_print:
+                    print(((V_next_opt - V_next) / V_next).norm().item()) # difference of robust update
+            else:
+                target_Q = r + (~dw) * self.gamma * V_next
+            #############################################################
 
         # Get current Q estimates and JQ(θ)
         if self.critic_ensemble:        
@@ -518,54 +424,6 @@ class SAC_continuous():
         else:
             current_Q1, current_Q2 = self.q_critic(s, a)
             q_loss = F.mse_loss(current_Q1, target_Q) + F.mse_loss(current_Q2, target_Q) 
-            
-        if self.use_cql:
-            # Sample random actions from action space 
-            num_random = 10
-            # [batch_size * num_random, action_dim]
-            random_a = torch.FloatTensor(self.batch_size * num_random, self.action_dim).uniform_(-1,1).to(self.device) * self.max_action
-            # [batch*size * num_random, state_dim]
-            repeated_s = s.unsqueeze(1).repeat(1, num_random, 1).view(self.batch_size * num_random, -1)
-            
-            # [ensemble_size, batch_size]
-            Q_list = self.q_critic_target(s, a) if self.soft_update_q else self.q_critic(s, a)
-            # [ensemble_size, batch_size * num_random]
-            random_list = self.q_critic_target(repeated_s, random_a) if self.soft_update_q else self.q_critic(repeated_s, random_a) 
-            # [ensemble_size, batch_size, num_random]
-            random_list = random_list.view(self.n_critic, self.batch_size, -1)  
-            
-            # Sample actions from current policy
-            with torch.no_grad():
-                policy_actions, _ = self.actor(repeated_s, deterministic=False, with_logprob=False)
-                policy_list = self.q_critic_target(repeated_s, policy_actions) if self.soft_update_q else self.q_critic(repeated_s, policy_actions)  
-                policy_list = policy_list.view(self.n_critic, self.batch_size, -1)
-            
-            if debug_print:
-                print(f"dataset Q: {Q_list.mean(dim=1).mean(dim=0).item()}," 
-                      f"random Q: {random_list.mean(dim=2).mean(dim=1).mean(dim=0).item()}, "
-                      f"policy Q: {policy_list.mean(dim=2).mean(dim=1).mean(dim=0).item()}")
-            
-            # [ensemble_size, batch_size, 1+2*num_random]    
-            cat_Q_list = torch.cat([Q_list.unsqueeze(-1), random_list, policy_list], dim=-1)
-            assert cat_Q_list.shape[-1] == 1 + 2 * num_random       
-                        
-            # [ensemble_size]
-            cql_loss = (torch.logsumexp(cat_Q_list / self.temp, dim=-1) * self.temp - Q_list).mean(dim=1)
-            
-            # Adaptive cql alpha
-            self.cql_log_alpha.clip(min=-20, max=6)
-            self.cql_alpha = self.cql_log_alpha.exp()
-            cql_alpha_loss = -self.cql_alpha * (cql_loss.detach() - self.target_action_gap).mean()
-            
-            self.cql_alpha_optim.zero_grad()
-            cql_alpha_loss.backward()
-            self.cql_alpha_optim.step()    
-              
-            cql_loss = (self.cql_alpha.detach() * (cql_loss - self.target_action_gap)).sum()        
-            q_loss += cql_loss
-            
-            if debug_print:
-                print(f"cql_loss: {cql_loss.item()}")
 
         self.q_critic_optimizer.zero_grad()
         q_loss.backward()
@@ -577,59 +435,15 @@ class SAC_continuous():
             
         for params in self.q_critic.parameters():
             params.requires_grad = False
-            
-        #----------------------------- ↓↓↓↓↓ Update V Net ↓↓↓↓↓ ------------------------------#
-        if self.use_v:
-            for params in self.v_critic.parameters():
-                params.requires_grad = True
-            
-            policy_a , log_pi_a = self.actor(s, deterministic=False, with_logprob=True)
-            if self.critic_ensemble:
-                Q_list = self.q_critic_target(s, policy_a) if self.soft_update_q else self.q_critic(s, policy_a)
-                assert Q_list.shape[0] == self.n_critic
-                Q_min = Q_list.min(0).values.unsqueeze(-1)
-            else:
-                current_Q1, current_Q2 = self.q_critic(s, policy_a)
-                Q_min = torch.min(current_Q1, current_Q2)         
-            ### V(s) = E_pi(Q(s,a) - α * logπ(a|s)) ###
-            target_V = (Q_min - self.alpha * log_pi_a).detach()
-
-            current_V = self.v_critic(s)
-            v_loss = F.mse_loss(current_V, target_V)
-
-            self.v_critic_optimizer.zero_grad()
-            v_loss.backward()
-            self.v_critic_optimizer.step()
-            if debug_print:
-                print(f"v_loss: {v_loss.item()}")
-            if writer:
-                writer.add_scalar('v_loss', v_loss, global_step=step)        
-                
-            for params in self.v_critic.parameters():
-                params.requires_grad = False      
 
         #----------------------------- ↓↓↓↓↓ Update Actor Net ↓↓↓↓↓ ------------------------------#
         # Entropy Regularization
         # Note that the entropy term is not included in the loss function
-        else:
-            policy_a , log_pi_a = self.actor(s, deterministic=False, with_logprob=True)
-            if self.critic_ensemble:
-                Q_list = self.q_critic(s, policy_a)
-                assert Q_list.shape[0] == self.n_critic
-                Q_min = Q_list.min(0).values.unsqueeze(-1)
-            else:
-                current_Q1, current_Q2 = self.q_critic(s, policy_a)
-                Q_min = torch.min(current_Q1, current_Q2)         
         #########################################
         ### Jπ(θ) = E[α * logπ(a|s) - Q(s,a)] ###
         a_loss = (self.alpha * log_pi_a - Q_min).mean()
         #########################################
-        if use_bc:
-            bc_loss = F.mse_loss(policy_a, a)
-            a_loss += 0.1 * bc_loss
-            if debug_print:
-                print(f"bc_loss: {bc_loss.item()}")
-        
+            
         self.actor_optimizer.zero_grad()
         a_loss.backward()
         self.actor_optimizer.step()
@@ -650,10 +464,9 @@ class SAC_continuous():
                 print(f"alpha = {self.alpha.item()}\n")
 
         #----------------------------- ↓↓↓↓↓ Update Target Net ↓↓↓↓↓ ------------------------------#
-        if self.soft_update_q:
-            for param, target_param in zip(self.q_critic.parameters(), self.q_critic_target.parameters()):
-                target_param.data.copy_(self.tau * param.data + (1 - self.tau) * target_param.data)
-        if self.use_v:
+        for param, target_param in zip(self.q_critic.parameters(), self.q_critic_target.parameters()):
+            target_param.data.copy_(self.tau * param.data + (1 - self.tau) * target_param.data)
+        if self.soft_update_v:
             for param, target_param in zip(self.v_critic.parameters(), self.v_critic_target.parameters()):
                 target_param.data.copy_(self.tau * param.data + (1 - self.tau) * target_param.data)
 
@@ -663,8 +476,7 @@ class SAC_continuous():
 
         torch.save(self.actor.state_dict(), model_dir / f"actor.pth")
         torch.save(self.q_critic.state_dict(), model_dir / f"q.pth")
-        if self.use_v:
-            torch.save(self.v_critic.state_dict(), model_dir / f"v.pth")
+        torch.save(self.v_critic.state_dict(), model_dir / f"v.pth")
         if self.robust:
             torch.save(self.transition.state_dict(), model_dir / f"tran.pth")
 
@@ -673,7 +485,6 @@ class SAC_continuous():
 
         self.actor.load_state_dict(torch.load(model_dir / f"actor.pth", map_location=self.device, weights_only=True))
         self.q_critic.load_state_dict(torch.load(model_dir / f"q.pth", map_location=self.device, weights_only=True))
-        if self.use_v:
-            self.v_critic.load_state_dict(torch.load(model_dir / f"v.pth", map_location=self.device, weights_only=True))
-        # if self.robust:
-        #     self.transition.load_state_dict(torch.load(model_dir / f"tran.pth", map_location=self.device, weights_only=True))
+        self.v_critic.load_state_dict(torch.load(model_dir / f"v.pth", map_location=self.device, weights_only=True))
+        if self.robust:
+            self.transition.load_state_dict(torch.load(model_dir / f"tran.pth", map_location=self.device, weights_only=True))
