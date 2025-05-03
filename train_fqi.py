@@ -20,7 +20,7 @@ from continuous_cartpole import register
     
 # Runs policy for X episodes and returns average reward
 # A fixed seed is used for the eval environment
-def eval_policy(policy, env, eval_episodes=10, seeds_list=[], debug_print=False):
+def eval_policy(policy, env, eval_episodes=10, seeds_list=[], debug_print=False, random_action_prob=0):
     episode_reward = 0.0
     rewards = []
     for j in range(eval_episodes):
@@ -30,7 +30,10 @@ def eval_policy(policy, env, eval_episodes=10, seeds_list=[], debug_print=False)
             state, _ = env.reset()
         done = False
         while not done:
-            action = policy.select_action(np.array(state))
+            if random.random() < random_action_prob:
+                action = env.action_space.sample()
+            else:
+                action = policy.select_action(np.array(state))
             state, reward, terminated, truncated, _ = env.step(action)
             done = terminated or truncated
             episode_reward += reward
@@ -208,12 +211,14 @@ def main(cfg: DictConfig):
     elif opt.eval_model:
         eval_num = 50
         log.info(f"Evaluating agent across {eval_num} episodes")
-        seeds_list = [random.randint(0, 100000) for _ in range(eval_num)] if not hasattr(opt, 'seeds_list') else opt.seeds_list
-                
+        if opt.random_action_prob != 0:
+            log.info(f"Action perturbation: random action probability={opt.random_action_prob}.")
+        seeds_list = [random.randint(0, 100000) for _ in range(eval_num)] if not hasattr(opt, 'seeds_list') else opt.seeds_list        
+
         scores = []
         # Use tqdm for evaluation progress
         for i in tqdm(range(eval_num), desc="Evaluation Progress", ncols=100):
-            score, _ = eval_policy(agent, eval_env, eval_episodes=1, seeds_list=[seeds_list[i]])
+            score, _ = eval_policy(agent, eval_env, eval_episodes=1, seeds_list=[seeds_list[i]], random_action_prob=opt.random_action_prob)
             scores.append(score)
             # Update progress bar with current mean score
             if i > 0 and i % 5 == 4:
@@ -252,62 +257,57 @@ def main(cfg: DictConfig):
         training_iters = 0
         
         # Offline learning doesn't have exploration stage
-        if opt.mode == 'offline':
-            if opt.automatic_beta == 'True':
-                automatic_beta = True
-            else:
-                automatic_beta = False
-                
-             # load data
-            data = DATA(opt.state_dim, opt.action_dim, opt.max_action, opt.device, opt.data_size)
-            data.load(opt.data_path, opt.reward_adapt, opt.env_index)
+        if opt.automatic_beta == 'True':
+            automatic_beta = True
+        else:
+            automatic_beta = False# load data
+        data = DATA(opt.state_dim, opt.action_dim, opt.max_action, opt.device, opt.data_size)
+        data.load(opt.data_path, opt.reward_adapt, opt.reward_normalize, opt.env_index)
 
-            # train VAE
-            filter_scores = []
-            training_iters = 0
-            with tqdm(total=opt.max_trn_steps, desc="Training Progress", ncols=100) as pbar:
-                if not opt.robust:
-                    while training_iters < opt.max_vae_trn_step:
-                        vae_loss = agent.train_vae(data, iterations=int(opt.eval_freq), batch_size=opt.batch_size)
-                        log.info(f"Training iterations: {training_iters}. State VAE loss: {vae_loss:.3f}.")
-                        training_iters += opt.eval_freq
-                        pbar.update(opt.eval_freq)
-
-                    if automatic_beta:  # args.automatic_beta:
-                        test_loss = agent.test_vae(data, batch_size=100000)
-                        beta = np.percentile(test_loss, opt.beta_percentile)
-                        agent.beta = beta
-                        log.info("Test vae", opt.beta_percentile,"percentile:", beta)
-                    else:
-                        pass
-
-                # train policy for 'eval_freq' steps
-                while training_iters < opt.max_trn_steps:
-                    if opt.robust:
-                        agent.train(data, int(opt.eval_freq), batch_size=opt.batch_size, writer=writer, log_base=training_iters)
-                    else:
-                        agent.train(data, iterations=int(opt.eval_freq), batch_size=opt.batch_size)
-                    
-                    training_iters += opt.eval_freq # loop
+        # train VAE
+        filter_scores = []
+        training_iters = 0
+        with tqdm(total=opt.max_trn_steps, desc="Training Progress", ncols=100) as pbar:
+            if not opt.robust:
+                while training_iters < opt.max_vae_trn_step:
+                    vae_loss = agent.train_vae(data, iterations=int(opt.eval_freq), batch_size=opt.batch_size)  
+                    training_iters += opt.eval_freq
                     pbar.update(opt.eval_freq)
+                    log.info(f"Training iterations: {training_iters}. State VAE loss: {vae_loss:.3f}.")
+
+                if opt.automatic_beta:  # args.automatic_beta:
+                    test_loss = agent.test_vae(data, batch_size=100000)
+                    beta = np.percentile(test_loss, opt.beta_percentile)
+                    agent.beta = beta
+                    log.info("Test vae", opt.beta_percentile,"percentile:", beta)
+                else:
+                    pass
+
+            # train policy for 'eval_freq' steps
+            while training_iters < opt.max_trn_steps:
+                if opt.robust:
+                    agent.train(data, trn_steps=int(opt.eval_freq), batch_size=opt.batch_size, writer=writer, log_base=training_iters)
+                else:
+                    agent.train(data, iterations=int(opt.eval_freq), batch_size=opt.batch_size)
+                    
+                training_iters += opt.eval_freq # loop
+                pbar.update(opt.eval_freq)
 
                         
-                    if training_iters % opt.eval_interval == 0:
-                        # Temporarily close progress bars for evaluation
-                        ep_r, _ = eval_policy(agent, eval_env, eval_episodes=10)
+                if training_iters % opt.eval_interval == 0:
+                    # Temporarily close progress bars for evaluation
+                    ep_r, _ = eval_policy(agent, eval_env, eval_episodes=10)
 
-                        if writer is not None:
-                            writer.add_scalar('ep_r', ep_r, global_step=training_iters)
+                    if writer is not None:
+                        writer.add_scalar('ep_r', ep_r, global_step=training_iters)
 
-                        log.info(
-                            f"EnvName: {BrifEnvName[opt.env_index]}, "
-                            f"Steps: {int(training_iters/1000)}k, "
-                            f"Episode Reward: {ep_r}"
-                        )
+                    log.info(f"EnvName: {BrifEnvName[opt.env_index]}, "
+                             f"Steps: {int(training_iters/1000)}k, "
+                             f"Episode Reward: {ep_r:.3f}.")
                             
-                    # (e) Save model at fixed intervals
-                    if opt.save_model and training_iters % opt.save_interval == 0:
-                        agent.save(BrifEnvName[opt.env_index])
+                # (e) Save model at fixed intervals
+                if opt.save_model and training_iters % opt.save_interval == 0:
+                    agent.save(BrifEnvName[opt.env_index])
                         
 
         # Evaluate the trained agent
