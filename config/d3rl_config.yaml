@@ -51,6 +51,7 @@ adv: false
 spread: 0.0      # Legacy std setting - consider using env_mods instead
 scale: 1.0    # Legacy scale setting - consider using env_mods instead
 delta: 0.0
+random_action_prob: 0.0
 
 # Hydra output directory
 hydra:

@@ -10,7 +10,7 @@ defaults:
 
 # General settings
 device: cuda
-mode: 'offline' # offline, continuous, generate
+mode: offline # offline only
 write: false
 debug_print: false
 render: false
@@ -80,6 +80,7 @@ vmin: 0
 
 # Environment configurations
 reward_adapt: true
+reward_normalize: false
 robust: false
 rho: 0.5
 noise: false  # Legacy noise setting - consider using env_mods instead
@@ -87,7 +88,7 @@ type: gaussian
 adv: false
 spread: 0.0      # Legacy std setting - consider using env_mods instead
 scale: 1.0    # Legacy scale setting - consider using env_mods instead
-
+random_action_prob: 0.0
 
 # Hydra output directory
 hydra:

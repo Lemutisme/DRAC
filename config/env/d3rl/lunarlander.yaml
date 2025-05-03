@@ -5,5 +5,3 @@
 env_name: LunarLanderContinuous-v3
 env_index: 2
 max_train_steps: 100000 #300k
-a_lr: 0.001
-c_lr: 0.001

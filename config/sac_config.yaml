@@ -19,9 +19,7 @@ load_path: None
 eval_model: false
 save_model: true
 data_path: None
-soft_update_q: true
-use_cql: false
-use_bc: false
+soft_update_v: true
 
 # Generating settings(epsilon-greedy)
 epsilon: 0.1
@@ -29,11 +27,14 @@ epsilon: 0.1
 # Training settings
 seed: 42
 max_train_steps: 200000
+vae_steps: 0
 save_interval: 10000
 eval_interval: 1000
-update_every: 50
-explore_episode: 50 
 data_size: 1000000 #1e6
+# Continual learning only
+update_every: 50
+update_freq: 1
+explore_episode: 50 
 
 # Algorithm hyperparameters
 gamma: 0.99
@@ -43,7 +44,7 @@ latent_dim: 5
 net_layer: 1
 critic_ensemble: true
 n_critic: 2
-a_lr: 0.005  # 5e-3
+a_lr: 0.0005  # 5e-3
 c_lr: 0.0005 # 5e-4
 b_lr: 0.00005 # 5e-5
 g_lr: 0.0005 # 5e-4
@@ -54,6 +55,7 @@ adaptive_alpha: true
 
 # Environment configurations
 reward_adapt: true
+reward_normalize: false
 robust: false
 robust_optimizer: functional # beta, functional, separate
 robust_update_after: 0
@@ -63,6 +65,7 @@ adv: false
 spread: 0.0      # Legacy std setting - consider using env_mods instead
 scale: 1.0    # Legacy scale setting - consider using env_mods instead
 delta: 0.0
+random_action_prob: 0.0
 
 # Hydra output directory
 hydra:
